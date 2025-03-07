@@ -1,0 +1,7 @@
+/node_modules
+/public
+/storage
+/vendor
+*.min.js
+*.css
+*.html

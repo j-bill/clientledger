@@ -1,0 +1,51 @@
+// permissions.js
+
+export const clearanceLevels = {
+  admin: 1,
+  employee: 2,
+  customer: 3,
+};
+
+export const clearanceRoutes = {
+  [clearanceLevels.admin]: [
+    "Benutzer",
+    "Rechnungen",
+    "PSAs",
+    "Rechnungsauswertung",
+    "Reporting",
+    "Zeiten zum Vorjahr",
+    "Wartungsverträge",
+    "Duplikate",
+    "Gelöschte Tickets",
+    "Kundencheck",
+    "SFN Zuschläge",
+    "Abrechnungsbericht",
+  ],
+  [clearanceLevels.employee]: [
+    "Dashboard",
+    "Fällige Tickets",
+    "Fällig",
+    "Daueraufträge",
+    "Kunden Tickets",
+    "Notification Tickets",
+    "Alle Tickets",
+    "Suche",
+    "Projekte",
+    "Kunden",
+    "Kompakt",
+    "Detail",
+    "Planung",
+    "Review",
+    "Fällige Review",
+    "Überfällig",
+    "Offen und in Bearbeitung",
+    "Customer Relationship Management",
+    "Ticket",
+    "Freie Tickets",
+    "Wartungsvorlagen",
+    "Nextcloud",
+    "Tickets für andere",
+    "Blockierte Domains",
+  ],
+  [clearanceLevels.customer]: [],
+};
