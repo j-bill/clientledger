@@ -5,8 +5,10 @@
 				   color="primary"
 				   dark>
 			<v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
-			<v-toolbar-title>Clientledger</v-toolbar-title>
-			<v-spacer></v-spacer>
+			<v-toolbar-title>
+				<h4>Clientledger</h4>
+			</v-toolbar-title>
+			<v-spacer />
 
 			<!-- Desktop Navigation Links -->
 			<div class="d-none d-md-flex">
