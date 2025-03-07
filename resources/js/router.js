@@ -65,7 +65,9 @@ const router = createRouter({
 // Add navigation guard
 router.beforeEach((to, from, next) => {
   const store = createStore();
-  if (to.meta.requiresAuth !== false && !store.isAuthenticated) {
+  if (to.name === "Login" && store.isAuthenticated) {
+    next({ path: "/" });
+  } else if (to.meta.requiresAuth !== false && !store.isAuthenticated) {
     next({ name: "Login" });
   } else {
     next();
