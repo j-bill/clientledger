@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <!-- Include the navigation component -->
-    <NavigationBar />
+    <NavigationBar v-if="isAuthenticated" />
     
     <!-- Main content area -->
     <v-main>
@@ -29,15 +29,10 @@ export default {
   },
   data() {
     return {
-      email: 'admin@admin.de',
-      password: 'adminadmin',
-      response: '',
-      type: 'error',
-      tab: null,
     };
   },
   computed: {
-    ...mapState(store, ['snackbar'])
+    ...mapState(store, ['snackbar', 'isAuthenticated']),
   },
   methods: {
     async validate() {
