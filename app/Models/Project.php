@@ -15,6 +15,11 @@ class Project extends Model
         'deadline',
     ];
 
+    // cast deadline to yyyy-mm-dd format
+    protected $casts = [
+        'deadline' => 'date:Y-m-d',
+    ];
+
     public function customer()
     {
         return $this->belongsTo(Customer::class);

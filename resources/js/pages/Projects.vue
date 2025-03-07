@@ -207,6 +207,7 @@ export default {
     },
     
     async saveProject(project) {
+      console.dir(project)
       try {
         const response = await axios.post('/api/projects', project);
         this.projects.unshift(response.data);
@@ -222,6 +223,8 @@ export default {
     },
     
     async updateProject(project) {
+      console.dir(project)
+
       try {
         const response = await axios.put(`/api/projects/${project.id}`, project);
         const index = this.projects.findIndex(p => p.id === project.id);
@@ -254,7 +257,13 @@ export default {
     },
     
     formatDate(dateStr) {
-      return new Date(dateStr).toLocaleDateString();
+      let date = new Date(dateStr)
+
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+
+      return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
     }
   }
 };

@@ -17,8 +17,19 @@ class WorkLog extends Model
         'billable',
     ];
 
+    // start time and end time should be return in H:i format.
+    protected $casts = [
+        'start_time' => 'datetime:H:i',
+        'end_time' => 'datetime:H:i',
+    ];
+
     public function project()
     {
         return $this->belongsTo(Project::class);
+    }
+    
+    public function customer()
+    {
+        return $this->hasOneThrough(Customer::class, Project::class, 'id', 'id', 'project_id', 'customer_id');
     }
 }
