@@ -2,8 +2,28 @@
 	<v-container>
 		<h1 class="text-h4 mb-4">Work Logs</h1>
 
+		<!-- Action Bar -->
+		<v-row class="mb-4">
+			<v-col cols="12"
+				   class="d-flex justify-space-between">
+
+				<v-btn color="secondary"
+					   @click="toggleFilters"
+					   prepend-icon="mdi-filter">
+					Display Filters
+				</v-btn>
+
+				<v-btn color="primary"
+					   @click="openCreateDialog"
+					   prepend-icon="mdi-plus">
+					New Work Log
+				</v-btn>
+			</v-col>
+		</v-row>
+
 		<!-- Filters -->
-		<v-card class="mb-6">
+		<v-card v-if="showFilters"
+				class="mb-6">
 			<v-card-title>Filters</v-card-title>
 			<v-card-text>
 				<v-row>
@@ -106,27 +126,18 @@
 			</v-card-text>
 		</v-card>
 
-		<!-- Action Bar -->
-		<v-row class="mb-4">
-			<v-col cols="12"
-				   class="text-right">
-				<v-btn color="primary"
-					   @click="openCreateDialog"
-					   prepend-icon="mdi-plus">
-					New Work Log
-				</v-btn>
-			</v-col>
-		</v-row>
-
 		<!-- Work Logs Table -->
 		<v-card>
-			<v-data-table :headers="headers"
-						  :items="workLogs"
-						  :loading="loading"
-						  class="elevation-1">
-				<template v-slot:item.date="{ item }">
-					{{ formatDate(item.date) }}
-				</template>
+			<v-data-table-server v-model:items-per-page="filters.per_page"
+								 :headers="headers"
+								 :items="workLogs"
+								 :items-length="totalItems"
+								 :loading="loading"
+								 :search="search"
+								 item-value="name"
+								 @update:options="fetchWorkLogs">
+
+
 				<template v-slot:item.billable="{ item }">
 					<v-icon :color="item.billable ? 'success' : 'error'">
 						{{ item.billable ? 'mdi-check' : 'mdi-close' }}
@@ -148,14 +159,9 @@
 						<v-icon>mdi-delete</v-icon>
 					</v-btn>
 				</template>
-			</v-data-table>
 
-			<!-- Pagination -->
-			<div class="pa-4 d-flex justify-end">
-				<v-pagination v-model="page"
-							  :length="totalPages"
-							  @update:model-value="fetchWorkLogs"></v-pagination>
-			</div>
+				
+			</v-data-table-server>
 		</v-card>
 
 		<!-- Delete Confirmation Dialog -->
@@ -247,6 +253,9 @@ export default {
 			editDialog: false,
 			itemToDelete: null,
 			currentWorkLog: null,
+			showFilters: false, // Add this data property
+			totalItems: 0, // Add this data property
+			search: '', // Add this data property
 
 			filters: {
 				start_date: null,
@@ -293,18 +302,19 @@ export default {
 
 	methods: {
 		...mapActions(store, ['showSnackbar']),
-		async fetchWorkLogs() {
+		async fetchWorkLogs(options = {}) {
 			this.loading = true;
 
 			try {
 				// Filter out null values
-				const params = { ...this.filters, page: this.page };
+				const params = { ...this.filters, page: this.page, ...options };
 				Object.keys(params).forEach(key => {
 					if (params[key] === null) delete params[key];
 				});
 
 				const response = await axios.get('/api/worklogs', { params });
 				this.workLogs = response.data.data;
+				this.totalItems = response.data.total;
 				this.totalPages = Math.ceil(response.data.total / this.filters.per_page);
 			} catch (error) {
 				console.error('Error fetching work logs:', error);
@@ -397,6 +407,10 @@ export default {
 
 		formatDate(dateStr) {
 			return new Date(dateStr).toLocaleDateString();
+		},
+
+		toggleFilters() {
+			this.showFilters = !this.showFilters;
 		}
 	}
 };

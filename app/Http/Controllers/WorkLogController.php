@@ -40,8 +40,12 @@ class WorkLogController extends Controller
 
         // Pagination
         $perPage = $request->input('per_page', 15);
+        $workLogs = $query->paginate($perPage);
 
-        return response()->json($query->paginate($perPage));
+        return response()->json([
+            'data' => $workLogs->items(),
+            'total' => $workLogs->total()
+        ]);
     }
 
     /**
