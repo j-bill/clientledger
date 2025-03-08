@@ -17,7 +17,8 @@
 						  item-value="id"
 						  label="Customer"
 						  prepend-icon="mdi-account"
-						  :rules="[v => !!v || 'Customer is required']"></v-select>
+						  :rules="[v => !!v || 'Customer is required']"
+						  @update:model-value="updateHourlyRate"></v-select>
 			</v-col>
 
 			<v-col cols="12"
@@ -26,7 +27,8 @@
 							  label="Hourly Rate ($)"
 							  type="number"
 							  prepend-icon="mdi-currency-usd"
-							  hint="Leave empty if not applicable"></v-text-field>
+							  hint="Inherited from customer by default, but can be customized"
+							  persistent-hint></v-text-field>
 			</v-col>
 
 			<v-col cols="12"
@@ -122,9 +124,22 @@ export default {
 	},
 
 	methods: {
-		submit() {
-			if (this.$refs.form.validate()) {
-				this.$emit('save', this.formData);
+		async submit() {
+			const { valid } = await this.$refs.form.validate();
+			
+			if (!valid) {
+				return;
+			}
+			
+			this.$emit('save', this.formData);
+		},
+
+		updateHourlyRate() {
+			if (this.formData.customer_id) {
+				const selectedCustomer = this.customers.find(c => c.id === this.formData.customer_id);
+				if (selectedCustomer && selectedCustomer.hourly_rate) {
+					this.formData.hourly_rate = selectedCustomer.hourly_rate;
+				}
 			}
 		},
 

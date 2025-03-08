@@ -22,7 +22,8 @@
 						  item-value="id"
 						  label="Project"
 						  prepend-icon="mdi-folder"
-						  :rules="[v => !!v || 'Project is required']"></v-select>
+						  :rules="[v => !!v || 'Project is required']"
+						  @update:model-value="updateHourlyRate"></v-select>
 			</v-col>
 
 			<v-col cols="12"
@@ -87,6 +88,16 @@
 				</v-menu>
 			</v-col>
 
+			<v-col cols="12"
+				   md="6">
+				<v-text-field v-model="formData.hourly_rate"
+							  label="Hourly Rate ($)"
+							  type="number"
+							  prepend-icon="mdi-currency-usd"
+							  :disabled="isNewWorkLog && formData.project_id"
+							  hint="Rate is inherited from project for new work logs"></v-text-field>
+			</v-col>
+
 			<v-col cols="12">
 				<v-textarea v-model="formData.description"
 							label="Description"
@@ -100,8 +111,8 @@
 
 			<v-col cols="12">
 				<v-checkbox v-model="formData.billable"
-				:true-value="1"
-				:false-value="0"
+							:true-value="1"
+							:false-value="0"
 							label="Billable"
 							color="primary"></v-checkbox>
 			</v-col>
@@ -136,15 +147,19 @@ export default {
 				start_time: null,
 				end_time: null,
 				billable: true,
-				description: ''
+				description: '',
+				hourly_rate: null
 			},
 			selectedCustomer: null,
 			customers: [],
-			filteredProjects: []
+			filteredProjects: [],
+			isNewWorkLog: true
 		};
 	},
 
 	created() {
+		this.isNewWorkLog = !this.workLog;
+
 		if (this.workLog) {
 			this.formData = { ...this.workLog };
 			// If editing, try to set the customer based on the project
@@ -174,16 +189,31 @@ export default {
 				// If the currently selected project doesn't belong to this customer, reset it
 				if (this.formData.project_id && !this.filteredProjects.some(p => p.id === this.formData.project_id)) {
 					this.formData.project_id = null;
+					this.formData.hourly_rate = null;
 				}
 			} else {
 				this.filteredProjects = [...this.projects];
 			}
 		},
 
-		submit() {
-			if (this.$refs.form.validate()) {
-				this.$emit('save', this.formData);
+		updateHourlyRate() {
+			// Only update hourly_rate automatically for new work logs
+			if (this.isNewWorkLog && this.formData.project_id) {
+				const selectedProject = this.projects.find(p => p.id === this.formData.project_id);
+				if (selectedProject && selectedProject.hourly_rate) {
+					this.formData.hourly_rate = selectedProject.hourly_rate;
+				}
 			}
+		},
+
+		async submit() {
+			const { valid } = await this.$refs.form.validate();
+
+			if (!valid) {
+				return;
+			}
+
+			this.$emit('save', this.formData);
 		}
 	}
 };

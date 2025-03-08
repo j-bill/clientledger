@@ -131,10 +131,14 @@ export default {
   },
   
   methods: {
-    submit() {
-      if (this.$refs.form.validate()) {
-        this.$emit('save', this.formData);
+    async submit() {
+      const { valid } = await this.$refs.form.validate();
+      
+      if (!valid) {
+        return;
       }
+      
+      this.$emit('save', this.formData);
     }
   }
 };

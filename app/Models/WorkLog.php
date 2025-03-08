@@ -15,6 +15,7 @@ class WorkLog extends Model
         'hours_worked',
         'description',
         'billable',
+        'hourly_rate',
     ];
 
     // start time and end time should be return in H:i format.

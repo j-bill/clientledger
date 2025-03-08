@@ -79,14 +79,18 @@ export default {
   },
   
   methods: {
-    submit() {
-      if (this.$refs.form.validate()) {
-        const data = { ...this.formData };
-        if (!data.password) {
-          delete data.password;
-        }
-        this.$emit('save', data);
+    async submit() {
+      const { valid } = await this.$refs.form.validate();
+      
+      if (!valid) {
+        return;
       }
+      
+      const data = { ...this.formData };
+      if (!data.password) {
+        delete data.password;
+      }
+      this.$emit('save', data);
     }
   }
 };

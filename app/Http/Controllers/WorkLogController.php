@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\WorkLog;
+use App\Models\Project;
 use Illuminate\Http\Request;
 
 class WorkLogController extends Controller
@@ -60,10 +61,19 @@ class WorkLogController extends Controller
             'end_time' => 'required|date_format:H:i|after:start_time',
             'description' => 'nullable|string',
             'billable' => 'boolean',
+            'hourly_rate' => 'nullable|numeric',
         ]);
 
         $hours_worked = (strtotime($validated['end_time']) - strtotime($validated['start_time'])) / 3600;
         $validated['hours_worked'] = $hours_worked;
+
+        // If hourly_rate is not provided, get it from the project
+        if (!isset($validated['hourly_rate']) || $validated['hourly_rate'] === null) {
+            $project = Project::find($validated['project_id']);
+            if ($project && $project->hourly_rate) {
+                $validated['hourly_rate'] = $project->hourly_rate;
+            }
+        }
 
         $workLog = WorkLog::create($validated);
         return response()->json($workLog->load('project'), 201);
@@ -89,10 +99,21 @@ class WorkLogController extends Controller
             'end_time' => 'sometimes|required|date_format:H:i|after:start_time',
             'description' => 'nullable|string',
             'billable' => 'boolean',
+            'hourly_rate' => 'nullable|numeric',
         ]);
 
-        $hours_worked = (strtotime($validated['end_time']) - strtotime($validated['start_time'])) / 3600;
-        $validated['hours_worked'] = $hours_worked;
+        if (isset($validated['start_time']) && isset($validated['end_time'])) {
+            $hours_worked = (strtotime($validated['end_time']) - strtotime($validated['start_time'])) / 3600;
+            $validated['hours_worked'] = $hours_worked;
+        }
+
+        // If project_id is changed but hourly_rate is not provided, get it from the new project
+        if (isset($validated['project_id']) && $validated['project_id'] !== $workLog->project_id && !isset($validated['hourly_rate'])) {
+            $project = Project::find($validated['project_id']);
+            if ($project && $project->hourly_rate) {
+                $validated['hourly_rate'] = $project->hourly_rate;
+            }
+        }
 
         $workLog->update($validated);
         return response()->json($workLog->load('project'));
