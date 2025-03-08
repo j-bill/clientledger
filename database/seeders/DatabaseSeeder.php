@@ -5,106 +5,74 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\Models\Customer;
 use App\Models\Project;
+use App\Models\WorkLog;
 use Illuminate\Database\Seeder;
+use Faker\Factory as Faker;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'admin@admin.de',
-            'role' => 'admin',
-            'password' => bcrypt('adminadmin'),
-        ]);
+        if (!User::where('email', 'admin@admin.de')->exists()) {
+            User::factory()->create([
+                'name' => 'Test User',
+                'email' => 'admin@admin.de',
+                'role' => 'admin',
+                'password' => bcrypt('adminadmin'),
+            ]);
+        }
 
-        $customers = [
-            [
-                'name' => 'Acme Corp',
-                'contact_person' => 'John Doe',
-                'contact_email' => 'john@acme.com',
-                'contact_phone' => '+49 176 12345678',
-                'address_line_1' => 'Hauptstraße 1',
-                'address_line_2' => '3rd Floor',
-                'city' => 'Berlin',
-                'state' => 'Berlin',
-                'postcode' => '10115',
-                'country' => 'Germany',
-                'vat_number' => 'DE123456789',
-                'hourly_rate' => 85.00,
-            ],
-            [
-                'name' => 'Tech Solutions GmbH',
-                'contact_person' => 'Jane Smith',
-                'contact_email' => 'jane@techsolutions.com',
-                'contact_phone' => '+49 30 987654321',
-                'address_line_1' => 'Alexanderplatz 5',
-                'address_line_2' => 'Building B',
-                'city' => 'Berlin',
-                'state' => 'Berlin',
-                'postcode' => '10178',
-                'country' => 'Germany',
-                'vat_number' => 'DE987654321',
-                'hourly_rate' => 95.00,
-            ],
-            [
-                'name' => 'Digital Dynamics AG',
-                'contact_person' => 'Maria Schmidt',
-                'contact_email' => 'maria@digitaldynamics.de',
-                'contact_phone' => '+49 89 11223344',
-                'address_line_1' => 'Maximilianstraße 25',
-                'city' => 'Munich',
-                'state' => 'Bavaria',
-                'postcode' => '80539',
-                'country' => 'Germany',
-                'vat_number' => 'DE456789012',
-                'hourly_rate' => 120.00,
-            ],
-        ];
+        $faker = Faker::create();
 
-        $projectTemplates = [
-            [
-                'name' => 'E-Commerce Platform Revamp',
-                'description' => 'Complete overhaul of the existing online shop including migration to Shopware 6, custom theme development, and integration of ERP system. Implementation of advanced analytics and personalization features.',
-                'deadline_months' => 4,
-            ],
-            [
-                'name' => 'Mobile App Development',
-                'description' => 'Development of a cross-platform mobile application using Flutter. Features include user authentication, push notifications, offline capability, and integration with REST APIs.',
-                'deadline_months' => 3,
-            ],
-            [
-                'name' => 'Corporate Website Redesign',
-                'description' => 'Modern website redesign with focus on performance and SEO. Including content management system, blog section, and multilingual support.',
-                'deadline_months' => 2,
-            ],
-            [
-                'name' => 'Internal Dashboard',
-                'description' => 'Development of an internal analytics dashboard using Laravel and Vue.js. Real-time data visualization, PDF report generation, and role-based access control.',
-                'deadline_months' => 2,
-            ],
-            [
-                'name' => 'API Development',
-                'description' => 'Design and implementation of RESTful APIs for existing systems. Including authentication, rate limiting, and comprehensive documentation.',
-                'deadline_months' => 3,
-            ],
-        ];
+        $amountCustomers = 10;
+        $amountProjects = 5;
+        $amountWorklogs = 200;
 
-        foreach ($customers as $customerData) {
-            $customer = Customer::create($customerData);
-            
-            // Randomly select 2-3 projects for each customer
-            $selectedProjects = collect($projectTemplates)
-                ->random(rand(2, 3))
-                ->each(function ($project) use ($customer) {
-                    Project::create([
-                        'name' => $project['name'],
-                        'description' => $project['description'],
-                        'customer_id' => $customer->id,
-                        'hourly_rate' => $customer->hourly_rate,
-                        'deadline' => now()->addMonths($project['deadline_months'])->addDays(rand(-5, 5)),
-                    ]);
-                });
+        // Create customers
+        for ($i = 0; $i < $amountCustomers; $i++) {
+            Customer::create([
+                'name' => $faker->company,
+                'contact_person' => $faker->name,
+                'contact_email' => $faker->email,
+                'contact_phone' => $faker->phoneNumber,
+                'address_line_1' => $faker->streetAddress,
+                'address_line_2' => $faker->secondaryAddress,
+                'city' => $faker->city,
+                'state' => $faker->state,
+                'postcode' => $faker->postcode,
+                'country' => $faker->country,
+                'vat_number' => $faker->randomNumber(8),
+                'hourly_rate' => $faker->randomFloat(2, 50, 150),
+            ]);
+        }
+
+        // Create projects
+        $customerIds = Customer::pluck('id')->toArray();
+        for ($j = 0; $j < $amountProjects; $j++) {
+            Project::create([
+                'name' => $faker->sentence(3),
+                'description' => $faker->paragraph,
+                'customer_id' => $faker->randomElement($customerIds),
+                'hourly_rate' => $faker->randomFloat(2, 50, 150),
+                'deadline' => $faker->dateTimeBetween('+1 month', '+6 months'),
+            ]);
+        }
+
+        // Create worklogs
+        $projectIds = Project::pluck('id')->toArray();
+        for ($k = 0; $k < $amountWorklogs; $k++) {
+            $startTime = $faker->dateTimeThisYear;
+            $endTime = (clone $startTime)->modify('+'.rand(1, 8).' hours');
+
+            WorkLog::create([
+                'project_id' => $faker->randomElement($projectIds),
+                'date' => $startTime->format('Y-m-d'),
+                'start_time' => $startTime->format('H:i'),
+                'end_time' => $endTime->format('H:i'),
+                'hours_worked' => $endTime->diff($startTime)->h,
+                'description' => $faker->sentence,
+                'billable' => $faker->boolean,
+            ]);
         }
     }
 }
