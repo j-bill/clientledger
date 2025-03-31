@@ -354,6 +354,13 @@ export default {
 					// Convert to hours with 2 decimal places
 					workLog.hours_worked = (minutesWorked / 60).toFixed(2);
 				}
+
+				// Ensure all required fields are present
+				workLog.project_id = workLog.project?.id || workLog.project_id;
+				workLog.date = workLog.date || new Date().toISOString().split('T')[0];
+				workLog.billable = workLog.billable ?? true;
+				workLog.description = workLog.description || 'Work in progress...';
+				workLog.hourly_rate = workLog.hourly_rate || workLog.project?.hourly_rate || 0;
 				
 				// Open the edit dialog with the work log data
 				this.currentWorkLog = workLog;
@@ -420,7 +427,7 @@ export default {
 
 		async deleteWorkLog() {
 			try {
-				await axios.delete(`/api/work-logs/${this.itemToDelete.id}`);
+				await axios.delete(`/api/worklogs/${this.itemToDelete.id}`);
 				this.workLogs = this.workLogs.filter(w => w.id !== this.itemToDelete.id);
 				this.deleteDialog = false;
 			} catch (error) {

@@ -88,9 +88,10 @@ class WorkLogController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(WorkLog $workLog)
+    public function show($workLog)
     {
-        return response()->json($workLog->load('project'));
+        $workLog = WorkLog::where('id', $workLog)->with('project', 'project.customer')->first();
+        return response()->json($workLog);
     }
 
     /**
