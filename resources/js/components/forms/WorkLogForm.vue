@@ -23,7 +23,19 @@
 						  label="Project"
 						  prepend-icon="mdi-folder"
 						  :rules="[v => !!v || 'Project is required']"
-						  @update:model-value="updateHourlyRate"></v-select>
+						  @update:model-value="updateProjectDetails"></v-select>
+			</v-col>
+
+			<v-col cols="12"
+				   md="6" v-if="isAdmin">
+				<v-select v-model="formData.user_id"
+						  :items="projectUsers"
+						  item-title="name"
+						  item-value="id"
+						  label="Freelancer"
+						  prepend-icon="mdi-account"
+						  :rules="[v => !!v || 'Freelancer is required']"
+						  @update:model-value="updateUserRate"></v-select>
 			</v-col>
 
 			<v-col cols="12"
@@ -89,13 +101,13 @@
 			</v-col>
 
 			<v-col cols="12"
-				   md="6">
+				   md="6" v-if="isAdmin">
 				<v-text-field v-model="formData.hourly_rate"
-							  label="Hourly Rate ($)"
+							  label="Freelancer Hourly Rate ($)"
 							  type="number"
 							  prepend-icon="mdi-currency-usd"
-							  :disabled="isNewWorkLog && formData.project_id"
-							  hint="Rate is inherited from project for new work logs"></v-text-field>
+							  :disabled="isNewWorkLog && formData.user_id"
+							  hint="Rate is inherited from freelancer for new work logs"></v-text-field>
 			</v-col>
 
 			<v-col cols="12">
@@ -121,7 +133,9 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { mapState } from 'pinia'
+import { store } from '../../store'
+import axios from 'axios'
 
 export default {
 	name: 'WorkLogForm',
@@ -144,34 +158,53 @@ export default {
 			formData: {
 				date: new Date().toISOString().substr(0, 10),
 				project_id: null,
+				user_id: null,
 				start_time: null,
 				end_time: null,
-				billable: true,
+				billable: 1,
 				description: '',
 				hourly_rate: null
 			},
 			selectedCustomer: null,
 			customers: [],
 			filteredProjects: [],
-			isNewWorkLog: true
+			projectUsers: [],
+			isNewWorkLog: true,
+			isAdmin: false
 		};
+	},
+
+	computed: {
+		...mapState(store, ['user'])
 	},
 
 	created() {
 		this.isNewWorkLog = !this.workLog;
+		this.checkUserRole();
 
 		if (this.workLog) {
 			this.formData = { ...this.workLog };
-			// If editing, try to set the customer based on the project
 			if (this.workLog.project && this.workLog.project.customer_id) {
 				this.selectedCustomer = this.workLog.project.customer_id;
 			}
+		} else {
+			// For new work logs, set the user_id to the authenticated user
+			this.formData.user_id = this.user?.id;
 		}
 		this.fetchCustomers();
 		this.filteredProjects = [...this.projects];
 	},
 
 	methods: {
+		async checkUserRole() {
+			try {
+				const response = await axios.get('/api/user');
+				this.isAdmin = response.data.role === 'admin';
+			} catch (error) {
+				console.error('Error checking user role:', error);
+			}
+		},
+
 		async fetchCustomers() {
 			try {
 				const response = await axios.get('/api/customers');
@@ -186,7 +219,6 @@ export default {
 				this.filteredProjects = this.projects.filter(
 					project => project.customer_id === this.selectedCustomer
 				);
-				// If the currently selected project doesn't belong to this customer, reset it
 				if (this.formData.project_id && !this.filteredProjects.some(p => p.id === this.formData.project_id)) {
 					this.formData.project_id = null;
 					this.formData.hourly_rate = null;
@@ -196,12 +228,28 @@ export default {
 			}
 		},
 
-		updateHourlyRate() {
-			// Only update hourly_rate automatically for new work logs
-			if (this.isNewWorkLog && this.formData.project_id) {
+		updateProjectDetails() {
+			if (this.formData.project_id) {
 				const selectedProject = this.projects.find(p => p.id === this.formData.project_id);
-				if (selectedProject && selectedProject.hourly_rate) {
-					this.formData.hourly_rate = selectedProject.hourly_rate;
+				if (selectedProject) {
+					this.projectUsers = selectedProject.users || [];
+					if (this.formData.user_id && !this.projectUsers.some(u => u.id === this.formData.user_id)) {
+						this.formData.user_id = null;
+						this.formData.hourly_rate = null;
+					}
+				}
+			} else {
+				this.projectUsers = [];
+				this.formData.user_id = null;
+				this.formData.hourly_rate = null;
+			}
+		},
+
+		updateUserRate() {
+			if (this.isNewWorkLog && this.formData.user_id) {
+				const selectedUser = this.projectUsers.find(u => u.id === this.formData.user_id);
+				if (selectedUser && selectedUser.hourly_rate) {
+					this.formData.hourly_rate = selectedUser.hourly_rate;
 				}
 			}
 		},
@@ -213,7 +261,16 @@ export default {
 				return;
 			}
 
-			this.$emit('save', this.formData);
+			// Format the data before emitting
+			const formattedData = {
+				...this.formData,
+				// Ensure hourly_rate is a number
+				hourly_rate: parseFloat(this.formData.hourly_rate) || 0,
+				// Ensure billable is a number
+				billable: parseInt(this.formData.billable) || 0
+			};
+
+			this.$emit('save', formattedData);
 		}
 	}
 };

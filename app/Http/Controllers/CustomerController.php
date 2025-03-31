@@ -10,9 +10,22 @@ class CustomerController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Customer::all());
+        $user = $request->user();
+        
+        if ($user->isAdmin()) {
+            return response()->json(Customer::all());
+        }
+
+        // For freelancers, return only customers they have projects for
+        $customers = Customer::whereHas('projects', function ($query) use ($user) {
+            $query->whereHas('users', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+        })->get();
+
+        return response()->json($customers);
     }
 
     /**

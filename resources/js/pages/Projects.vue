@@ -4,23 +4,65 @@
     
     <!-- Action Bar -->
     <v-row class="mb-4">
-      <v-col cols="12" sm="6">
-        <v-text-field
-          v-model="search"
-          label="Search"
-          prepend-inner-icon="mdi-magnify"
-          single-line
-          hide-details
-          clearable
-          @input="fetchProjects"
-        ></v-text-field>
-      </v-col>
-      <v-col cols="12" sm="6" class="text-right">
-        <v-btn color="primary" @click="openCreateDialog" prepend-icon="mdi-plus">
+      <v-col cols="12" class="d-flex justify-space-between">
+        <v-btn color="secondary" @click="toggleFilters" prepend-icon="mdi-filter">
+          Display Filters
+        </v-btn>
+
+        <v-btn v-if="isAdmin" color="primary" @click="openCreateDialog" prepend-icon="mdi-plus">
           New Project
         </v-btn>
       </v-col>
     </v-row>
+    
+    <!-- Filters -->
+    <v-card v-if="showFilters" class="mb-6">
+      <v-card-title>Filters</v-card-title>
+      <v-card-text>
+        <v-row>
+          <v-col cols="12" sm="6" md="4">
+            <v-autocomplete
+              v-model="filters.customers"
+              :items="customers"
+              item-title="name"
+              item-value="id"
+              label="Customers"
+              multiple
+              chips
+              closable-chips
+              clearable
+              prepend-icon="mdi-account"
+              :search-input.sync="customerSearch"
+              @update:search="searchCustomers"
+            ></v-autocomplete>
+          </v-col>
+          <v-col cols="12" sm="6" md="4">
+            <v-autocomplete
+              v-model="filters.freelancers"
+              :items="freelancers"
+              item-title="name"
+              item-value="id"
+              label="Freelancers"
+              multiple
+              chips
+              closable-chips
+              clearable
+              prepend-icon="mdi-account"
+              :search-input.sync="freelancerSearch"
+              @update:search="searchFreelancers"
+            ></v-autocomplete>
+          </v-col>
+          <v-col cols="12" class="text-right">
+            <v-btn color="primary" @click="applyFilters">
+              Apply Filters
+            </v-btn>
+            <v-btn class="ms-2" @click="resetFilters">
+              Reset
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
     
     <!-- Projects Table -->
     <v-card>
@@ -35,18 +77,34 @@
           {{ item.deadline ? formatDate(item.deadline) : 'N/A' }}
         </template>
         <template v-slot:item.hourly_rate="{ item }">
-          {{ item.hourly_rate ? `$${item.hourly_rate}` : 'N/A' }}
+          <span v-if="isAdmin">${{ Number(item.hourly_rate || 0).toFixed(2) }}</span>
+          <span v-else>-</span>
+        </template>
+        <template v-slot:item.users="{ item }">
+          <v-chip-group>
+            <v-chip
+              v-for="user in item.users"
+              :key="user.id"
+              size="small"
+              color="primary"
+              variant="outlined"
+            >
+              {{ user.name }}
+            </v-chip>
+          </v-chip-group>
         </template>
         <template v-slot:item.actions="{ item }">
-          <v-btn icon variant="text" size="small" color="info" @click="viewProject(item)">
+          <v-btn icon variant="text" size="small" color="primary" @click="openViewDialog(item)">
             <v-icon>mdi-eye</v-icon>
           </v-btn>
-          <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)">
-            <v-icon>mdi-pencil</v-icon>
-          </v-btn>
-          <v-btn icon variant="text" size="small" color="error" @click="confirmDelete(item)">
-            <v-icon>mdi-delete</v-icon>
-          </v-btn>
+          <template v-if="isAdmin">
+            <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)">
+              <v-icon>mdi-pencil</v-icon>
+            </v-btn>
+            <v-btn icon variant="text" size="small" color="error" @click="confirmDelete(item)">
+              <v-icon>mdi-delete</v-icon>
+            </v-btn>
+          </template>
         </template>
       </v-data-table>
     </v-card>
@@ -71,7 +129,7 @@
       <v-card>
         <v-card-title>New Project</v-card-title>
         <v-card-text>
-          <project-form ref="createForm" :customers="customers" @save="saveProject"></project-form>
+          <project-form ref="createForm" :customers="customers" :freelancers="freelancers" @save="saveProject"></project-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -86,7 +144,7 @@
       <v-card>
         <v-card-title>Edit Project</v-card-title>
         <v-card-text>
-          <project-form ref="editForm" :project="currentProject" :customers="customers" @save="updateProject"></project-form>
+          <project-form ref="editForm" :project="currentProject" :customers="customers" :freelancers="freelancers" @save="updateProject"></project-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -96,33 +154,40 @@
       </v-card>
     </v-dialog>
     
-    <!-- View Project Dialog -->
+    <!-- Project View Dialog -->
     <v-dialog v-model="viewDialog" max-width="800px">
-      <v-card v-if="currentProject">
-        <v-card-title>{{ currentProject.name }}</v-card-title>
+      <v-card>
+        <v-card-title>Project Details</v-card-title>
         <v-card-text>
-          <v-list>
-            <v-list-item>
-              <v-list-item-title>Customer:</v-list-item-title>
-              <v-list-item-subtitle>{{ currentProject.customer?.name }}</v-list-item-subtitle>
-            </v-list-item>
-            <v-list-item>
-              <v-list-item-title>Hourly Rate:</v-list-item-title>
-              <v-list-item-subtitle>${{ currentProject.hourly_rate || 'N/A' }}</v-list-item-subtitle>
-            </v-list-item>
-            <v-list-item>
-              <v-list-item-title>Deadline:</v-list-item-title>
-              <v-list-item-subtitle>{{ currentProject.deadline ? formatDate(currentProject.deadline) : 'N/A' }}</v-list-item-subtitle>
-            </v-list-item>
-            <v-list-item>
-              <v-list-item-title>Description:</v-list-item-title>
-              <v-list-item-subtitle>{{ currentProject.description || 'No description' }}</v-list-item-subtitle>
-            </v-list-item>
-          </v-list>
+          <v-row>
+            <v-col cols="12">
+              <strong>Name:</strong> {{ currentProject?.name }}
+            </v-col>
+            <v-col cols="12">
+              <strong>Customer:</strong> {{ currentProject?.customer?.name }}
+            </v-col>
+            <v-col cols="12" v-if="isAdmin">
+              <strong>Project Rate:</strong> ${{ Number(currentProject?.hourly_rate || 0).toFixed(2) }}
+            </v-col>
+            <v-col cols="12">
+              <strong>Deadline:</strong> {{ formatDate(currentProject?.deadline) }}
+            </v-col>
+            <v-col cols="12">
+              <strong>Description:</strong> {{ currentProject?.description }}
+            </v-col>
+            <v-col cols="12">
+              <strong>Assigned Freelancers:</strong>
+              <v-chip-group class="mt-2">
+                <v-chip v-for="user in currentProject?.users" :key="user.id" color="primary" variant="outlined">
+                  {{ user.name }} ( ${{ Number(user.hourly_rate || 0).toFixed(2) }}/hr )
+                </v-chip>
+              </v-chip-group>
+            </v-col>
+          </v-row>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" @click="viewDialog = false">Close</v-btn>
+          <v-btn color="primary" variant="text" @click="viewDialog = false">Close</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -144,6 +209,7 @@ export default {
     return {
       projects: [],
       customers: [],
+      freelancers: [],
       loading: false,
       search: '',
       deleteDialog: false,
@@ -152,11 +218,20 @@ export default {
       viewDialog: false,
       itemToDelete: null,
       currentProject: null,
+      isAdmin: false,
+      showFilters: false,
+      filters: {
+        customers: [],
+        freelancers: []
+      },
+      customerSearch: '',
+      freelancerSearch: '',
       
       headers: [
         { title: 'Name', key: 'name' },
         { title: 'Customer', key: 'customer.name' },
-        { title: 'Hourly Rate', key: 'hourly_rate' },
+        { title: 'Project Rate', key: 'hourly_rate' },
+        { title: 'Assigned Freelancers', key: 'users' },
         { title: 'Deadline', key: 'deadline' },
         { title: 'Actions', key: 'actions', sortable: false }
       ]
@@ -166,6 +241,8 @@ export default {
   created() {
     this.fetchProjects();
     this.fetchCustomers();
+    this.fetchFreelancers();
+    this.checkUserRole();
   },
   
   methods: {
@@ -174,7 +251,13 @@ export default {
       this.loading = true;
       
       try {
-        const response = await axios.get('/api/projects');
+        // Filter out null values
+        const params = { ...this.filters };
+        Object.keys(params).forEach(key => {
+          if (params[key] === null) delete params[key];
+        });
+
+        const response = await axios.get('/api/projects', { params });
         this.projects = response.data;
       } catch (error) {
         console.error('Error fetching projects:', error);
@@ -191,6 +274,15 @@ export default {
         console.error('Error fetching customers:', error);
       }
     },
+
+    async fetchFreelancers() {
+      try {
+        const response = await axios.get('/api/users');
+        this.freelancers = response.data.filter(user => user.role === 'freelancer');
+      } catch (error) {
+        console.error('Error fetching freelancers:', error);
+      }
+    },
     
     openCreateDialog() {
       this.createDialog = true;
@@ -201,7 +293,7 @@ export default {
       this.editDialog = true;
     },
     
-    viewProject(item) {
+    openViewDialog(item) {
       this.currentProject = { ...item };
       this.viewDialog = true;
     },
@@ -264,6 +356,40 @@ export default {
       const day = date.getDate();
 
       return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    },
+
+    async checkUserRole() {
+      try {
+        const response = await axios.get('/api/user');
+        this.isAdmin = response.data.role === 'admin';
+      } catch (error) {
+        console.error('Error checking user role:', error);
+      }
+    },
+    
+    toggleFilters() {
+      this.showFilters = !this.showFilters;
+    },
+
+    applyFilters() {
+      this.fetchProjects();
+    },
+
+    resetFilters() {
+      // Reset filters to default
+      this.filters = {
+        customers: [],
+        freelancers: []
+      };
+      this.fetchProjects();
+    },
+
+    searchCustomers(query) {
+      this.customerSearch = query;
+    },
+
+    searchFreelancers(query) {
+      this.freelancerSearch = query;
     }
   }
 };

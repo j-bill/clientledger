@@ -34,6 +34,19 @@
         ></v-select>
       </v-col>
       
+      <v-col cols="12" md="6" v-if="formData.role === 'freelancer'">
+        <v-text-field
+          v-model="formData.hourly_rate"
+          label="Hourly Rate"
+          type="number"
+          prepend-icon="mdi-currency-usd"
+          :rules="[
+            v => !!v || 'Hourly rate is required',
+            v => v >= 0 || 'Hourly rate must be positive'
+          ]"
+        ></v-text-field>
+      </v-col>
+      
       <v-col cols="12" md="6" v-if="!user">
         <v-text-field
           v-model="formData.password"
@@ -59,12 +72,13 @@ export default {
   
   data() {
     return {
-      roles: ['admin', 'user'],
+      roles: ['admin', 'freelancer'],
       formData: {
         name: '',
         email: '',
-        role: 'user',
-        password: ''
+        role: 'freelancer',
+        password: '',
+        hourly_rate: 0
       }
     };
   },

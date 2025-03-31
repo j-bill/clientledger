@@ -46,6 +46,10 @@
         <template v-slot:item.updated_at="{ item }">
           {{ new Date(item.updated_at).toLocaleDateString() }}
         </template>
+        <template v-slot:item.hourly_rate="{ item }">
+          <span v-if="item.role === 'freelancer'">${{ Number(item.hourly_rate || 0).toFixed(2) }}</span>
+          <span v-else>-</span>
+        </template>
       </v-data-table>
     </v-card>
 
@@ -121,8 +125,9 @@ export default {
         { title: 'Name', key: 'name' },
         { title: 'Email', key: 'email' },
         { title: 'Role', key: 'role' },
-        { title: 'Created', key: 'created_at' }, // added
-        { title: 'Updated', key: 'updated_at' }, // added
+        { title: 'Hourly Rate', key: 'hourly_rate' },
+        { title: 'Created', key: 'created_at' },
+        { title: 'Updated', key: 'updated_at' },
         { title: 'Actions', key: 'actions', sortable: false }
       ]
     };

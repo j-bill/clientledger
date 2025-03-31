@@ -20,4 +20,9 @@ class Customer extends Model
         'vat_number',
         'hourly_rate',
     ];
+
+    public function projects()
+    {
+        return $this->hasMany(Project::class);
+    }
 }

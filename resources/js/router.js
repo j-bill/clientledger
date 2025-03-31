@@ -8,6 +8,7 @@ import Projects from "./pages/Projects.vue";
 import Customers from "./pages/Customers.vue";
 import Invoices from "./pages/Invoices.vue";
 import Users from "./pages/Users.vue";
+import NoPermission from "./pages/NoPermission.vue";
 
 const routes = [
   {
@@ -15,6 +16,12 @@ const routes = [
     name: "Login",
     component: Login,
     meta: { requiresAuth: false },
+  },
+  {
+    path: "/no-permission",
+    name: "NoPermission",
+    component: NoPermission,
+    meta: { requiresAuth: true },
   },
   {
     path: "/",
@@ -35,25 +42,25 @@ const routes = [
     meta: { requiresAuth: true },
   },
 
-  // Customers routes
+  // Customers routes (admin only)
   {
     path: "/customers",
     component: Customers,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresAdmin: true },
   },
 
-  // Invoice routes
+  // Invoice routes (admin only)
   {
     path: "/invoices",
     component: Invoices,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresAdmin: true },
   },
 
-  // User routes
+  // User routes (admin only)
   {
     path: "/users",
     component: Users,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresAdmin: true },
   },
 ];
 
@@ -65,13 +72,26 @@ const router = createRouter({
 // Add navigation guard
 router.beforeEach((to, from, next) => {
   const store = createStore();
+  
+  // Check if user is authenticated
+  if (to.meta.requiresAuth !== false && !store.isAuthenticated) {
+    next({ name: "Login" });
+    return;
+  }
+
+  // Redirect to login if already authenticated and trying to access login page
   if (to.name === "Login" && store.isAuthenticated) {
     next({ path: "/" });
-  } else if (to.meta.requiresAuth !== false && !store.isAuthenticated) {
-    next({ name: "Login" });
-  } else {
-    next();
+    return;
   }
+
+  // Check admin access
+  if (to.meta.requiresAdmin && store.user?.role !== 'admin') {
+    next({ name: "NoPermission" });
+    return;
+  }
+
+  next();
 });
 
 export default router;

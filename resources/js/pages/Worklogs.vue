@@ -137,6 +137,21 @@
 								 item-value="name"
 								 @update:options="fetchWorkLogs">
 
+				<template v-slot:item.user="{ item }">
+					{{ item.user?.name || 'N/A' }}
+				</template>
+
+				<template v-slot:item.hours="{ item }">
+					{{ Number(item.hours_worked || 0).toFixed(2) }}
+				</template>
+
+				<template v-slot:item.hourly_rate="{ item }">
+					${{ Number(item.user_hourly_rate || 0).toFixed(2) }}
+				</template>
+
+				<template v-slot:item.amount="{ item }">
+					${{ Number(item.amount || 0).toFixed(2) }}
+				</template>
 
 				<template v-slot:item.billable="{ item }">
 					<v-icon :color="item.billable ? 'success' : 'error'">
@@ -271,13 +286,16 @@ export default {
 			},
 
 			headers: [
-				{ title: 'Date', key: 'date' },
-				{ title: 'Project', key: 'project.name' },
-				{ title: 'Start Time', key: 'start_time' },
-				{ title: 'End Time', key: 'end_time' },
-				{ title: 'Hours', key: 'hours_worked' },
-				{ title: 'Billable', key: 'billable' },
-				{ title: 'Description', key: 'description' },
+				{ title: 'Date', key: 'date', sortable: true },
+				{ title: 'Project', key: 'project.name', sortable: true },
+				{ title: 'Freelancer', key: 'user', sortable: true },
+				{ title: 'Start Time', key: 'start_time', sortable: true },
+				{ title: 'End Time', key: 'end_time', sortable: true },
+				{ title: 'Hours', key: 'hours', sortable: true },
+				{ title: 'Rate', key: 'hourly_rate', sortable: true },
+				{ title: 'Amount', key: 'amount', sortable: true },
+				{ title: 'Billable', key: 'billable', sortable: true },
+				{ title: 'Description', key: 'description', sortable: true },
 				{ title: 'Actions', key: 'actions', sortable: false }
 			],
 
@@ -306,6 +324,10 @@ export default {
 	
 	methods: {
 		...mapActions(store, ['showSnackbar']),
+		
+		toggleFilters() {
+			this.showFilters = !this.showFilters;
+		},
 		
 		checkForCompletingTracking() {
 			const { completeTracking, workLogId } = this.$route.query;
@@ -481,10 +503,6 @@ export default {
 
 		formatDate(dateStr) {
 			return new Date(dateStr).toLocaleDateString();
-		},
-
-		toggleFilters() {
-			this.showFilters = !this.showFilters;
 		}
 	}
 };

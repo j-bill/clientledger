@@ -13,7 +13,8 @@ class WorkLogController extends Controller
      */
     public function index(Request $request)
     {
-        $query = WorkLog::with('project');
+        $query = WorkLog::with(['project', 'user'])
+            ->forUser($request->user());
 
         // Date range filter
         if ($request->has('start_date')) {
@@ -43,8 +44,25 @@ class WorkLogController extends Controller
         $perPage = $request->input('per_page', 15);
         $workLogs = $query->paginate($perPage);
 
+        // Transform the data to include calculated fields
+        $transformedData = $workLogs->items();
+        foreach ($transformedData as &$workLog) {
+            // Calculate hours if not set
+            if (!$workLog->hours_worked && $workLog->start_time && $workLog->end_time) {
+                $start = strtotime($workLog->start_time);
+                $end = strtotime($workLog->end_time);
+                $hours = ($end - $start) / 3600;
+                $workLog->hours_worked = $hours;
+            }
+            
+            // Calculate amount using user's hourly rate
+            if ($workLog->hours_worked && $workLog->user_hourly_rate) {
+                $workLog->amount = $workLog->hours_worked * $workLog->user_hourly_rate;
+            }
+        }
+
         return response()->json([
-            'data' => $workLogs->items(),
+            'data' => $transformedData,
             'total' => $workLogs->total()
         ]);
     }
@@ -58,10 +76,9 @@ class WorkLogController extends Controller
             'project_id' => 'required|exists:projects,id',
             'date' => 'required|date',
             'start_time' => 'required|date_format:H:i',
-            'end_time' => 'nullable|date_format:H:i', // Changed from required to nullable
+            'end_time' => 'nullable|date_format:H:i',
             'description' => 'nullable|string',
             'billable' => 'boolean',
-            'hourly_rate' => 'nullable|numeric',
         ]);
 
         // Calculate hours_worked if both start_time and end_time are provided
@@ -69,67 +86,83 @@ class WorkLogController extends Controller
             $hours_worked = (strtotime($validated['end_time']) - strtotime($validated['start_time'])) / 3600;
             $validated['hours_worked'] = $hours_worked;
         } else {
-            // Set hours_worked to null if end_time is not provided
             $validated['hours_worked'] = null;
         }
 
-        // If hourly_rate is not provided, get it from the project
-        if (!isset($validated['hourly_rate']) || $validated['hourly_rate'] === null) {
-            $project = Project::find($validated['project_id']);
-            if ($project && $project->hourly_rate) {
-                $validated['hourly_rate'] = $project->hourly_rate;
-            }
+        // Get the project and user
+        $project = Project::find($validated['project_id']);
+        $user = $request->user();
+
+        // Ensure user is assigned to the project
+        if (!$project->users->contains($user->id)) {
+            abort(403, 'You are not assigned to this project.');
         }
 
+        // Set the project's hourly rate (for invoice generation)
+        $validated['hourly_rate'] = $project->hourly_rate;
+
+        // Set the user's hourly rate for this project
+        $validated['user_hourly_rate'] = $user->getProjectHourlyRate($project);
+        $validated['user_id'] = $user->id;
+
         $workLog = WorkLog::create($validated);
-        return response()->json($workLog->load('project'), 201);
+        return response()->json($workLog->load(['project', 'user']), 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show($workLog)
+    public function show(Request $request, WorkLog $workLog)
     {
-        $workLog = WorkLog::where('id', $workLog)->with('project', 'project.customer')->first();
-        return response()->json($workLog);
+        // Check if user has access to this work log
+        if (!$request->user()->isAdmin() && $workLog->user_id !== $request->user()->id) {
+            abort(403, 'Unauthorized access to this work log.');
+        }
+
+        return response()->json($workLog->load('project', 'project.customer'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $workLog)
+    public function update(Request $request, WorkLog $workLog)
     {
+        // Check if user has access to this work log
+        if (!$request->user()->isAdmin() && $workLog->user_id !== $request->user()->id) {
+            abort(403, 'Unauthorized access to this work log.');
+        }
+
         $validated = $request->validate([
             'project_id' => 'sometimes|required|exists:projects,id',
             'date' => 'sometimes|required|date',
             'start_time' => 'sometimes|required|date_format:H:i',
-            'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time', // Modified validation rule
+            'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time',
             'description' => 'nullable|string',
             'billable' => 'boolean',
-            'hourly_rate' => 'nullable|numeric',
         ]);
-
-        $workLog = WorkLog::find($workLog);
 
         // Calculate hours_worked if end_time is provided
         if (isset($validated['end_time'])) {
-            // Use the updated start_time if provided, otherwise use the existing one
             $start_time = isset($validated['start_time']) ? $validated['start_time'] : $workLog->start_time;
             $hours_worked = (strtotime($validated['end_time']) - strtotime($start_time)) / 3600;
             $validated['hours_worked'] = $hours_worked;
         }
 
-        // If project_id is changed but hourly_rate is not provided, get it from the new project
-        if (isset($validated['project_id']) && $validated['project_id'] !== $workLog->project_id && !isset($validated['hourly_rate'])) {
+        // Update hourly rates if project changes
+        if (isset($validated['project_id']) && $validated['project_id'] !== $workLog->project_id) {
             $project = Project::find($validated['project_id']);
-            if ($project && $project->hourly_rate) {
-                $validated['hourly_rate'] = $project->hourly_rate;
+            
+            // Ensure user is assigned to the new project
+            if (!$project->users->contains($request->user()->id)) {
+                abort(403, 'You are not assigned to this project.');
             }
+
+            $validated['hourly_rate'] = $project->hourly_rate;
+            $validated['user_hourly_rate'] = $request->user()->getProjectHourlyRate($project);
         }
 
-
         $workLog->update($validated);
-        return response()->json($workLog->load('project'));
+        return response()->json($workLog->load(['project', 'user']));
     }
 
     /**
@@ -137,6 +170,11 @@ class WorkLogController extends Controller
      */
     public function completeTracking(Request $request, WorkLog $workLog)
     {
+        // Check if user has access to this work log
+        if (!$request->user()->isAdmin() && $workLog->user_id !== $request->user()->id) {
+            abort(403, 'Unauthorized access to this work log.');
+        }
+
         $validated = $request->validate([
             'end_time' => 'required|date_format:H:i|after_or_equal:start_time',
             'description' => 'nullable|string',
@@ -145,7 +183,6 @@ class WorkLogController extends Controller
         $hours_worked = (strtotime($validated['end_time']) - strtotime($workLog->start_time)) / 3600;
         $validated['hours_worked'] = $hours_worked;
 
-        // Update the description if provided
         if (isset($validated['description']) && !empty($validated['description'])) {
             $workLog->description = $validated['description'];
         }
@@ -160,8 +197,13 @@ class WorkLogController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(WorkLog $workLog)
+    public function destroy(Request $request, WorkLog $workLog)
     {
+        // Check if user has access to this work log
+        if (!$request->user()->isAdmin() && $workLog->user_id !== $request->user()->id) {
+            abort(403, 'Unauthorized access to this work log.');
+        }
+
         $workLog->delete();
         return response()->json(null, 204);
     }

@@ -24,7 +24,7 @@
 			<v-col cols="12"
 				   md="6">
 				<v-text-field v-model="formData.hourly_rate"
-							  label="Hourly Rate ($)"
+							  label="Project Hourly Rate ($)"
 							  type="number"
 							  prepend-icon="mdi-currency-usd"
 							  hint="Inherited from customer by default, but can be customized"
@@ -58,6 +58,25 @@
 							label="Description"
 							prepend-icon="mdi-text"></v-textarea>
 			</v-col>
+
+			<v-col cols="12">
+				<v-select v-model="formData.users"
+						  :items="freelancers"
+						  item-title="name"
+						  item-value="id"
+						  label="Assigned Freelancers"
+						  prepend-icon="mdi-account-group"
+						  multiple
+						  chips
+						  :rules="[v => v.length > 0 || 'At least one freelancer is required']"
+						  @update:model-value="updateUserRates">
+					<template v-slot:item="{ props, item }">
+						<v-list-item v-bind="props">
+							<v-list-item-subtitle>Rate: ${{ item.raw.hourly_rate }}/hr</v-list-item-subtitle>
+						</v-list-item>
+					</template>
+				</v-select>
+			</v-col>
 		</v-row>
 	</v-form>
 </template>
@@ -71,6 +90,10 @@ export default {
 			default: null
 		},
 		customers: {
+			type: Array,
+			required: true
+		},
+		freelancers: {
 			type: Array,
 			required: true
 		}
@@ -101,14 +124,18 @@ export default {
 				customer_id: null,
 				hourly_rate: null,
 				deadline: null,
-				description: ''
+				description: '',
+				users: []
 			}
 		};
 	},
 
 	created() {
 		if (this.project) {
-			this.formData = { ...this.project };
+			this.formData = { 
+				...this.project,
+				users: this.project.users?.map(user => user.id) || []
+			};
 
 			// convert deadline to Date object
 			if (this.formData.deadline) {
@@ -131,7 +158,19 @@ export default {
 				return;
 			}
 			
-			this.$emit('save', this.formData);
+			// Format the data before emitting
+			const formattedData = {
+				...this.formData,
+				users: this.formData.users.map(userId => {
+					const user = this.freelancers.find(f => f.id === userId);
+					return {
+						id: userId,
+						hourly_rate: user.hourly_rate
+					};
+				})
+			};
+
+			this.$emit('save', formattedData);
 		},
 
 		updateHourlyRate() {
@@ -143,8 +182,11 @@ export default {
 			}
 		},
 
-		updateDate(date) {
+		updateUserRates(selectedUserIds) {
+			// This method can be used to handle any user-specific rate updates if needed
+		},
 
+		updateDate(date) {
 			const year = date.getFullYear();
 			const month = date.getMonth() + 1;
 			const day = date.getDate();

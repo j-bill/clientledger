@@ -24,6 +24,9 @@ export const store = defineStore("store", {
     getUser(state) {
       return state.user;
     },
+    isAdmin(state) {
+      return state.user?.role === 'admin';
+    }
   },
   actions: {
     showSnackbar(message, color = 'success', timeout = 3000) {
@@ -40,7 +43,7 @@ export const store = defineStore("store", {
     async fetchCustomers() {
       try {
         const response = await axios.get("/api/customers");
-        this.customers = response.data.customers;
+        this.customers = response.data;
       } catch (error) {
         eventBus.emit("snackbar", {
           message: error.response.data.message,
@@ -51,7 +54,7 @@ export const store = defineStore("store", {
     async fetchProjects() {
       try {
         const response = await axios.get("/api/projects");
-        this.projects = response.data.projects;
+        this.projects = response.data;
       } catch (error) {
         eventBus.emit("snackbar", {
           message: error.response.data.message,
@@ -61,8 +64,13 @@ export const store = defineStore("store", {
     },
     async fetchUsers() {
       try {
-        const response = await axios.get("/api/users");
-        this.users = response.data.users;
+        if (this.isAdmin) {
+          const response = await axios.get("/api/users");
+          this.users = response.data;
+        } else {
+          // For freelancers, just store their own user object
+          this.users = [this.user];
+        }
       } catch (error) {
         eventBus.emit("snackbar", {
           message: error.response.data.message,
@@ -98,6 +106,8 @@ export const store = defineStore("store", {
         try {
           const response = await axios.get("/api/user");
           this.user = response.data;
+          // Initialize users array with the authenticated user
+          this.users = [this.user];
           resolve(this.user); // Resolve promise with authenticated user
         } catch (error) {
           reject(error.response.data.message); // Reject promise with error message
@@ -108,6 +118,7 @@ export const store = defineStore("store", {
       try {
         await axios.post("/api/logout");
         this.user = null;
+        this.users = [];
         router.push({ name: "Login" });
       } catch (error) {
         eventBus.emit("snackbar", {
@@ -115,6 +126,6 @@ export const store = defineStore("store", {
           color: "red",
         });
       }
-    },
+    }
   }
 });

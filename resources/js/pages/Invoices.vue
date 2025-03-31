@@ -29,10 +29,7 @@
         class="elevation-1"
         :search="search"
       >
-        <template v-slot:item.amount="{ item }">
-          ${{ item.amount.toFixed(2) }}
-        </template>
-        <template v-slot:item.date="{ item }">
+          <template v-slot:item.date="{ item }">
           {{ formatDate(item.date) }}
         </template>
         <template v-slot:item.status="{ item }">
@@ -90,7 +87,7 @@ export default {
         { title: 'Invoice #', key: 'number' },
         { title: 'Customer', key: 'customer.name' },
         { title: 'Date', key: 'date' },
-        { title: 'Amount', key: 'amount' },
+        { title: 'total_amount', key: 'total_amount' },
         { title: 'Status', key: 'status' },
         { title: 'Actions', key: 'actions', sortable: false }
       ]

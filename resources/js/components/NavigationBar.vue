@@ -4,7 +4,7 @@
 		<v-app-bar app
 				   color="primary"
 				   dark>
-			<v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
+			<v-app-bar-nav-icon v-if="isAdmin" @click="drawer = !drawer"></v-app-bar-nav-icon>
 			<v-toolbar-title>
 				<h4>Clientledger</h4>
 			</v-toolbar-title>
@@ -16,9 +16,9 @@
 					   text>Home</v-btn>
 				<v-btn to="/projects"
 					   text>Projects</v-btn>
-				<v-btn to="/customers"
+				<v-btn v-if="isAdmin" to="/customers"
 					   text>Customers</v-btn>
-				<v-btn to="/invoices"
+				<v-btn v-if="isAdmin" to="/invoices"
 					   text>Invoices</v-btn>
 				<v-btn to="/work-logs"
 					   text>Work Logs</v-btn>
@@ -79,11 +79,10 @@
 		</v-app-bar>
 
 		<!-- Navigation Drawer -->
-		<v-navigation-drawer v-model="drawer"
+		<v-navigation-drawer v-if="isAdmin" v-model="drawer"
 							 temporary
 							 app>
 			<v-list class="py-0">
-				<!-- <v-list-item title="Freelancer App" prepend-icon="mdi-view-dashboard" to="/"></v-list-item> -->
 				<v-divider></v-divider>
 				<v-list-item prepend-icon="mdi-home"
 							 title="Home"
@@ -104,7 +103,6 @@
 							 title="Work Logs"
 							 to="/work-logs"></v-list-item>
 				<v-divider></v-divider>
-				<!-- <v-list-item prepend-icon="mdi-cog" title="Settings" to="/settings"></v-list-item> -->
 			</v-list>
 		</v-navigation-drawer>
 
@@ -147,7 +145,7 @@
 </template>
 
 <script>
-import { mapActions } from 'pinia'
+import { mapActions, mapGetters } from 'pinia'
 import { store } from '../store'
 import axios from 'axios'
 
@@ -174,6 +172,7 @@ export default {
 		}
 	},
 	computed: {
+		...mapGetters(store, ['isAdmin']),
 		formattedEarnings() {
 			return this.earnings > 0 ? `$${this.earnings.toFixed(2)}` : '';
 		}
