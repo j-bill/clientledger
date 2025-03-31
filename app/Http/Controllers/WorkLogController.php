@@ -97,7 +97,7 @@ class WorkLogController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, WorkLog $workLog)
+    public function update(Request $request, $workLog)
     {
         $validated = $request->validate([
             'project_id' => 'sometimes|required|exists:projects,id',
@@ -108,6 +108,8 @@ class WorkLogController extends Controller
             'billable' => 'boolean',
             'hourly_rate' => 'nullable|numeric',
         ]);
+
+        $workLog = WorkLog::find($workLog);
 
         // Calculate hours_worked if end_time is provided
         if (isset($validated['end_time'])) {
@@ -124,6 +126,7 @@ class WorkLogController extends Controller
                 $validated['hourly_rate'] = $project->hourly_rate;
             }
         }
+
 
         $workLog->update($validated);
         return response()->json($workLog->load('project'));
