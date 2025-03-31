@@ -38,4 +38,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Reports
     Route::get('/reports/time/by-project', [ReportController::class, 'timeByProject']);
     Route::get('/reports/financial/by-customer', [ReportController::class, 'financialByCustomer']);
+    
+    // Special route for completing active time tracking
+    Route::post('worklogs/{workLog}/complete', [WorkLogController::class, 'completeTracking'])
+        ->name('worklogs.complete');
 });

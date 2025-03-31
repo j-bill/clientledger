@@ -58,14 +58,20 @@ class WorkLogController extends Controller
             'project_id' => 'required|exists:projects,id',
             'date' => 'required|date',
             'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
+            'end_time' => 'nullable|date_format:H:i', // Changed from required to nullable
             'description' => 'nullable|string',
             'billable' => 'boolean',
             'hourly_rate' => 'nullable|numeric',
         ]);
 
-        $hours_worked = (strtotime($validated['end_time']) - strtotime($validated['start_time'])) / 3600;
-        $validated['hours_worked'] = $hours_worked;
+        // Calculate hours_worked if both start_time and end_time are provided
+        if (isset($validated['start_time']) && isset($validated['end_time'])) {
+            $hours_worked = (strtotime($validated['end_time']) - strtotime($validated['start_time'])) / 3600;
+            $validated['hours_worked'] = $hours_worked;
+        } else {
+            // Set hours_worked to null if end_time is not provided
+            $validated['hours_worked'] = null;
+        }
 
         // If hourly_rate is not provided, get it from the project
         if (!isset($validated['hourly_rate']) || $validated['hourly_rate'] === null) {
@@ -96,14 +102,17 @@ class WorkLogController extends Controller
             'project_id' => 'sometimes|required|exists:projects,id',
             'date' => 'sometimes|required|date',
             'start_time' => 'sometimes|required|date_format:H:i',
-            'end_time' => 'sometimes|required|date_format:H:i|after:start_time',
+            'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time', // Modified validation rule
             'description' => 'nullable|string',
             'billable' => 'boolean',
             'hourly_rate' => 'nullable|numeric',
         ]);
 
-        if (isset($validated['start_time']) && isset($validated['end_time'])) {
-            $hours_worked = (strtotime($validated['end_time']) - strtotime($validated['start_time'])) / 3600;
+        // Calculate hours_worked if end_time is provided
+        if (isset($validated['end_time'])) {
+            // Use the updated start_time if provided, otherwise use the existing one
+            $start_time = isset($validated['start_time']) ? $validated['start_time'] : $workLog->start_time;
+            $hours_worked = (strtotime($validated['end_time']) - strtotime($start_time)) / 3600;
             $validated['hours_worked'] = $hours_worked;
         }
 
@@ -116,6 +125,31 @@ class WorkLogController extends Controller
         }
 
         $workLog->update($validated);
+        return response()->json($workLog->load('project'));
+    }
+
+    /**
+     * Complete a work log by setting the end time
+     */
+    public function completeTracking(Request $request, WorkLog $workLog)
+    {
+        $validated = $request->validate([
+            'end_time' => 'required|date_format:H:i|after_or_equal:start_time',
+            'description' => 'nullable|string',
+        ]);
+
+        $hours_worked = (strtotime($validated['end_time']) - strtotime($workLog->start_time)) / 3600;
+        $validated['hours_worked'] = $hours_worked;
+
+        // Update the description if provided
+        if (isset($validated['description']) && !empty($validated['description'])) {
+            $workLog->description = $validated['description'];
+        }
+
+        $workLog->end_time = $validated['end_time'];
+        $workLog->hours_worked = $validated['hours_worked'];
+        $workLog->save();
+
         return response()->json($workLog->load('project'));
     }
 

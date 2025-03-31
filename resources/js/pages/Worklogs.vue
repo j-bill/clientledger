@@ -208,7 +208,7 @@
 		<v-dialog v-model="editDialog"
 				  max-width="1000px">
 			<v-card>
-				<v-card-title>Edit Work Log</v-card-title>
+				<v-card-title>{{ currentWorkLog?.id && !currentWorkLog?.end_time ? 'Complete Time Tracking' : 'Edit Work Log' }}</v-card-title>
 				<v-card-text>
 					<work-log-form ref="editForm"
 								   :work-log="currentWorkLog"
@@ -221,17 +221,20 @@
 						   variant="text"
 						   @click="editDialog = false">Cancel</v-btn>
 					<v-btn color="primary"
-						   @click="$refs.editForm.submit()">Update</v-btn>
+						   @click="$refs.editForm.submit()">
+						{{ currentWorkLog?.id && !currentWorkLog?.end_time ? 'Complete Tracking' : 'Update' }}
+					</v-btn>
 				</v-card-actions>
 			</v-card>
 		</v-dialog>
+
 	</v-container>
 </template>
 
 <script>
 import axios from 'axios';
 import WorkLogForm from '../components/forms/WorkLogForm.vue';
-import eventBus from '../eventBus'; // Add this import
+import eventBus from '../eventBus';
 import { mapActions } from 'pinia';
 import { store } from '../store';
 
@@ -253,10 +256,10 @@ export default {
 			editDialog: false,
 			itemToDelete: null,
 			currentWorkLog: null,
-			showFilters: false, // Add this data property
-			totalItems: 0, // Add this data property
-			search: '', // Add this data property
-
+			showFilters: false,
+			totalItems: 0,
+			search: '',
+			
 			filters: {
 				start_date: null,
 				end_date: null,
@@ -291,17 +294,79 @@ export default {
 			sortDirections: [
 				{ title: 'Ascending', value: 'asc' },
 				{ title: 'Descending', value: 'desc' }
-			]
+				],
 		};
 	},
 
 	created() {
 		this.fetchWorkLogs();
 		this.fetchProjects();
+		this.checkForCompletingTracking();
 	},
-
+	
 	methods: {
 		...mapActions(store, ['showSnackbar']),
+		
+		checkForCompletingTracking() {
+			const { completeTracking, workLogId } = this.$route.query;
+
+			if (completeTracking && workLogId) {
+				// Set loading state to true
+				this.loading = true;
+                
+                // First, fetch the work logs to ensure they're loaded
+                this.fetchWorkLogs().then(() => {
+                    // Then fetch the specific work log to edit
+                    this.fetchWorkLogForEditing(workLogId);
+                });
+				
+				// Clean up query params
+				this.$router.replace({
+					query: Object.assign({}, this.$route.query, {
+						completeTracking: undefined,
+						workLogId: undefined
+					})
+				});
+			}
+		},
+		
+		async fetchWorkLogForEditing(workLogId) {
+			try {
+				const response = await axios.get(`/api/worklogs/${workLogId}`);
+				const workLog = response.data;
+				
+				// Set current time as the default end time
+				const now = new Date();
+				workLog.end_time = now.toTimeString().slice(0, 5); // Format: HH:MM
+				
+				// Calculate hours worked
+				if (workLog.start_time && workLog.end_time) {
+					const startParts = workLog.start_time.split(':').map(Number);
+					const endParts = workLog.end_time.split(':').map(Number);
+					const startMinutes = startParts[0] * 60 + startParts[1];
+					const endMinutes = endParts[0] * 60 + endParts[1];
+					
+					// Handle case where end time is on the next day
+					let minutesWorked = endMinutes >= startMinutes ? 
+						endMinutes - startMinutes : 
+						endMinutes + (24 * 60) - startMinutes;
+					
+					// Convert to hours with 2 decimal places
+					workLog.hours_worked = (minutesWorked / 60).toFixed(2);
+				}
+				
+				// Open the edit dialog with the work log data
+				this.currentWorkLog = workLog;
+				this.editDialog = true;
+				
+			} catch (error) {
+				console.error('Error fetching work log for editing:', error);
+				this.showSnackbar('Could not load time tracking session for editing', 'error');
+			} finally {
+				this.loading = false;
+			}
+		},
+		
 		async fetchWorkLogs(options = {}) {
 			this.loading = true;
 
@@ -316,8 +381,10 @@ export default {
 				this.workLogs = response.data.data;
 				this.totalItems = response.data.total;
 				this.totalPages = Math.ceil(response.data.total / this.filters.per_page);
+                return response; // Return the response for promise chaining
 			} catch (error) {
 				console.error('Error fetching work logs:', error);
+                throw error; // Re-throw for promise chaining
 			} finally {
 				this.loading = false;
 			}
@@ -415,3 +482,21 @@ export default {
 	}
 };
 </script>
+
+<style scoped>
+.pulse-animation {
+	animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+	0% {
+		box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
+	}
+	70% {
+		box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+	}
+}
+</style>
