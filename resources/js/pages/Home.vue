@@ -13,14 +13,14 @@
                     >mdi-information</v-icon
                   >
                 </template>
-                <span>Last year's revenue and hours</span>
+                <span>Last year's {{ isAdmin ? 'revenue' : 'earnings' }} and hours</span>
               </v-tooltip>
             </div>
             <div class="mt-2">
               <div class="d-flex justify-space-between">
-                <span>Revenue:</span>
+                <span>{{ isAdmin ? 'Revenue:' : 'Earnings:' }}</span>
                 <span class="font-weight-bold">{{
-                  formatCurrency(kpis.revenue.last_year)
+                  formatCurrency(isAdmin ? kpis.revenue.last_year : kpis.earnings.last_year)
                 }}</span>
               </div>
               <div class="d-flex justify-space-between">
@@ -52,14 +52,14 @@
                     >mdi-information</v-icon
                   >
                 </template>
-                <span>Current year's revenue and hours</span>
+                <span>Current year's {{ isAdmin ? 'revenue' : 'earnings' }} and hours</span>
               </v-tooltip>
             </div>
             <div class="mt-2">
               <div class="d-flex justify-space-between">
-                <span>Revenue:</span>
+                <span>{{ isAdmin ? 'Revenue:' : 'Earnings:' }}</span>
                 <span class="font-weight-bold">{{
-                  formatCurrency(kpis.revenue.yearly)
+                  formatCurrency(isAdmin ? kpis.revenue.yearly : kpis.earnings.yearly)
                 }}</span>
               </div>
               <div class="d-flex justify-space-between">
@@ -91,14 +91,14 @@
                     >mdi-information</v-icon
                   >
                 </template>
-                <span>Last month's actual revenue and hours</span>
+                <span>Last month's actual {{ isAdmin ? 'revenue' : 'earnings' }} and hours</span>
               </v-tooltip>
             </div>
             <div class="mt-2">
               <div class="d-flex justify-space-between">
-                <span>Revenue:</span>
+                <span>{{ isAdmin ? 'Revenue:' : 'Earnings:' }}</span>
                 <span class="font-weight-bold">{{
-                  formatCurrency(kpis.revenue.last_month)
+                  formatCurrency(isAdmin ? kpis.revenue.last_month : kpis.earnings.last_month)
                 }}</span>
               </div>
               <div class="d-flex justify-space-between">
@@ -130,15 +130,15 @@
                     >mdi-information</v-icon
                   >
                 </template>
-                <span>Current month's extrapolated revenue and hours</span>
+                <span>Current month's extrapolated {{ isAdmin ? 'revenue' : 'earnings' }} and hours</span>
               </v-tooltip>
             </div>
             <div class="mt-2">
               <div class="d-flex justify-space-between">
-                <span>Revenue:</span>
+                <span>{{ isAdmin ? 'Revenue:' : 'Earnings:' }}</span>
                 <span class="font-weight-bold">
-                  {{ formatCurrency(kpis.revenue.monthly) }}
-                  <v-tooltip v-if="kpis.revenue.is_extrapolated" location="top">
+                  {{ formatCurrency(isAdmin ? kpis.revenue.monthly : kpis.earnings.monthly) }}
+                  <v-tooltip v-if="(isAdmin ? kpis.revenue.is_extrapolated : kpis.earnings.is_extrapolated)" location="top">
                     <template v-slot:activator="{ props }">
                       <v-icon v-bind="props" size="small" color="warning"
                         >mdi-alert</v-icon
@@ -167,30 +167,28 @@
     </v-row>
 
     <v-row class="mt-4">
-      <!-- Revenue Trend Chart -->
+      <!-- Revenue/Earnings Trend Chart -->
       <v-col cols="12" md="8">
         <v-card class="chart-card">
-          <v-card-title
-            >Revenue Trend ({{ new Date().getFullYear() }})</v-card-title
-          >
+          <v-card-title>{{ isAdmin ? 'Revenue' : 'Earnings' }} Trend ({{ new Date().getFullYear() }})</v-card-title>
           <v-card-text>
             <GChart
               type="LineChart"
-              :data="revenueChartData"
+              :data="isAdmin ? revenueChartData : earningsChartData"
               :options="revenueChartOptions"
             />
           </v-card-text>
         </v-card>
       </v-col>
 
-      <!-- Revenue by Customer Chart -->
+      <!-- Revenue by Customer or Earnings by Project Chart -->
       <v-col cols="12" md="4">
         <v-card class="chart-card">
-          <v-card-title>Revenue by Customer</v-card-title>
+          <v-card-title>{{ isAdmin ? 'Revenue by Customer' : 'Earnings by Project' }}</v-card-title>
           <v-card-text>
             <GChart
               type="PieChart"
-              :data="customerChartData"
+              :data="isAdmin ? customerChartData : projectEarningsChartData"
               :options="customerChartOptions"
             />
           </v-card-text>
@@ -245,6 +243,8 @@
 <script>
 import { GChart } from "vue-google-charts";
 import axios from "axios";
+import { mapState } from 'pinia';
+import { store } from '../store';
 
 export default {
   name: "Home",
@@ -271,13 +271,22 @@ export default {
           active: 0,
           overdue: 0,
         },
+        earnings: {
+          yearly: 0,
+          last_year: 0,
+          monthly: 0,
+          last_month: 0,
+          is_extrapolated: false,
+        }
       },
       revenueByCustomer: {},
       yearlyRevenueTrend: [],
+      earningsByProject: {},
+      yearlyEarningsTrend: [],
       monthlyHours: [],
       upcomingDeadlines: [],
       revenueChartOptions: {
-        curveType: "function",
+        curveType: "line",
         legend: { position: "top", textStyle: { color: "#fff" } },
         height: 300,
         backgroundColor: "transparent",
@@ -377,6 +386,10 @@ export default {
     };
   },
   computed: {
+    ...mapState(store, ['user']),
+    isAdmin() {
+      return this.user?.role === 'admin';
+    },
     revenueChartData() {
       const headers = ["Date", "Revenue"];
       const data = this.yearlyRevenueTrend.map((item) => [
@@ -385,10 +398,25 @@ export default {
       ]);
       return [headers, ...data];
     },
+    earningsChartData() {
+      const headers = ["Date", "Earnings"];
+      const data = this.yearlyEarningsTrend?.map((item) => [
+        new Date(item.date),
+        parseFloat(item.amount),
+      ]) || [];
+      return [headers, ...data];
+    },
     customerChartData() {
       const headers = ["Customer", "Revenue"];
-      const data = Object.entries(this.revenueByCustomer).map(
+      const data = Object.entries(this.revenueByCustomer || {}).map(
         ([customer, amount]) => [customer, parseFloat(amount)]
+      );
+      return [headers, ...data];
+    },
+    projectEarningsChartData() {
+      const headers = ["Project", "Earnings"];
+      const data = Object.entries(this.earningsByProject || {}).map(
+        ([project, amount]) => [project, parseFloat(amount)]
       );
       return [headers, ...data];
     },
@@ -419,12 +447,22 @@ export default {
       try {
         const response = await axios.get("/api/dashboard");
         this.kpis = response.data.kpis;
-        this.revenueByCustomer = response.data.revenue_by_customer;
-        this.yearlyRevenueTrend = response.data.yearly_revenue_trend;
+        
+        // Store data for both admin and freelancer roles
+        if (this.isAdmin) {
+          this.revenueByCustomer = response.data.revenue_by_customer || {};
+          this.yearlyRevenueTrend = response.data.yearly_revenue_trend || [];
+        } else {
+          this.earningsByProject = response.data.earnings_by_project || {};
+          this.yearlyEarningsTrend = response.data.yearly_earnings_trend || [];
+        }
+        
+        // Common data for both roles
         this.monthlyHours = response.data.monthly_hours.map((item) => ({
           ...item,
           billable: parseFloat(item.billable || 0),
         }));
+        
         this.upcomingDeadlines = response.data.upcoming_deadlines.map(
           (deadline) => ({
             ...deadline,
