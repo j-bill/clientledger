@@ -227,8 +227,49 @@ export default {
 			}
 		},
 		
-		startTimeTracking() {
-			this.projectDialog = true;
+		async startTimeTracking() {
+			this.isLoading = true;
+			try {
+				// First check with the server if there's an active worklog
+				const response = await axios.get('/api/active-worklog');
+				if (response.data && response.data.id) {
+					// User already has an active worklog
+					this.showSnackbar('You already have an active work log. Please complete it before starting a new one.', 'warning');
+					
+					// Update local state with the active worklog
+					this.activeWorkLog = response.data;
+					
+					// Calculate how long it's been running
+					const startTimeParts = this.activeWorkLog.start_time.split(':');
+					const startDate = new Date();
+					startDate.setHours(parseInt(startTimeParts[0]), parseInt(startTimeParts[1]), 0, 0);
+					
+					// If the start time is in the future (of today), assume it started yesterday
+					const now = new Date();
+					if (startDate > now) {
+						startDate.setDate(startDate.getDate() - 1);
+					}
+					
+					this.trackingStartTime = startDate;
+					this.hourlyRate = parseFloat(this.activeWorkLog.hourly_rate || '0');
+					
+					// Update localStorage
+					localStorage.setItem('activeWorkLog', JSON.stringify(this.activeWorkLog));
+					localStorage.setItem('trackingStartTime', this.trackingStartTime.toString());
+					localStorage.setItem('hourlyRate', this.hourlyRate.toString());
+					
+					this.startElapsedTimer();
+					return;
+				}
+				
+				// No active work log, show dialog to start a new one
+				this.projectDialog = true;
+			} catch (error) {
+				console.error('Error checking for active work logs:', error);
+				this.showSnackbar('Failed to check for active work logs', 'error');
+			} finally {
+				this.isLoading = false;
+			}
 		},
 		
 		cancelTimeTracking() {
@@ -308,6 +349,7 @@ export default {
 		
 		checkForActiveWorkLog() {
 			try {
+				// First try to restore from localStorage
 				const savedWorkLog = localStorage.getItem('activeWorkLog');
 				const savedStartTime = localStorage.getItem('trackingStartTime');
 				const savedHourlyRate = localStorage.getItem('hourlyRate');
@@ -318,6 +360,9 @@ export default {
 					this.hourlyRate = parseFloat(savedHourlyRate || '0');
 					this.startElapsedTimer();
 				}
+				
+				// Then check with the server for the most accurate data
+				this.fetchActiveWorklogFromServer();
 			} catch (error) {
 				console.error('Error checking for active work log:', error);
 				this.showSnackbar('Error loading active work log data', 'error');
@@ -325,6 +370,57 @@ export default {
 				localStorage.removeItem('activeWorkLog');
 				localStorage.removeItem('trackingStartTime');
 				localStorage.removeItem('hourlyRate');
+			}
+		},
+		
+		async fetchActiveWorklogFromServer() {
+			try {
+				const response = await axios.get('/api/active-worklog');
+				if (response.data && response.data.id) {
+					// There is an active worklog in the database
+					this.activeWorkLog = response.data;
+					
+					// Calculate how long it's been running
+					const startTimeParts = this.activeWorkLog.start_time.split(':');
+					const startDate = new Date();
+					startDate.setHours(parseInt(startTimeParts[0]), parseInt(startTimeParts[1]), 0, 0);
+					
+					// If the start time is in the future (of today), assume it started yesterday
+					const now = new Date();
+					if (startDate > now) {
+						startDate.setDate(startDate.getDate() - 1);
+					}
+					
+					this.trackingStartTime = startDate;
+					
+					// Get hourly rate from the worklog
+					this.hourlyRate = parseFloat(this.activeWorkLog.hourly_rate || '0');
+					
+					// Update localStorage to match server data
+					localStorage.setItem('activeWorkLog', JSON.stringify(this.activeWorkLog));
+					localStorage.setItem('trackingStartTime', this.trackingStartTime.toString());
+					localStorage.setItem('hourlyRate', this.hourlyRate.toString());
+					
+					// Start the timer if not already running
+					if (!this.timerInterval) {
+						this.startElapsedTimer();
+					}
+				} else if (this.activeWorkLog) {
+					// No active worklog on server but we have one in localStorage - clear it
+					if (this.timerInterval) {
+						clearInterval(this.timerInterval);
+						this.timerInterval = null;
+					}
+					this.activeWorkLog = null;
+					this.trackingStartTime = null;
+					this.hourlyRate = 0;
+					this.earnings = 0;
+					localStorage.removeItem('activeWorkLog');
+					localStorage.removeItem('trackingStartTime');
+					localStorage.removeItem('hourlyRate');
+				}
+			} catch (error) {
+				console.error('Error fetching active worklog from server:', error);
 			}
 		},
 		

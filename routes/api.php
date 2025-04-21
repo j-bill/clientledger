@@ -55,6 +55,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/worklogs/{workLog}', [WorkLogController::class, 'update']);
     Route::delete('/worklogs/{workLog}', [WorkLogController::class, 'destroy']);
     Route::post('/worklogs/{workLog}/complete', [WorkLogController::class, 'completeTracking']);
+    Route::get('/active-worklog', [WorkLogController::class, 'getActiveWorkLog']);
     
     // Invoice routes (admin only)
     Route::middleware(CheckRole::class . ':admin')->group(function () {

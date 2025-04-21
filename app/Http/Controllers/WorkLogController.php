@@ -81,6 +81,24 @@ class WorkLogController extends Controller
             'billable' => 'boolean',
         ]);
 
+        // Get the user
+        $user = $request->user();
+
+        // If end_time is not provided, check for existing active work logs
+        if (!isset($validated['end_time']) || $validated['end_time'] === null) {
+            $activeWorkLog = WorkLog::where('user_id', $user->id)
+                ->whereNotNull('start_time')
+                ->whereNull('end_time')
+                ->first();
+                
+            if ($activeWorkLog) {
+                return response()->json([
+                    'message' => 'You already have an active work log. Please complete it before starting a new one.',
+                    'active_work_log' => $activeWorkLog->load('project')
+                ], 422);
+            }
+        }
+
         // Calculate hours_worked if both start_time and end_time are provided
         if (isset($validated['start_time']) && isset($validated['end_time'])) {
             $hours_worked = (strtotime($validated['end_time']) - strtotime($validated['start_time'])) / 3600;
@@ -91,7 +109,6 @@ class WorkLogController extends Controller
 
         // Get the project and user
         $project = Project::find($validated['project_id']);
-        $user = $request->user();
 
         // Ensure user is assigned to the project
         if (!$project->users->contains($user->id)) {
@@ -206,5 +223,25 @@ class WorkLogController extends Controller
 
         $workLog->delete();
         return response()->json(null, 204);
+    }
+
+    /**
+     * Get the user's active work log (one with start_time but no end_time)
+     */
+    public function getActiveWorkLog(Request $request)
+    {
+        $user = $request->user();
+        
+        $activeWorkLog = WorkLog::where('user_id', $user->id)
+            ->whereNotNull('start_time')
+            ->whereNull('end_time')
+            ->with('project')
+            ->first();
+            
+        if ($activeWorkLog) {
+            return response()->json($activeWorkLog);
+        }
+        
+        return response()->json(null);
     }
 }
