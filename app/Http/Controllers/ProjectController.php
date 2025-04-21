@@ -13,21 +13,37 @@ class ProjectController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Project::with(['customer', 'users']);
+        $user = $request->user();
+        
+        // Prepare the query with appropriate relations
+        if ($user && $user->isFreelancer()) {
+            // For freelancers, only include projects they're assigned to and limit hourly rate data
+            $query = Project::with(['customer', 'users' => function($query) use ($user) {
+                $query->select('users.id', 'users.name', 'users.email', 'users.role');
+            }]);
+            
+            $query->whereHas('users', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            });
+        } else {
+            // For admins, include all data
+            $query = Project::with(['customer', 'users']);
+        }
 
         // Filter by customers
         if ($request->has('customers') && is_array($request->customers) && !empty($request->customers)) {
             $query->whereIn('customer_id', $request->customers);
         }
 
-        // Filter by freelancers
-        if ($request->has('freelancers') && is_array($request->freelancers) && !empty($request->freelancers)) {
-            $query->whereHas('users', function ($q) use ($request) {
-                $q->whereIn('users.id', $request->freelancers);
+        // Hide the pivot data for users
+        $projects = $query->get()->each(function ($project) {
+            $project->users->each(function ($user) {
+                // Hide the pivot data for each user
+                $user->makeHidden(['pivot']);
             });
-        }
+        });
 
-        return response()->json($query->get());
+        return response()->json($projects);
     }
 
     /**
@@ -66,20 +82,6 @@ class ProjectController extends Controller
         }
 
         return response()->json($project->load('customer', 'users'), 201);
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Request $request, Project $project)
-    {
-        $user = $request->user();
-        
-        if (!$user->isAdmin() && !$project->users->contains($user->id)) {
-            abort(403, 'Unauthorized access to this project.');
-        }
-
-        return response()->json($project->load('customer', 'users'));
     }
 
     /**
