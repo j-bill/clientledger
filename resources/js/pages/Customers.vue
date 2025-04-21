@@ -183,6 +183,8 @@ export default {
         this.customers = response.data;
       } catch (error) {
         console.error('Error fetching customers:', error);
+        const message = error.response?.data?.message || 'Failed to fetch customers. Please try again.';
+        this.showSnackbar(message, 'error');
       } finally {
         this.loading = false;
       }
@@ -198,8 +200,11 @@ export default {
         await axios.delete(`/api/customers/${this.itemToDelete.id}`);
         this.customers = this.customers.filter(c => c.id !== this.itemToDelete.id);
         this.deleteDialog = false;
+        this.showSnackbar('Customer deleted successfully', 'success');
       } catch (error) {
         console.error('Error deleting customer:', error);
+        const message = error.response?.data?.message || 'Failed to delete customer. Please try again.';
+        this.showSnackbar(message, 'error');
       }
     },
     

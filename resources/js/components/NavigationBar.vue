@@ -6,7 +6,9 @@
 				   dark>
 			<v-app-bar-nav-icon v-if="isAdmin" @click="drawer = !drawer"></v-app-bar-nav-icon>
 			<v-toolbar-title>
-				<h4>Clientledger</h4>
+				<router-link to="/" class="text-decoration-none text-white">
+					<h4>Clientledger</h4>
+				</router-link>
 			</v-toolbar-title>
 			<v-spacer />
 
@@ -196,6 +198,7 @@ export default {
 				this.customers = response.data;
 			} catch (error) {
 				console.error('Error fetching customers:', error);
+				this.showSnackbar('Failed to load customers', 'error');
 			}
 		},
 		
@@ -206,6 +209,7 @@ export default {
 				this.filteredProjects = [...this.projects];
 			} catch (error) {
 				console.error('Error fetching projects:', error);
+				this.showSnackbar('Failed to load projects', 'error');
 			}
 		},
 		
@@ -303,15 +307,24 @@ export default {
 		},
 		
 		checkForActiveWorkLog() {
-			const savedWorkLog = localStorage.getItem('activeWorkLog');
-			const savedStartTime = localStorage.getItem('trackingStartTime');
-			const savedHourlyRate = localStorage.getItem('hourlyRate');
-			
-			if (savedWorkLog && savedStartTime) {
-				this.activeWorkLog = JSON.parse(savedWorkLog);
-				this.trackingStartTime = new Date(savedStartTime);
-				this.hourlyRate = parseFloat(savedHourlyRate || '0');
-				this.startElapsedTimer();
+			try {
+				const savedWorkLog = localStorage.getItem('activeWorkLog');
+				const savedStartTime = localStorage.getItem('trackingStartTime');
+				const savedHourlyRate = localStorage.getItem('hourlyRate');
+				
+				if (savedWorkLog && savedStartTime) {
+					this.activeWorkLog = JSON.parse(savedWorkLog);
+					this.trackingStartTime = new Date(savedStartTime);
+					this.hourlyRate = parseFloat(savedHourlyRate || '0');
+					this.startElapsedTimer();
+				}
+			} catch (error) {
+				console.error('Error checking for active work log:', error);
+				this.showSnackbar('Error loading active work log data', 'error');
+				// Clear potentially corrupted data
+				localStorage.removeItem('activeWorkLog');
+				localStorage.removeItem('trackingStartTime');
+				localStorage.removeItem('hourlyRate');
 			}
 		},
 		

@@ -146,6 +146,8 @@ export default {
         this.users = response.data;
       } catch (error) {
         console.error('Error fetching users:', error);
+        const message = error.response?.data?.message || 'Failed to fetch users. Please try again.';
+        this.showSnackbar(message, 'error');
       } finally {
         this.loading = false;
       }

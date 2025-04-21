@@ -243,7 +243,7 @@
 <script>
 import { GChart } from "vue-google-charts";
 import axios from "axios";
-import { mapState } from 'pinia';
+import { mapState, mapActions } from 'pinia';
 import { store } from '../store';
 
 export default {
@@ -432,6 +432,7 @@ export default {
     },
   },
   methods: {
+    ...mapActions(store, ['showSnackbar', 'showLoading', 'hideLoading']),
     formatCurrency(value) {
       return new Intl.NumberFormat("de-DE", {
         style: "currency",
@@ -444,6 +445,9 @@ export default {
       return `${parseFloat(value).toFixed(1)}h`;
     },
     async fetchDashboardData() {
+      // Show the loading overlay
+      this.showLoading();
+      
       try {
         const response = await axios.get("/api/dashboard");
         this.kpis = response.data.kpis;
@@ -471,6 +475,10 @@ export default {
         );
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
+        this.showSnackbar("Failed to load dashboard data. Please try again later.", "error");
+      } finally {
+        // Hide the loading overlay when done
+        this.hideLoading();
       }
     },
   },

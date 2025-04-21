@@ -179,7 +179,10 @@
               <strong>Assigned Freelancers:</strong>
               <v-chip-group class="mt-2">
                 <v-chip v-for="user in currentProject?.users" :key="user.id" color="primary" variant="outlined">
-                  {{ user.name }} ( ${{ Number(user.hourly_rate || 0).toFixed(2) }}/hr )
+                  {{ user.name }} 
+                  <template v-if="isAdmin">
+                    (${{ Number(user.pivot?.hourly_rate || 0).toFixed(2) }}/hr)
+                  </template>
                 </v-chip>
               </v-chip-group>
             </v-col>
@@ -219,6 +222,7 @@ export default {
       itemToDelete: null,
       currentProject: null,
       isAdmin: false,
+      currentUserId: null,
       showFilters: false,
       filters: {
         customers: [],
@@ -261,6 +265,8 @@ export default {
         this.projects = response.data;
       } catch (error) {
         console.error('Error fetching projects:', error);
+        const message = error.response?.data?.message || 'Failed to fetch projects. Please try again.';
+        this.showSnackbar(message, 'error');
       } finally {
         this.loading = false;
       }
@@ -272,6 +278,8 @@ export default {
         this.customers = response.data;
       } catch (error) {
         console.error('Error fetching customers:', error);
+        const message = error.response?.data?.message || 'Failed to fetch customers. Please try again.';
+        this.showSnackbar(message, 'error');
       }
     },
 
@@ -281,6 +289,8 @@ export default {
         this.freelancers = response.data.filter(user => user.role === 'freelancer');
       } catch (error) {
         console.error('Error fetching freelancers:', error);
+        const message = error.response?.data?.message || 'Failed to fetch freelancers. Please try again.';
+        this.showSnackbar(message, 'error');
       }
     },
     
@@ -343,8 +353,11 @@ export default {
         await axios.delete(`/api/projects/${this.itemToDelete.id}`);
         this.projects = this.projects.filter(p => p.id !== this.itemToDelete.id);
         this.deleteDialog = false;
+        this.showSnackbar('Project deleted successfully', 'success');
       } catch (error) {
         console.error('Error deleting project:', error);
+        const message = error.response?.data?.message || 'Failed to delete project. Please try again.';
+        this.showSnackbar(message, 'error');
       }
     },
     
@@ -362,8 +375,10 @@ export default {
       try {
         const response = await axios.get('/api/user');
         this.isAdmin = response.data.role === 'admin';
+        this.currentUserId = response.data.id;
       } catch (error) {
         console.error('Error checking user role:', error);
+        this.showSnackbar('Error loading user information', 'error');
       }
     },
     

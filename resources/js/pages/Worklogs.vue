@@ -132,8 +132,6 @@
 								 :headers="headers"
 								 :items="workLogs"
 								 :items-length="totalItems"
-								 :loading="loading"
-								 :search="search"
 								 item-value="name"
 								 @update:options="fetchWorkLogs">
 
@@ -323,7 +321,7 @@ export default {
 	},
 	
 	methods: {
-		...mapActions(store, ['showSnackbar']),
+		...mapActions(store, ['showSnackbar', 'showLoading', 'hideLoading']),
 		
 		toggleFilters() {
 			this.showFilters = !this.showFilters;
@@ -333,8 +331,8 @@ export default {
 			const { completeTracking, workLogId } = this.$route.query;
 
 			if (completeTracking && workLogId) {
-				// Set loading state to true
-				this.loading = true;
+				// Set global loading state to true
+				this.showLoading();
                 
                 // First, fetch the work logs to ensure they're loaded
                 this.fetchWorkLogs().then(() => {
@@ -392,12 +390,12 @@ export default {
 				console.error('Error fetching work log for editing:', error);
 				this.showSnackbar('Could not load time tracking session for editing', 'error');
 			} finally {
-				this.loading = false;
+				this.hideLoading();
 			}
 		},
 		
 		async fetchWorkLogs(options = {}) {
-			this.loading = true;
+			this.showLoading();
 
 			try {
 				// Filter out null values
@@ -413,9 +411,11 @@ export default {
                 return response; // Return the response for promise chaining
 			} catch (error) {
 				console.error('Error fetching work logs:', error);
+				const message = error.response?.data?.message || 'Failed to fetch work logs. Please try again.';
+				this.showSnackbar(message, 'error');
                 throw error; // Re-throw for promise chaining
 			} finally {
-				this.loading = false;
+				this.hideLoading();
 			}
 		},
 
@@ -425,6 +425,8 @@ export default {
 				this.projects = response.data;
 			} catch (error) {
 				console.error('Error fetching projects:', error);
+				const message = error.response?.data?.message || 'Failed to fetch projects. Please try again.';
+				this.showSnackbar(message, 'error');
 			}
 		},
 
@@ -452,8 +454,11 @@ export default {
 				await axios.delete(`/api/worklogs/${this.itemToDelete.id}`);
 				this.workLogs = this.workLogs.filter(w => w.id !== this.itemToDelete.id);
 				this.deleteDialog = false;
+				this.showSnackbar('Work log deleted successfully', 'success');
 			} catch (error) {
 				console.error('Error deleting work log:', error);
+				const message = error.response?.data?.message || 'Failed to delete work log. Please try again.';
+				this.showSnackbar(message, 'error');
 			}
 		},
 

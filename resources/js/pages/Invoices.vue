@@ -106,6 +106,8 @@ export default {
         this.invoices = response.data;
       } catch (error) {
         console.error('Error fetching invoices:', error);
+        const message = error.response?.data?.message || 'Failed to fetch invoices. Please try again.';
+        this.showSnackbar(message, 'error');
       } finally {
         this.loading = false;
       }
@@ -121,8 +123,11 @@ export default {
         await axios.delete(`/api/invoices/${this.itemToDelete.id}`);
         this.invoices = this.invoices.filter(i => i.id !== this.itemToDelete.id);
         this.deleteDialog = false;
+        this.showSnackbar('Invoice deleted successfully', 'success');
       } catch (error) {
         console.error('Error deleting invoice:', error);
+        const message = error.response?.data?.message || 'Failed to delete invoice. Please try again.';
+        this.showSnackbar(message, 'error');
       }
     },
     
