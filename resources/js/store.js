@@ -1,13 +1,12 @@
-import { defineStore } from "pinia";
-import eventBus from "./eventBus";
-import router from "./router";
-import axios from "axios";
+import { defineStore } from 'pinia';
+import axios from 'axios';
 
 export const store = defineStore("store", {
   state: () => ({
     user: null,
     customers: [],
     projects: [],
+    invoices: [], // Added invoice state
     users: [],
     settings: {},
     loading: false,
@@ -19,37 +18,27 @@ export const store = defineStore("store", {
     }
   }),
   getters: {
-    isAuthenticated(state) {
-      return !!state.user;
-    },
-    getUser(state) {
-      return state.user;
-    },
-    isAdmin(state) {
-      return state.user?.role === 'admin';
-    }
+    // ...existing getters...
+    isAuthenticated(state) { return !!state.user; },
+    getUser(state) { return state.user; },
+    isAdmin(state) { return state.user && state.user.role === 'admin'; }
   },
   actions: {
     showSnackbar(message, color = 'success', timeout = 3000) {
-      color = color === 'error' ? 'red' : color;
-      color = color === "danger" ? "red" : color;
-
-      this.snackbar = {
-        show: true,
-        message,
-        color,
-        timeout
-      };
+      this.snackbar.show = true;
+      this.snackbar.message = message;
+      this.snackbar.color = color;
+      this.snackbar.timeout = timeout;
     },
-    
+
     showLoading() {
       this.loading = true;
     },
-    
+
     hideLoading() {
       this.loading = false;
     },
-    
+
     // Customer actions
     async fetchCustomers() {
       try {
@@ -327,5 +316,87 @@ export const store = defineStore("store", {
         throw error;
       }
     },
+
+    // Invoice actions - NEW
+    async fetchInvoices() {
+      this.showLoading();
+      try {
+        const response = await axios.get('/api/invoices');
+        this.invoices = response.data;
+      } catch (error) {
+        this.showSnackbar('Error fetching invoices: ' + (error.response?.data?.message || error.message), 'error');
+        console.error("Error fetching invoices:", error);
+      } finally {
+        this.hideLoading();
+      }
+    },
+
+    async createInvoice(invoice) {
+      this.showLoading();
+      try {
+        const response = await axios.post('/api/invoices', invoice);
+        this.invoices.push(response.data); // Add the new invoice to the state
+        this.showSnackbar('Invoice created successfully', 'success');
+        return response.data; // Return the created invoice
+      } catch (error) {
+        this.showSnackbar('Error creating invoice: ' + (error.response?.data?.message || error.message), 'error');
+        console.error("Error creating invoice:", error);
+        return null;
+      } finally {
+        this.hideLoading();
+      }
+    },
+
+    async updateInvoice(invoice) {
+      this.showLoading();
+      try {
+        const response = await axios.put(`/api/invoices/${invoice.id}`, invoice);
+        const index = this.invoices.findIndex(inv => inv.id === invoice.id);
+        if (index !== -1) {
+          this.invoices.splice(index, 1, response.data); // Update the invoice in the state
+        }
+        this.showSnackbar('Invoice updated successfully', 'success');
+        return response.data; // Return the updated invoice
+      } catch (error) {
+        this.showSnackbar('Error updating invoice: ' + (error.response?.data?.message || error.message), 'error');
+        console.error("Error updating invoice:", error);
+        return null;
+      } finally {
+        this.hideLoading();
+      }
+    },
+
+    async deleteInvoice(id) {
+      this.showLoading();
+      try {
+        await axios.delete(`/api/invoices/${id}`);
+        this.invoices = this.invoices.filter(inv => inv.id !== id); // Remove the invoice from the state
+        this.showSnackbar('Invoice deleted successfully', 'success');
+        return true;
+      } catch (error) {
+        this.showSnackbar('Error deleting invoice: ' + (error.response?.data?.message || error.message), 'error');
+        console.error("Error deleting invoice:", error);
+        return false;
+      } finally {
+        this.hideLoading();
+      }
+    },
+
+    async generateInvoiceFromWorkLogs(payload) {
+        this.showLoading();
+        try {
+            const response = await axios.post('/api/invoices/generate', payload);
+            // Optionally fetch invoices again or add the new one to the list
+            await this.fetchInvoices(); // Refresh the list to show the new invoice
+            this.showSnackbar('Invoice generated successfully', 'success');
+            return response.data;
+        } catch (error) {
+            this.showSnackbar('Error generating invoice: ' + (error.response?.data?.message || error.message), 'error');
+            console.error("Error generating invoice:", error);
+            return null;
+        } finally {
+            this.hideLoading();
+        }
+    }
   }
 });

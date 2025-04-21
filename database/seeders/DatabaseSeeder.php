@@ -174,8 +174,8 @@ class DatabaseSeeder extends Seeder
 
                     // Create invoice
                     $invoice = Invoice::create([
+                        'invoice_number' => 'INV-' . strtoupper(uniqid()),
                         'customer_id' => $customer->id,
-                        'issue_date' => $currentDate->copy()->endOfMonth(),
                         'due_date' => $currentDate->copy()->addMonth()->endOfMonth(),
                         'total_amount' => $totalAmount,
                         'status' => 'paid'

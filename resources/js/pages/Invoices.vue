@@ -15,7 +15,7 @@
         ></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" class="text-right">
-        <v-btn color="primary" to="/invoices/create" prepend-icon="mdi-plus">
+        <v-btn color="primary" @click="openCreateDialog" prepend-icon="mdi-plus">
           New Invoice
         </v-btn>
       </v-col>
@@ -29,8 +29,8 @@
         class="elevation-1"
         :search="search"
       >
-          <template v-slot:item.date="{ item }">
-          {{ formatDate(item.date) }}
+          <template v-slot:item.due_date="{ item }">
+          {{ formatDate(item.due_date) }}
         </template>
         <template v-slot:item.status="{ item }">
           <v-chip
@@ -44,7 +44,7 @@
           <v-btn icon variant="text" size="small" color="info" :to="`/invoices/${item.id}`">
             <v-icon>mdi-eye</v-icon>
           </v-btn>
-          <v-btn icon variant="text" size="small" color="primary" :to="`/invoices/${item.id}/edit`">
+          <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)">
             <v-icon>mdi-pencil</v-icon>
           </v-btn>
           <v-btn icon variant="text" size="small" color="error" @click="confirmDelete(item)">
@@ -63,86 +63,189 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="primary" variant="text" @click="deleteDialog = false">Cancel</v-btn>
-          <v-btn color="error" @click="deleteInvoice">Delete</v-btn>
+          <v-btn color="error" @click="performDelete">Delete</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="generateDialog" max-width="500px">
+      <v-card>
+        <v-card-title>Generate Invoice from Work Logs</v-card-title>
+        <v-card-text>
+          <v-select
+            v-model="generatePayload.customer_id"
+            :items="customers"
+            item-text="name"
+            item-value="id"
+            label="Select Customer"
+            :rules="[rules.required]"
+          ></v-select>
+          <v-date-picker
+            v-model="generatePayload.start_date"
+            label="Start Date"
+            :rules="[rules.required]"
+          ></v-date-picker>
+          <v-date-picker
+            v-model="generatePayload.end_date"
+            label="End Date"
+            :rules="[rules.required]"
+          ></v-date-picker>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" variant="text" @click="generateDialog = false">Cancel</v-btn>
+          <v-btn color="success" @click="performGenerate">Generate</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <InvoiceForm
+      v-model:dialog="dialog"
+      :invoice.sync="editedInvoice"
+      @saved="onInvoiceSaved"
+    />
+
+    <LoadingOverlay :active="loading" />
   </v-container>
 </template>
 
 <script>
-import axios from 'axios';
+import { store } from "../store";
+import { mapActions, mapState } from "pinia";
+import InvoiceForm from '../components/forms/InvoiceForm.vue'; // Import the new form
+import LoadingOverlay from '../components/LoadingOverlay.vue'; // Assuming you have this
 
 export default {
   name: 'InvoicesIndex',
+  components: {
+    InvoiceForm,
+    LoadingOverlay
+  },
   data() {
     return {
-      invoices: [],
-      loading: false,
       search: '',
+      dialog: false, // Controls create/edit dialog
       deleteDialog: false,
-      itemToDelete: null,
-      
+      generateDialog: false, // Controls generate dialog
+      editedInvoice: null, // Holds invoice being edited/created
+      invoiceToDelete: null, // Holds invoice to be deleted
+      generatePayload: { // Data for generating invoice
+          customer_id: null,
+          start_date: null,
+          end_date: null,
+      },
       headers: [
-        { title: 'Invoice #', key: 'number' },
-        { title: 'Customer', key: 'customer.name' },
-        { title: 'Date', key: 'date' },
-        { title: 'total_amount', key: 'total_amount' },
-        { title: 'Status', key: 'status' },
-        { title: 'Actions', key: 'actions', sortable: false }
-      ]
+        { title: 'Invoice #', key: 'invoice_number', sortable: true },
+        { title: 'Customer', key: 'customer.name', sortable: true },
+        { title: 'Due Date', key: 'due_date', sortable: true },
+        { title: 'Total', key: 'total_amount', sortable: true },
+        { title: 'Status', key: 'status', sortable: true },
+        { title: 'Actions', key: 'actions', sortable: false },
+      ],
+      rules: {
+          required: value => !!value || 'Required.',
+      },
     };
   },
-  
-  created() {
-    this.fetchInvoices();
-  },
-  
-  methods: {
-    async fetchInvoices() {
-      this.loading = true;
-      try {
-        const response = await axios.get('/api/invoices');
-        this.invoices = response.data;
-      } catch (error) {
-        console.error('Error fetching invoices:', error);
-        const message = error.response?.data?.message || 'Failed to fetch invoices. Please try again.';
-        this.showSnackbar(message, 'error');
-      } finally {
-        this.loading = false;
-      }
+
+  computed: {
+    ...mapState(store, ['invoices', 'loading', 'customers']), // Map state from store
+    formTitle() {
+      return this.editedInvoice && this.editedInvoice.id ? 'Edit Invoice' : 'Create New Invoice';
     },
-    
+  },
+
+  created() {
+    this.fetchInvoices(); // Fetch invoices using store action
+    this.fetchCustomers(); // Fetch customers if needed for generate dialog
+  },
+
+  methods: {
+    ...mapActions(store, [
+        'fetchInvoices',
+        'deleteInvoice',
+        'generateInvoiceFromWorkLogs',
+        'fetchCustomers' // Map store actions
+    ]),
+
+    openCreateDialog() {
+      this.editedInvoice = {}; // Clear for new invoice
+      this.dialog = true;
+    },
+
+    openEditDialog(item) {
+      this.editedInvoice = { ...item }; // Copy item to avoid direct state mutation
+      this.dialog = true;
+    },
+
+     openGenerateDialog() {
+        this.generatePayload = { customer_id: null, start_date: null, end_date: null }; // Reset payload
+        this.generateDialog = true;
+    },
+
     confirmDelete(item) {
-      this.itemToDelete = item;
+      this.invoiceToDelete = item;
       this.deleteDialog = true;
     },
-    
-    async deleteInvoice() {
-      try {
-        await axios.delete(`/api/invoices/${this.itemToDelete.id}`);
-        this.invoices = this.invoices.filter(i => i.id !== this.itemToDelete.id);
-        this.deleteDialog = false;
-        this.showSnackbar('Invoice deleted successfully', 'success');
-      } catch (error) {
-        console.error('Error deleting invoice:', error);
-        const message = error.response?.data?.message || 'Failed to delete invoice. Please try again.';
-        this.showSnackbar(message, 'error');
+
+    closeDialogs() {
+      this.dialog = false;
+      this.deleteDialog = false;
+      this.generateDialog = false;
+      this.editedInvoice = null;
+      this.invoiceToDelete = null;
+    },
+
+    async performDelete() {
+      if (!this.invoiceToDelete) return;
+      const success = await this.deleteInvoice(this.invoiceToDelete.id);
+      if (success) {
+        this.closeDialogs();
       }
     },
-    
-    formatDate(dateStr) {
-      return new Date(dateStr).toLocaleDateString();
+
+     async performGenerate() {
+        // Basic validation
+        if (!this.generatePayload.customer_id || !this.generatePayload.start_date || !this.generatePayload.end_date) {
+            // Use store's snackbar for error
+            store().showSnackbar('Please select customer and date range.', 'warning');
+            return;
+        }
+        const result = await this.generateInvoiceFromWorkLogs(this.generatePayload);
+        if (result) {
+            this.closeDialogs();
+            // Invoices are refetched by the action
+        }
     },
-    
+
+    // Called when InvoiceForm emits 'saved'
+    onInvoiceSaved() {
+        this.closeDialogs();
+        // No need to manually fetch, store actions update the state
+    },
+
+    formatDate(dateStr) {
+        if (!dateStr) return 'N/A';
+        // Adjust formatting as needed
+        return new Date(dateStr).toLocaleDateString();
+    },
+
+    formatCurrency(value) {
+        if (typeof value !== 'number') {
+            value = parseFloat(value) || 0;
+        }
+        return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+    },
+
     getStatusColor(status) {
-      const colors = {
-        'paid': 'success',
-        'pending': 'warning',
-        'overdue': 'error',
-        'draft': 'grey'
-      };
-      return colors[status.toLowerCase()] || 'grey';
+      switch (status) {
+        case 'paid': return 'success';
+        case 'overdue': return 'error';
+        case 'sent': return 'info';
+        case 'draft': return 'grey';
+        case 'cancelled': return 'warning';
+        default: return 'default';
+      }
     }
   }
 };
