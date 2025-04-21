@@ -460,17 +460,21 @@ export default {
 <style scoped>
 .pulse-animation {
 	animation: pulse 1.5s infinite;
+	border-radius: 50%;
 }
 
 @keyframes pulse {
 	0% {
-		box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.4);
+		box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.6);
+		transform: scale(1);
 	}
-	70% {
-		box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
+	50% {
+		box-shadow: 0 0 0 20px rgba(244, 67, 54, 0);
+		transform: scale(1.1);
 	}
 	100% {
 		box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+		transform: scale(1);
 	}
 }
 
