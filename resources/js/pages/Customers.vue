@@ -52,7 +52,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="primary" variant="text" @click="deleteDialog = false">Cancel</v-btn>
-          <v-btn color="error" @click="deleteCustomer">Delete</v-btn>
+          <v-btn color="error" @click="deleteCustomerRecord">Delete</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -62,7 +62,7 @@
       <v-card>
         <v-card-title>New Customer</v-card-title>
         <v-card-text>
-          <customer-form ref="createForm" @save="saveCustomer"></customer-form>
+          <customer-form ref="createForm" @save="saveCustomerRecord"></customer-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -77,7 +77,7 @@
       <v-card>
         <v-card-title>Edit Customer</v-card-title>
         <v-card-text>
-          <customer-form ref="editForm" :customer="currentCustomer" @save="updateCustomer"></customer-form>
+          <customer-form ref="editForm" :customer="currentCustomer" @save="updateCustomerRecord"></customer-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -134,10 +134,8 @@
 </template>
 
 <script>
-import axios from 'axios';
 import CustomerForm from '../components/forms/CustomerForm.vue';
-import eventBus from '../eventBus'; // Add this import
-import { mapActions } from 'pinia';
+import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
 
 export default {
@@ -147,7 +145,6 @@ export default {
   },
   data() {
     return {
-      customers: [],
       loading: false,
       search: '',
       deleteDialog: false,
@@ -170,41 +167,31 @@ export default {
     };
   },
   
+  computed: {
+    ...mapState(store, ['customers'])
+  },
+  
   created() {
     this.fetchCustomers();
   },
   
   methods: {
-    ...mapActions(store, ['showSnackbar']),
-    async fetchCustomers() {
-      this.loading = true;
-      try {
-        const response = await axios.get('/api/customers');
-        this.customers = response.data;
-      } catch (error) {
-        console.error('Error fetching customers:', error);
-        const message = error.response?.data?.message || 'Failed to fetch customers. Please try again.';
-        this.showSnackbar(message, 'error');
-      } finally {
-        this.loading = false;
-      }
-    },
+    ...mapActions(store, [
+      'showSnackbar',
+      'fetchCustomers',
+    ]),
     
     confirmDelete(item) {
       this.itemToDelete = item;
       this.deleteDialog = true;
     },
     
-    async deleteCustomer() {
+    async deleteCustomerRecord() {
       try {
-        await axios.delete(`/api/customers/${this.itemToDelete.id}`);
-        this.customers = this.customers.filter(c => c.id !== this.itemToDelete.id);
+        await this.deleteCustomer(this.itemToDelete.id);
         this.deleteDialog = false;
-        this.showSnackbar('Customer deleted successfully', 'success');
       } catch (error) {
         console.error('Error deleting customer:', error);
-        const message = error.response?.data?.message || 'Failed to delete customer. Please try again.';
-        this.showSnackbar(message, 'error');
       }
     },
     
@@ -222,35 +209,21 @@ export default {
       this.viewDialog = true;
     },
     
-    async saveCustomer(customer) {
+    async saveCustomerRecord(customer) {
       try {
-        const response = await axios.post('/api/customers', customer);
-        this.customers.unshift(response.data);
+        await this.createCustomer(customer);
         this.createDialog = false;
-        this.fetchCustomers();
-        this.showSnackbar('Customer created successfully', 'success');
       } catch (error) {
-        const message = error.response?.data?.errors 
-          ? Object.values(error.response.data.errors)[0][0]
-          : 'Failed to create customer';
-        this.showSnackbar(message, 'error');
+        console.error('Error creating customer:', error);
       }
     },
     
-    async updateCustomer(customer) {
+    async updateCustomerRecord(customer) {
       try {
-        const response = await axios.put(`/api/customers/${customer.id}`, customer);
-        const index = this.customers.findIndex(c => c.id === customer.id);
-        if (index !== -1) {
-          this.customers.splice(index, 1, response.data);
-        }
+        await this.updateCustomer(customer);
         this.editDialog = false;
-        this.showSnackbar('Customer updated successfully', 'success');
       } catch (error) {
-        const message = error.response?.data?.errors 
-          ? Object.values(error.response.data.errors)[0][0]
-          : 'Failed to update customer';
-        this.showSnackbar(message, 'error');
+        console.error('Error updating customer:', error);
       }
     }
   }

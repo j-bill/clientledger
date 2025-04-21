@@ -119,7 +119,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="primary" variant="text" @click="deleteDialog = false">Cancel</v-btn>
-          <v-btn color="error" @click="deleteProject">Delete</v-btn>
+          <v-btn color="error" @click="deleteProjectRecord">Delete</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -198,9 +198,8 @@
 </template>
 
 <script>
-import axios from 'axios';
 import ProjectForm from '../components/forms/ProjectForm.vue';
-import { mapActions } from 'pinia';
+import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
 
 export default {
@@ -210,9 +209,6 @@ export default {
   },
   data() {
     return {
-      projects: [],
-      customers: [],
-      freelancers: [],
       loading: false,
       search: '',
       deleteDialog: false,
@@ -221,8 +217,6 @@ export default {
       viewDialog: false,
       itemToDelete: null,
       currentProject: null,
-      isAdmin: false,
-      currentUserId: null,
       showFilters: false,
       filters: {
         customers: [],
@@ -242,55 +236,46 @@ export default {
     };
   },
   
+  computed: {
+    ...mapState(store, ['projects', 'customers', 'users', 'user']),
+    
+    isAdmin() {
+      return this.user?.role === 'admin';
+    },
+    
+    freelancers() {
+      return this.users.filter(user => user.role === 'freelancer');
+    }
+  },
+  
   created() {
-    this.fetchProjects();
-    this.fetchCustomers();
-    this.fetchFreelancers();
-    this.checkUserRole();
+    this.loadData();
   },
   
   methods: {
-    ...mapActions(store, ['showSnackbar']),
-    async fetchProjects() {
+    ...mapActions(store, [
+      'showSnackbar',
+      'fetchProjects',
+      'fetchCustomers', 
+      'fetchUsers',
+      'createProject',
+      'updateProject',
+      'deleteProject'
+    ]),
+    
+    async loadData() {
       this.loading = true;
       
       try {
-        // Filter out null values
-        const params = { ...this.filters };
-        Object.keys(params).forEach(key => {
-          if (params[key] === null) delete params[key];
-        });
-
-        const response = await axios.get('/api/projects', { params });
-        this.projects = response.data;
+        await Promise.all([
+          this.fetchProjects(),
+          this.fetchCustomers(),
+          this.fetchUsers()
+        ]);
       } catch (error) {
-        console.error('Error fetching projects:', error);
-        const message = error.response?.data?.message || 'Failed to fetch projects. Please try again.';
-        this.showSnackbar(message, 'error');
+        console.error('Error loading data:', error);
       } finally {
         this.loading = false;
-      }
-    },
-    
-    async fetchCustomers() {
-      try {
-        const response = await axios.get('/api/customers');
-        this.customers = response.data;
-      } catch (error) {
-        console.error('Error fetching customers:', error);
-        const message = error.response?.data?.message || 'Failed to fetch customers. Please try again.';
-        this.showSnackbar(message, 'error');
-      }
-    },
-
-    async fetchFreelancers() {
-      try {
-        const response = await axios.get('/api/users');
-        this.freelancers = response.data.filter(user => user.role === 'freelancer');
-      } catch (error) {
-        console.error('Error fetching freelancers:', error);
-        const message = error.response?.data?.message || 'Failed to fetch freelancers. Please try again.';
-        this.showSnackbar(message, 'error');
       }
     },
     
@@ -309,37 +294,20 @@ export default {
     },
     
     async saveProject(project) {
-      console.dir(project)
       try {
-        const response = await axios.post('/api/projects', project);
-        this.projects.unshift(response.data);
+        await this.createProject(project);
         this.createDialog = false;
-        this.fetchProjects();
-        this.showSnackbar('Project created successfully', 'success');
       } catch (error) {
-        const message = error.response?.data?.errors 
-          ? Object.values(error.response.data.errors)[0][0]
-          : 'Failed to create project';
-        this.showSnackbar(message, 'error');
+        console.error('Error creating project:', error);
       }
     },
     
     async updateProject(project) {
-      console.dir(project)
-
       try {
-        const response = await axios.put(`/api/projects/${project.id}`, project);
-        const index = this.projects.findIndex(p => p.id === project.id);
-        if (index !== -1) {
-          this.projects.splice(index, 1, response.data);
-        }
+        await this.updateProject(project);
         this.editDialog = false;
-        this.showSnackbar('Project updated successfully', 'success');
       } catch (error) {
-        const message = error.response?.data?.errors 
-          ? Object.values(error.response.data.errors)[0][0]
-          : 'Failed to update project';
-        this.showSnackbar(message, 'error');
+        console.error('Error updating project:', error);
       }
     },
     
@@ -348,16 +316,12 @@ export default {
       this.deleteDialog = true;
     },
     
-    async deleteProject() {
+    async deleteProjectRecord() {
       try {
-        await axios.delete(`/api/projects/${this.itemToDelete.id}`);
-        this.projects = this.projects.filter(p => p.id !== this.itemToDelete.id);
+        await this.deleteProject(this.itemToDelete.id);
         this.deleteDialog = false;
-        this.showSnackbar('Project deleted successfully', 'success');
       } catch (error) {
         console.error('Error deleting project:', error);
-        const message = error.response?.data?.message || 'Failed to delete project. Please try again.';
-        this.showSnackbar(message, 'error');
       }
     },
     

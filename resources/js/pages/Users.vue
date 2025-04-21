@@ -62,7 +62,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="primary" variant="text" @click="deleteDialog = false">Cancel</v-btn>
-          <v-btn color="error" @click="deleteUser">Delete</v-btn>
+          <v-btn color="error" @click="deleteUserRecord">Delete</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -72,7 +72,7 @@
       <v-card>
         <v-card-title>New User</v-card-title>
         <v-card-text>
-          <user-form ref="createForm" @save="saveUser"></user-form>
+          <user-form ref="createForm" @save="saveUserRecord"></user-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -87,7 +87,7 @@
       <v-card>
         <v-card-title>Edit User</v-card-title>
         <v-card-text>
-          <user-form ref="editForm" :user="currentUser" @save="updateUser"></user-form>
+          <user-form ref="editForm" :user="currentUser" @save="updateUserRecord"></user-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -100,9 +100,8 @@
 </template>
 
 <script>
-import axios from 'axios';
 import UserForm from '../components/forms/UserForm.vue';
-import { mapActions } from 'pinia';
+import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
 
 export default {
@@ -112,7 +111,6 @@ export default {
   },
   data() {
     return {
-      users: [],
       loading: false,
       search: '',
       deleteDialog: false,
@@ -133,40 +131,34 @@ export default {
     };
   },
   
+  computed: {
+    ...mapState(store, ['users'])
+  },
+  
   created() {
     this.fetchUsers();
   },
   
   methods: {
-    ...mapActions(store, ['showSnackbar']),
-    async fetchUsers() {
-      this.loading = true;
-      try {
-        const response = await axios.get('/api/users');
-        this.users = response.data;
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        const message = error.response?.data?.message || 'Failed to fetch users. Please try again.';
-        this.showSnackbar(message, 'error');
-      } finally {
-        this.loading = false;
-      }
-    },
+    ...mapActions(store, [
+      'showSnackbar',
+      'fetchUsers',
+      'createUser',
+      'updateUser',
+      'deleteUser'
+    ]),
     
     confirmDelete(item) {
       this.itemToDelete = item;
       this.deleteDialog = true;
     },
     
-    async deleteUser() {
+    async deleteUserRecord() {
       try {
-        await axios.delete(`/api/users/${this.itemToDelete.id}`);
-        this.users = this.users.filter(u => u.id !== this.itemToDelete.id);
+        await this.deleteUser(this.itemToDelete.id);
         this.deleteDialog = false;
-        this.showSnackbar('User deleted successfully', 'success');
       } catch (error) {
-        const message = error.response?.data?.message || 'Failed to delete user';
-        this.showSnackbar(message, 'error');
+        console.error('Error deleting user:', error);
       }
     },
 
@@ -179,35 +171,21 @@ export default {
       this.editDialog = true;
     },
     
-    async saveUser(user) {
+    async saveUserRecord(user) {
       try {
-        const response = await axios.post('/api/users', user);
-        this.users.unshift(response.data);
+        await this.createUser(user);
         this.createDialog = false;
-        this.fetchUsers();
-        this.showSnackbar('User created successfully', 'success');
       } catch (error) {
-        const message = error.response?.data?.errors 
-          ? Object.values(error.response.data.errors)[0][0]
-          : 'Failed to create user';
-        this.showSnackbar(message, 'error');
+        console.error('Error creating user:', error);
       }
     },
     
-    async updateUser(user) {
+    async updateUserRecord(user) {
       try {
-        const response = await axios.put(`/api/users/${user.id}`, user);
-        const index = this.users.findIndex(u => u.id === user.id);
-        if (index !== -1) {
-          this.users.splice(index, 1, response.data);
-        }
+        await this.updateUser(user);
         this.editDialog = false;
-        this.showSnackbar('User updated successfully', 'success');
       } catch (error) {
-        const message = error.response?.data?.errors 
-          ? Object.values(error.response.data.errors)[0][0]
-          : 'Failed to update user';
-        this.showSnackbar(message, 'error');
+        console.error('Error updating user:', error);
       }
     }
   }

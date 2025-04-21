@@ -191,7 +191,7 @@
 						   variant="text"
 						   @click="deleteDialog = false">Cancel</v-btn>
 					<v-btn color="error"
-						   @click="deleteWorkLog">Delete</v-btn>
+						   @click="deleteWorkLogRecord">Delete</v-btn>
 				</v-card-actions>
 			</v-card>
 		</v-dialog>
@@ -204,7 +204,7 @@
 				<v-card-text>
 					<work-log-form ref="createForm"
 								   :projects="projects"
-								   @save="saveWorkLog"></work-log-form>
+								   @save="saveWorkLogRecord"></work-log-form>
 				</v-card-text>
 				<v-card-actions>
 					<v-spacer></v-spacer>
@@ -234,7 +234,7 @@
 					<work-log-form ref="editForm"
 								   :work-log="currentWorkLog"
 								   :projects="projects"
-								   @save="updateWorkLog"></work-log-form>
+								   @save="updateWorkLogRecord"></work-log-form>
 				</v-card-text>
 				<v-card-actions>
 					<v-spacer></v-spacer>
@@ -255,10 +255,9 @@
 </template>
 
 <script>
-import axios from 'axios';
 import WorkLogForm from '../components/forms/WorkLogForm.vue';
 import eventBus from '../eventBus';
-import { mapActions } from 'pinia';
+import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
 
 export default {
@@ -330,6 +329,10 @@ export default {
 		this.checkForCompletingTracking();
 	},
 	
+	computed: {
+		...mapState(store, ['projects'])
+	},
+	
 	// Add navigation guard to handle when already on worklogs page
 	beforeRouteUpdate(to, from, next) {
 		// Check if query parameters related to tracking completion have changed
@@ -353,7 +356,17 @@ export default {
 	},
 	
 	methods: {
-		...mapActions(store, ['showSnackbar', 'showLoading', 'hideLoading']),
+		...mapActions(store, [
+			'showSnackbar', 
+			'showLoading', 
+			'hideLoading',
+			'fetchProjects',
+			'fetchWorkLogs',
+			'getWorkLog',
+			'createWorkLog',
+			'updateWorkLog',
+			'deleteWorkLog'
+		]),
 		
 		toggleFilters() {
 			this.showFilters = !this.showFilters;
@@ -375,7 +388,7 @@ export default {
 			this.showLoading();
 			
 			// First, fetch the work logs to ensure they're loaded
-			this.fetchWorkLogs().then(() => {
+			this.loadWorkLogs().then(() => {
 				// Then fetch the specific work log to edit or view
 				this.fetchWorkLogForEditing(workLogId, autoSaved === 'true');
 			});
@@ -392,8 +405,7 @@ export default {
 		
 		async fetchWorkLogForEditing(workLogId, wasAutoSaved = false) {
 			try {
-				const response = await axios.get(`/api/worklogs/${workLogId}`);
-				const workLog = response.data;
+				const workLog = await this.getWorkLog(workLogId);
 				
 				// If not auto-saved, we need to set the end time
 				if (!wasAutoSaved && !workLog.end_time) {
@@ -440,7 +452,7 @@ export default {
 			}
 		},
 		
-		async fetchWorkLogs(options = {}) {
+		async loadWorkLogs(options = {}) {
 			this.showLoading();
 
 			try {
@@ -450,29 +462,16 @@ export default {
 					if (params[key] === null) delete params[key];
 				});
 
-				const response = await axios.get('/api/worklogs', { params });
-				this.workLogs = response.data.data;
-				this.totalItems = response.data.total;
-				this.totalPages = Math.ceil(response.data.total / this.filters.per_page);
+				const response = await this.fetchWorkLogs(params);
+				this.workLogs = response.data;
+				this.totalItems = response.total;
+				this.totalPages = Math.ceil(response.total / this.filters.per_page);
                 return response; // Return the response for promise chaining
 			} catch (error) {
 				console.error('Error fetching work logs:', error);
-				const message = error.response?.data?.message || 'Failed to fetch work logs. Please try again.';
-				this.showSnackbar(message, 'error');
                 throw error; // Re-throw for promise chaining
 			} finally {
 				this.hideLoading();
-			}
-		},
-
-		async fetchProjects() {
-			try {
-				const response = await axios.get('/api/projects');
-				this.projects = response.data;
-			} catch (error) {
-				console.error('Error fetching projects:', error);
-				const message = error.response?.data?.message || 'Failed to fetch projects. Please try again.';
-				this.showSnackbar(message, 'error');
 			}
 		},
 
@@ -487,7 +486,7 @@ export default {
 				per_page: 10
 			};
 			this.page = 1;
-			this.fetchWorkLogs();
+			this.loadWorkLogs();
 		},
 
 		confirmDelete(item) {
@@ -495,16 +494,13 @@ export default {
 			this.deleteDialog = true;
 		},
 
-		async deleteWorkLog() {
+		async deleteWorkLogRecord() {
 			try {
-				await axios.delete(`/api/worklogs/${this.itemToDelete.id}`);
-				this.workLogs = this.workLogs.filter(w => w.id !== this.itemToDelete.id);
+				await this.deleteWorkLog(this.itemToDelete.id);
 				this.deleteDialog = false;
-				this.showSnackbar('Work log deleted successfully', 'success');
+				this.loadWorkLogs(); // Refresh the list
 			} catch (error) {
 				console.error('Error deleting work log:', error);
-				const message = error.response?.data?.message || 'Failed to delete work log. Please try again.';
-				this.showSnackbar(message, 'error');
 			}
 		},
 
@@ -517,38 +513,23 @@ export default {
 			this.editDialog = true;
 		},
 
-		async saveWorkLog(workLog) {
+		async saveWorkLogRecord(workLog) {
 			try {
-				const response = await axios.post('/api/worklogs', workLog);
-				this.workLogs.unshift(response.data);
+				await this.createWorkLog(workLog);
 				this.createDialog = false;
-				this.fetchWorkLogs();
-				this.showSnackbar('Work log created successfully', 'success');
+				this.loadWorkLogs(); // Refresh the list
 			} catch (error) {
-				const message = error.response?.data?.errors
-					? Object.values(error.response.data.errors)[0][0]
-					: 'Failed to create work log';
-				this.showSnackbar(message, 'error');
+				console.error('Error creating work log:', error);
 			}
 		},
 
-		async updateWorkLog(workLog) {
+		async updateWorkLogRecord(workLog) {
 			try {
-				console.log('Updating work log:', workLog);
-				const response = await axios.put(`/api/worklogs/${workLog.id}`, workLog);
-				console.log('Update response:', response);
-				const index = this.workLogs.findIndex(w => w.id === workLog.id);
-				if (index !== -1) {
-					this.workLogs.splice(index, 1, response.data);
-				}
+				await this.updateWorkLog(workLog);
 				this.editDialog = false;
-				this.showSnackbar('Work log updated successfully', 'success');
+				this.loadWorkLogs(); // Refresh the list
 			} catch (error) {
 				console.error('Error updating work log:', error);
-				const message = error.response?.data?.errors
-					? Object.values(error.response.data.errors)[0][0]
-					: 'Failed to update work log';
-				this.showSnackbar(message, 'error');
 			}
 		},
 
@@ -560,19 +541,4 @@ export default {
 </script>
 
 <style scoped>
-.pulse-animation {
-	animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-	0% {
-		box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
-	}
-	70% {
-		box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
-	}
-	100% {
-		box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
-	}
-}
 </style>
