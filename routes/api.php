@@ -40,7 +40,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Project routes
     // Routes accessible by both admin and freelancer
     Route::get('/projects', [ProjectController::class, 'index']);
-    Route::get('/projects/{project}', [ProjectController::class, 'show']);
 
     // Admin-only project routes
     Route::middleware(CheckRole::class . ':admin')->group(function () {
