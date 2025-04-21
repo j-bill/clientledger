@@ -10,6 +10,7 @@ export const store = defineStore("store", {
     projects: [],
     users: [],
     settings: {},
+    loading: false,
     snackbar: {
       show: false,
       message: '',
@@ -40,6 +41,15 @@ export const store = defineStore("store", {
         timeout
       };
     },
+    
+    showLoading() {
+      this.loading = true;
+    },
+    
+    hideLoading() {
+      this.loading = false;
+    },
+    
     async fetchCustomers() {
       try {
         const response = await axios.get("/api/customers");

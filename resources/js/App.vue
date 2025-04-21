@@ -2,6 +2,7 @@
   <v-app>
     <!-- Include the navigation component -->
     <NavigationBar v-if="isAuthenticated" />
+
     
     <!-- Main content area -->
     <v-main>
@@ -9,6 +10,9 @@
       
       <!-- Router view for page content -->
       <router-view></router-view>
+
+    <LoadingOverlay v-if="loading"/>
+
     </v-main>
     <Snackbar />
   </v-app>
@@ -17,6 +21,7 @@
 <script>
 import NavigationBar from './components/NavigationBar.vue';
 import Snackbar from './components/Snackbar.vue';
+import LoadingOverlay from './components/LoadingOverlay.vue';
 import axios from 'axios';
 import { mapState } from 'pinia';
 import { store } from './store';
@@ -26,13 +31,14 @@ export default {
   components: {
     NavigationBar,
     Snackbar,
+    LoadingOverlay,
   },
   data() {
     return {
     };
   },
   computed: {
-    ...mapState(store, ['snackbar', 'isAuthenticated']),
+    ...mapState(store, ['snackbar', 'isAuthenticated', 'loading']),
   },
   methods: {
     async validate() {
@@ -60,29 +66,8 @@ export default {
         this.response = error.response?.data?.message || 'An error occurred';
       }
     },
-    printDate(date) {
-      alert(date);
-    },
+
   },
 };
 </script>
 
-<style scoped>
-body {
-  font-family: Arial, sans-serif;
-}
-
-.code-block {
-  background-color: #333;
-  color: #e0e0e0;
-  padding: 16px;
-  font-family: monospace;
-  border-radius: 8px;
-  white-space: pre-wrap;
-  /* Preserves formatting and line breaks */
-  overflow: auto;
-  margin: 8px 0;
-  line-height: 1.5;
-  /* Improves readability */
-}
-</style>
