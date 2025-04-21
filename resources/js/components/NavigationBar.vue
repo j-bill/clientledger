@@ -323,12 +323,23 @@ export default {
 			try {
 				clearInterval(this.timerInterval);
 				
+				// Get current time in HH:MM format
+				const now = new Date();
+				const currentTime = now.toTimeString().slice(0, 5);
+				
+				// Automatically save the end time to the server
+				await axios.post(`/api/worklogs/${this.activeWorkLog.id}/complete`, {
+					end_time: currentTime,
+					description: this.activeWorkLog.description
+				});
+				
 				// Navigate to work logs page and pass the active work log ID
 				this.$router.push({ 
 					path: '/work-logs', 
 					query: { 
 						completeTracking: true, 
-						workLogId: this.activeWorkLog.id 
+						workLogId: this.activeWorkLog.id,
+						autoSaved: true // Add flag to indicate the worklog was already saved
 					}
 				});
 				
@@ -340,7 +351,6 @@ export default {
 				localStorage.removeItem('activeWorkLog');
 				localStorage.removeItem('trackingStartTime');
 				localStorage.removeItem('hourlyRate');
-				
 			} catch (error) {
 				console.error('Error stopping time tracking:', error);
 				this.showSnackbar('Failed to stop time tracking', 'error');

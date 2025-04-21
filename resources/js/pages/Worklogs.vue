@@ -221,8 +221,16 @@
 		<v-dialog v-model="editDialog"
 				  max-width="1000px">
 			<v-card>
-				<v-card-title>{{ currentWorkLog?.id && !currentWorkLog?.end_time ? 'Complete Time Tracking' : 'Edit Work Log' }}</v-card-title>
+				<v-card-title>
+					<span v-if="currentWorkLog?.wasAutoSaved">Review Time Tracking</span>
+					<span v-else-if="currentWorkLog?.id && !currentWorkLog?.end_time">Complete Time Tracking</span>
+					<span v-else>Edit Work Log</span>
+				</v-card-title>
 				<v-card-text>
+					<div v-if="currentWorkLog?.wasAutoSaved" class="mb-4 pa-4 bg-success-lighten-5 rounded">
+						<v-icon color="success" class="mr-2">mdi-check-circle</v-icon>
+						Your time tracking has been automatically saved. You can review and update the details below if needed.
+					</div>
 					<work-log-form ref="editForm"
 								   :work-log="currentWorkLog"
 								   :projects="projects"
@@ -232,10 +240,12 @@
 					<v-spacer></v-spacer>
 					<v-btn color="error"
 						   variant="text"
-						   @click="editDialog = false">Cancel</v-btn>
+						   @click="editDialog = false">Close</v-btn>
 					<v-btn color="primary"
 						   @click="$refs.editForm.submit()">
-						{{ currentWorkLog?.id && !currentWorkLog?.end_time ? 'Complete Tracking' : 'Update' }}
+						<span v-if="currentWorkLog?.wasAutoSaved">Update Details</span>
+						<span v-else-if="currentWorkLog?.id && !currentWorkLog?.end_time">Complete Tracking</span>
+						<span v-else>Update</span>
 					</v-btn>
 				</v-card-actions>
 			</v-card>
@@ -320,6 +330,28 @@ export default {
 		this.checkForCompletingTracking();
 	},
 	
+	// Add navigation guard to handle when already on worklogs page
+	beforeRouteUpdate(to, from, next) {
+		// Check if query parameters related to tracking completion have changed
+		if (to.query.completeTracking && to.query.workLogId) {
+			// Call the handler with the new query params
+			this.handleCompletingTracking(to.query);
+		}
+		next();
+	},
+	
+	// Add watcher for route query changes
+	watch: {
+		'$route.query': {
+			handler(newQuery) {
+				if (newQuery.completeTracking && newQuery.workLogId) {
+					this.handleCompletingTracking(newQuery);
+				}
+			},
+			immediate: true
+		}
+	},
+	
 	methods: {
 		...mapActions(store, ['showSnackbar', 'showLoading', 'hideLoading']),
 		
@@ -328,39 +360,50 @@ export default {
 		},
 		
 		checkForCompletingTracking() {
-			const { completeTracking, workLogId } = this.$route.query;
-
+			// Initial check during component creation
+			const { completeTracking, workLogId, autoSaved } = this.$route.query;
+			
 			if (completeTracking && workLogId) {
-				// Set global loading state to true
-				this.showLoading();
-                
-                // First, fetch the work logs to ensure they're loaded
-                this.fetchWorkLogs().then(() => {
-                    // Then fetch the specific work log to edit
-                    this.fetchWorkLogForEditing(workLogId);
-                });
-				
-				// Clean up query params
-				this.$router.replace({
-					query: Object.assign({}, this.$route.query, {
-						completeTracking: undefined,
-						workLogId: undefined
-					})
-				});
+				this.handleCompletingTracking({ completeTracking, workLogId, autoSaved });
 			}
 		},
 		
-		async fetchWorkLogForEditing(workLogId) {
+		handleCompletingTracking(queryParams) {
+			const { workLogId, autoSaved } = queryParams;
+			
+			// Set global loading state to true
+			this.showLoading();
+			
+			// First, fetch the work logs to ensure they're loaded
+			this.fetchWorkLogs().then(() => {
+				// Then fetch the specific work log to edit or view
+				this.fetchWorkLogForEditing(workLogId, autoSaved === 'true');
+			});
+			
+			// Clean up query params
+			this.$router.replace({
+				query: Object.assign({}, this.$route.query, {
+					completeTracking: undefined,
+					workLogId: undefined,
+					autoSaved: undefined
+				})
+			});
+		},
+		
+		async fetchWorkLogForEditing(workLogId, wasAutoSaved = false) {
 			try {
 				const response = await axios.get(`/api/worklogs/${workLogId}`);
 				const workLog = response.data;
 				
-				// Set current time as the default end time
-				const now = new Date();
-				workLog.end_time = now.toTimeString().slice(0, 5); // Format: HH:MM
+				// If not auto-saved, we need to set the end time
+				if (!wasAutoSaved && !workLog.end_time) {
+					// Set current time as the default end time
+					const now = new Date();
+					workLog.end_time = now.toTimeString().slice(0, 5); // Format: HH:MM
+				}
 				
-				// Calculate hours worked
-				if (workLog.start_time && workLog.end_time) {
+				// Calculate hours worked if needed
+				if (workLog.start_time && workLog.end_time && !workLog.hours_worked) {
 					const startParts = workLog.start_time.split(':').map(Number);
 					const endParts = workLog.end_time.split(':').map(Number);
 					const startMinutes = startParts[0] * 60 + startParts[1];
@@ -381,6 +424,9 @@ export default {
 				workLog.billable = workLog.billable ?? true;
 				workLog.description = workLog.description || 'Work in progress...';
 				workLog.hourly_rate = workLog.hourly_rate || workLog.project?.hourly_rate || 0;
+				
+				// Store if this worklog was auto-saved
+				workLog.wasAutoSaved = wasAutoSaved;
 				
 				// Open the edit dialog with the work log data
 				this.currentWorkLog = workLog;
