@@ -16,7 +16,11 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        return response()->json(Invoice::with(['customer', 'workLogs'])->get());
+        return response()->json(
+            Invoice::with(['customer', 'workLogs'])
+                ->orderByDesc('issue_date')
+                ->get()
+        );
     }
 
     /**
@@ -29,11 +33,17 @@ class InvoiceController extends Controller
             'issue_date' => 'required|date',
             'due_date' => 'required|date|after_or_equal:issue_date',
             'total_amount' => 'required|numeric',
-            'status' => 'required|string|in:draft,sent,paid,overdue,cancelled',
+            // align with DB enum
+            'status' => 'required|string|in:pending,paid',
+            'notes' => 'nullable|string',
             'work_logs' => 'sometimes|array',
             'work_logs.*' => 'exists:work_logs,id',
         ]);
 
+        // Strip empty notes to avoid issues if column not present yet
+        if (array_key_exists('notes', $validated) && ($validated['notes'] === null || $validated['notes'] === '')) {
+            unset($validated['notes']);
+        }
         $workLogs = $validated['work_logs'] ?? [];
         unset($validated['work_logs']);
         
@@ -64,10 +74,16 @@ class InvoiceController extends Controller
             'issue_date' => 'sometimes|required|date',
             'due_date' => 'sometimes|required|date|after_or_equal:issue_date',
             'total_amount' => 'sometimes|required|numeric',
-            'status' => 'sometimes|required|string|in:draft,sent,paid,overdue,cancelled',
+            'status' => 'sometimes|required|string|in:pending,paid',
+            'notes' => 'nullable|string',
             'work_logs' => 'sometimes|array',
             'work_logs.*' => 'exists:work_logs,id',
         ]);
+
+        // Strip empty notes
+        if (array_key_exists('notes', $validated) && ($validated['notes'] === null || $validated['notes'] === '')) {
+            unset($validated['notes']);
+        }
 
         if (isset($validated['work_logs'])) {
             $workLogs = $validated['work_logs'];
@@ -100,7 +116,7 @@ class InvoiceController extends Controller
             'work_log_ids.*' => 'exists:work_logs,id',
             'issue_date' => 'required|date',
             'due_date' => 'required|date|after_or_equal:issue_date',
-            'status' => 'required|string|in:draft,sent,paid,overdue,cancelled',
+            'status' => 'required|string|in:pending,paid',
         ]);
 
         // Get customer and work logs
@@ -134,5 +150,26 @@ class InvoiceController extends Controller
         $invoice->workLogs()->attach($validated['work_log_ids']);
 
         return response()->json($invoice->load(['customer', 'workLogs']), 201);
+    }
+
+    /**
+     * Get billable, unbilled work logs for a customer (to select for invoice generation)
+     */
+    public function unbilledWorkLogs(Request $request)
+    {
+        $validated = $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+        ]);
+
+        $logs = WorkLog::whereHas('project', function ($q) use ($validated) {
+                $q->where('customer_id', $validated['customer_id']);
+            })
+            ->where('billable', true)
+            ->whereDoesntHave('invoices')
+            ->with(['project', 'user'])
+            ->orderByDesc('date')
+            ->get();
+
+        return response()->json($logs);
     }
 }

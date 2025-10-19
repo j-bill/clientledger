@@ -5,6 +5,7 @@
 			<h2 class="pb-4">Login</h2>
 			<div class="form-group">
 				<v-text-field v-model="form.email"
+							  data-test="login-email"
 							  type="email"
 							  variant="outlined"
 							  label="Email"
@@ -12,12 +13,14 @@
 			</div>
 			<div class="form-group">
 				<v-text-field v-model="form.password"
+							  data-test="login-password"
 							  type="password"
 							  variant="outlined"
 							  label="Password"
 							  required />
 			</div>
 			<v-btn type="submit"
+				   data-test="btn-login"
 				   block
 				   :loading="loading"
 				   color="primary">

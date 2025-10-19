@@ -1,5 +1,6 @@
-import { defineStore } from 'pinia';
-import axios from 'axios';
+import { defineStore } from "pinia";
+import eventBus from "./eventBus";
+import axios from "axios";
 
 export const store = defineStore("store", {
   state: () => ({
@@ -252,6 +253,8 @@ export const store = defineStore("store", {
         await axios.post("/api/logout");
         this.user = null;
         this.users = [];
+        // Lazy import router to avoid circular import during module init
+        const { default: router } = await import('./router');
         router.push({ name: "Login" });
       } catch (error) {
         this.showSnackbar(error.response?.data?.message || "Logout failed", "error");

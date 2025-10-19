@@ -13,6 +13,13 @@ class Invoice extends Model
         'due_date',       // User must provide this now
         'total_amount',
         'status',
+        'notes',
+    ];
+
+    protected $casts = [
+        'issue_date' => 'date:Y-m-d',
+        'due_date' => 'date:Y-m-d',
+        'total_amount' => 'decimal:2',
     ];
 
     public function customer()

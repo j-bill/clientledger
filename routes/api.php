@@ -59,12 +59,14 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Invoice routes (admin only)
     Route::middleware(CheckRole::class . ':admin')->group(function () {
-        Route::get('/invoices', [InvoiceController::class, 'index']);
-        Route::post('/invoices', [InvoiceController::class, 'store']);
-        Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
-        Route::put('/invoices/{invoice}', [InvoiceController::class, 'update']);
-        Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy']);
-        Route::post('/invoices/generate', [InvoiceController::class, 'generateFromWorkLogs']);
+    Route::get('/invoices', [InvoiceController::class, 'index']);
+    Route::post('/invoices', [InvoiceController::class, 'store']);
+    // Put specific routes before the parameter route to prevent shadowing
+    Route::post('/invoices/generate', [InvoiceController::class, 'generateFromWorkLogs']);
+    Route::get('/invoices/unbilled-worklogs', [InvoiceController::class, 'unbilledWorkLogs']);
+    Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
+    Route::put('/invoices/{invoice}', [InvoiceController::class, 'update']);
+    Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy']);
     });
     
     // Settings routes (admin only)

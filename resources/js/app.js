@@ -23,6 +23,7 @@ import { store } from "./store";
 // Components
 import App from "./App.vue";
 import axios from "axios";
+import "./bootstrap";
 
 // create store
 const pinia = createPinia();

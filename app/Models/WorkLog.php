@@ -43,6 +43,11 @@ class WorkLog extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function invoices()
+    {
+        return $this->belongsToMany(Invoice::class)->withTimestamps();
+    }
+
     // Calculate the amount owed to the user
     public function calculateUserAmount()
     {

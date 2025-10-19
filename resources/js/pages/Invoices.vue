@@ -14,8 +14,11 @@
           @input="fetchInvoices"
         ></v-text-field>
       </v-col>
-      <v-col cols="12" sm="6" class="text-right">
-        <v-btn color="primary" @click="openCreateDialog" prepend-icon="mdi-plus">
+      <v-col cols="12" sm="6" class="text-right d-flex justify-end gap-2">
+        <v-btn color="secondary" data-test="btn-generate" prepend-icon="mdi-file-plus" class="mr-2" @click="openGenerateDialog">
+          Generate from Work Logs
+        </v-btn>
+        <v-btn color="primary" data-test="btn-new" prepend-icon="mdi-plus" @click="openCreateDialog">
           New Invoice
         </v-btn>
       </v-col>
@@ -29,8 +32,8 @@
         class="elevation-1"
         :search="search"
       >
-          <template v-slot:item.due_date="{ item }">
-          {{ formatDate(item.due_date) }}
+        <template v-slot:item.issue_date="{ item }">
+          {{ formatDate(item.issue_date) }}
         </template>
         <template v-slot:item.status="{ item }">
           <v-chip
@@ -40,10 +43,10 @@
             {{ item.status }}
           </v-chip>
         </template>
+        <template v-slot:item.total_amount="{ item }">
+          {{ Number(item.total_amount).toFixed(2) }}
+        </template>
         <template v-slot:item.actions="{ item }">
-          <v-btn icon variant="text" size="small" color="info" :to="`/invoices/${item.id}`">
-            <v-icon>mdi-eye</v-icon>
-          </v-btn>
           <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)">
             <v-icon>mdi-pencil</v-icon>
           </v-btn>
@@ -54,6 +57,86 @@
       </v-data-table>
     </v-card>
 
+    <!-- Create Invoice Dialog -->
+    <v-dialog v-model="createDialog" max-width="800px">
+      <v-card>
+        <v-card-title>New Invoice</v-card-title>
+        <v-card-text>
+          <invoice-form ref="createForm" @save="saveInvoice"></invoice-form>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="error" data-test="btn-cancel-create" variant="text" @click="createDialog = false">Cancel</v-btn>
+          <v-btn color="primary" data-test="btn-save-create" @click="$refs.createForm.submit()">Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Generate from Work Logs Dialog -->
+    <v-dialog v-model="generateDialog" max-width="800px">
+      <v-card>
+        <v-card-title>Generate Invoice from Work Logs</v-card-title>
+        <v-card-text>
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-autocomplete
+                v-model="generateForm.customer_id"
+                data-test="gen-customer"
+                :items="customers"
+                item-title="name"
+                item-value="id"
+                label="Customer"
+                prepend-icon="mdi-account"
+                @update:model-value="onGenerateCustomerChange"
+              />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-select
+                v-model="generateForm.work_log_ids"
+                data-test="gen-worklogs"
+                :items="unbilledLogs"
+                item-title="label"
+                item-value="id"
+                chips
+                multiple
+                label="Work Logs"
+                prepend-icon="mdi-timelapse"
+              />
+            </v-col>
+            <v-col cols="12" md="3">
+              <v-text-field v-model="generateForm.issue_date" data-test="gen-issue-date" type="date" label="Issue Date" />
+            </v-col>
+            <v-col cols="12" md="3">
+              <v-text-field v-model="generateForm.due_date" data-test="gen-due-date" type="date" label="Due Date" />
+            </v-col>
+            <v-col cols="12" md="3">
+              <v-select v-model="generateForm.status" data-test="gen-status" :items="['pending','paid']" label="Status" />
+            </v-col>
+          </v-row>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="error" data-test="btn-cancel-generate" variant="text" @click="generateDialog = false">Cancel</v-btn>
+          <v-btn color="primary" data-test="btn-generate-confirm" :disabled="!generateForm.customer_id || generateForm.work_log_ids.length===0" @click="generateInvoice">Generate</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Edit Invoice Dialog -->
+    <v-dialog v-model="editDialog" max-width="800px">
+      <v-card>
+        <v-card-title>Edit Invoice</v-card-title>
+        <v-card-text>
+          <invoice-form ref="editForm" :invoice="currentInvoice" @save="updateInvoiceRecord"></invoice-form>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="error" variant="text" @click="editDialog = false">Cancel</v-btn>
+          <v-btn color="primary" @click="$refs.editForm.submit()">Update</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-dialog v-model="deleteDialog" max-width="500px">
       <v-card>
         <v-card-title>Delete Invoice</v-card-title>
@@ -63,188 +146,170 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="primary" variant="text" @click="deleteDialog = false">Cancel</v-btn>
-          <v-btn color="error" @click="performDelete">Delete</v-btn>
+          <v-btn color="error" @click="deleteInvoice">Delete</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-
-    <v-dialog v-model="generateDialog" max-width="500px">
-      <v-card>
-        <v-card-title>Generate Invoice from Work Logs</v-card-title>
-        <v-card-text>
-          <v-select
-            v-model="generatePayload.customer_id"
-            :items="customers"
-            item-text="name"
-            item-value="id"
-            label="Select Customer"
-            :rules="[rules.required]"
-          ></v-select>
-          <v-date-picker
-            v-model="generatePayload.start_date"
-            label="Start Date"
-            :rules="[rules.required]"
-          ></v-date-picker>
-          <v-date-picker
-            v-model="generatePayload.end_date"
-            label="End Date"
-            :rules="[rules.required]"
-          ></v-date-picker>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" variant="text" @click="generateDialog = false">Cancel</v-btn>
-          <v-btn color="success" @click="performGenerate">Generate</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <InvoiceForm
-      v-model:dialog="dialog"
-      :invoice.sync="editedInvoice"
-      @saved="onInvoiceSaved"
-    />
-
-    <LoadingOverlay :active="loading" />
   </v-container>
 </template>
 
 <script>
-import { store } from "../store";
-import { mapActions, mapState } from "pinia";
-import InvoiceForm from '../components/forms/InvoiceForm.vue'; // Import the new form
-import LoadingOverlay from '../components/LoadingOverlay.vue'; // Assuming you have this
+import { mapActions } from 'pinia';
+import { store } from '../store';
+import axios from 'axios';
+import InvoiceForm from '../components/forms/InvoiceForm.vue';
 
 export default {
   name: 'InvoicesIndex',
-  components: {
-    InvoiceForm,
-    LoadingOverlay
-  },
+  components: { InvoiceForm },
   data() {
     return {
+      invoices: [],
+      loading: false,
       search: '',
-      dialog: false, // Controls create/edit dialog
       deleteDialog: false,
-      generateDialog: false, // Controls generate dialog
-      editedInvoice: null, // Holds invoice being edited/created
-      invoiceToDelete: null, // Holds invoice to be deleted
-      generatePayload: { // Data for generating invoice
-          customer_id: null,
-          start_date: null,
-          end_date: null,
+      itemToDelete: null,
+      createDialog: false,
+      editDialog: false,
+      currentInvoice: null,
+      generateDialog: false,
+      customers: [],
+      unbilledLogs: [],
+      generateForm: {
+        customer_id: null,
+        work_log_ids: [],
+        issue_date: new Date().toISOString().slice(0, 10),
+        due_date: new Date().toISOString().slice(0, 10),
+        status: 'pending'
       },
+      
       headers: [
-        { title: 'Invoice #', key: 'invoice_number', sortable: true },
-        { title: 'Customer', key: 'customer.name', sortable: true },
-        { title: 'Due Date', key: 'due_date', sortable: true },
-        { title: 'Total', key: 'total_amount', sortable: true },
-        { title: 'Status', key: 'status', sortable: true },
-        { title: 'Actions', key: 'actions', sortable: false },
-      ],
-      rules: {
-          required: value => !!value || 'Required.',
-      },
+        { title: 'Invoice #', key: 'id' },
+        { title: 'Customer', key: 'customer.name' },
+        { title: 'Issue Date', key: 'issue_date' },
+        { title: 'Total', key: 'total_amount' },
+        { title: 'Status', key: 'status' },
+        { title: 'Actions', key: 'actions', sortable: false }
+      ]
     };
   },
-
-  computed: {
-    ...mapState(store, ['invoices', 'loading', 'customers']), // Map state from store
-    formTitle() {
-      return this.editedInvoice && this.editedInvoice.id ? 'Edit Invoice' : 'Create New Invoice';
-    },
-  },
-
+  
   created() {
-    this.fetchInvoices(); // Fetch invoices using store action
-    this.fetchCustomers(); // Fetch customers if needed for generate dialog
+    this.fetchInvoices();
   },
-
+  
   methods: {
-    ...mapActions(store, [
-        'fetchInvoices',
-        'deleteInvoice',
-        'generateInvoiceFromWorkLogs',
-        'fetchCustomers' // Map store actions
-    ]),
-
-    openCreateDialog() {
-      this.editedInvoice = {}; // Clear for new invoice
-      this.dialog = true;
-    },
-
-    openEditDialog(item) {
-      this.editedInvoice = { ...item }; // Copy item to avoid direct state mutation
-      this.dialog = true;
-    },
-
-     openGenerateDialog() {
-        this.generatePayload = { customer_id: null, start_date: null, end_date: null }; // Reset payload
-        this.generateDialog = true;
-    },
-
-    confirmDelete(item) {
-      this.invoiceToDelete = item;
-      this.deleteDialog = true;
-    },
-
-    closeDialogs() {
-      this.dialog = false;
-      this.deleteDialog = false;
-      this.generateDialog = false;
-      this.editedInvoice = null;
-      this.invoiceToDelete = null;
-    },
-
-    async performDelete() {
-      if (!this.invoiceToDelete) return;
-      const success = await this.deleteInvoice(this.invoiceToDelete.id);
-      if (success) {
-        this.closeDialogs();
+    ...mapActions(store, ['showSnackbar']),
+    async fetchInvoices() {
+      this.loading = true;
+      try {
+        const { data } = await axios.get('/api/invoices');
+        this.invoices = data;
+      } catch (error) {
+        const message = error.response?.data?.message || 'Failed to fetch invoices. Please try again.';
+        this.showSnackbar(message, 'error');
+      } finally {
+        this.loading = false;
       }
     },
-
-     async performGenerate() {
-        // Basic validation
-        if (!this.generatePayload.customer_id || !this.generatePayload.start_date || !this.generatePayload.end_date) {
-            // Use store's snackbar for error
-            store().showSnackbar('Please select customer and date range.', 'warning');
-            return;
-        }
-        const result = await this.generateInvoiceFromWorkLogs(this.generatePayload);
-        if (result) {
-            this.closeDialogs();
-            // Invoices are refetched by the action
-        }
+    
+    confirmDelete(item) {
+      this.itemToDelete = item;
+      this.deleteDialog = true;
     },
-
-    // Called when InvoiceForm emits 'saved'
-    onInvoiceSaved() {
-        this.closeDialogs();
-        // No need to manually fetch, store actions update the state
+    
+    async deleteInvoice() {
+      try {
+        await axios.delete(`/api/invoices/${this.itemToDelete.id}`);
+        this.invoices = this.invoices.filter(i => i.id !== this.itemToDelete.id);
+        this.deleteDialog = false;
+        this.showSnackbar('Invoice deleted successfully', 'success');
+      } catch (error) {
+        const message = error.response?.data?.message || 'Failed to delete invoice. Please try again.';
+        this.showSnackbar(message, 'error');
+      }
     },
-
+    
     formatDate(dateStr) {
-        if (!dateStr) return 'N/A';
-        // Adjust formatting as needed
-        return new Date(dateStr).toLocaleDateString();
+      return new Date(dateStr).toLocaleDateString();
     },
-
-    formatCurrency(value) {
-        if (typeof value !== 'number') {
-            value = parseFloat(value) || 0;
-        }
-        return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-    },
-
+    
     getStatusColor(status) {
-      switch (status) {
-        case 'paid': return 'success';
-        case 'overdue': return 'error';
-        case 'sent': return 'info';
-        case 'draft': return 'grey';
-        case 'cancelled': return 'warning';
-        default: return 'default';
+      const colors = {
+        'paid': 'success',
+        'pending': 'warning'
+      };
+      return colors[status.toLowerCase()] || 'grey';
+    },
+    openCreateDialog() {
+      this.createDialog = true;
+    },
+    openEditDialog(item) {
+      this.currentInvoice = { ...item };
+      this.editDialog = true;
+    },
+    async saveInvoice(payload) {
+      try {
+        const { data } = await axios.post('/api/invoices', payload);
+        this.invoices.unshift(data);
+        this.createDialog = false;
+        this.showSnackbar('Invoice created successfully', 'success');
+      } catch (e) {
+        const message = e.response?.data?.errors 
+          ? Object.values(e.response.data.errors)[0][0]
+          : (e.response?.data?.message || 'Failed to create invoice');
+        this.showSnackbar(message, 'error');
+      }
+    },
+    async updateInvoiceRecord(payload) {
+      try {
+        const { data } = await axios.put(`/api/invoices/${this.currentInvoice.id}`, payload);
+        const idx = this.invoices.findIndex(i => i.id === data.id);
+        if (idx !== -1) this.invoices.splice(idx, 1, data);
+        this.editDialog = false;
+        this.showSnackbar('Invoice updated successfully', 'success');
+      } catch (e) {
+        const message = e.response?.data?.errors 
+          ? Object.values(e.response.data.errors)[0][0]
+          : (e.response?.data?.message || 'Failed to update invoice');
+        this.showSnackbar(message, 'error');
+      }
+    },
+    async openGenerateDialog() {
+      this.generateDialog = true;
+      try {
+        const { data } = await axios.get('/api/customers');
+        this.customers = data;
+      } catch (e) {
+        this.showSnackbar('Failed to load customers', 'error');
+      }
+    },
+    async onGenerateCustomerChange() {
+      this.unbilledLogs = [];
+      this.generateForm.work_log_ids = [];
+      if (!this.generateForm.customer_id) return;
+      try {
+        const { data } = await axios.get('/api/invoices/unbilled-worklogs', {
+          params: { customer_id: this.generateForm.customer_id }
+        });
+        this.unbilledLogs = (data || []).map(l => ({
+          id: l.id,
+          label: `${l.date} - ${l.project?.name || 'Project'} - ${l.hours_worked || 0}h`
+        }));
+      } catch (e) {
+        this.showSnackbar('Failed to load work logs', 'error');
+      }
+    },
+    async generateInvoice() {
+      try {
+        const payload = { ...this.generateForm };
+        const { data } = await axios.post('/api/invoices/generate', payload);
+        this.invoices.unshift(data);
+        this.generateDialog = false;
+        this.showSnackbar('Invoice generated from work logs', 'success');
+      } catch (e) {
+        const message = e.response?.data?.message || 'Failed to generate invoice';
+        this.showSnackbar(message, 'error');
       }
     }
   }
