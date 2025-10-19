@@ -39,7 +39,7 @@
           v-model="formData.hourly_rate"
           label="Hourly Rate"
           type="number"
-          prepend-icon="mdi-currency-usd"
+          prepend-icon="mdi-cash"
           :rules="[
             v => !!v || 'Hourly rate is required',
             v => v >= 0 || 'Hourly rate must be positive'
@@ -47,13 +47,39 @@
         ></v-text-field>
       </v-col>
       
-      <v-col cols="12" md="6" v-if="!user">
+      <v-col cols="12" v-if="user">
+        <v-checkbox
+          v-model="changePassword"
+          label="Change Password"
+          hide-details
+        ></v-checkbox>
+      </v-col>
+      
+      <v-col cols="12" md="6" v-if="!user || changePassword">
         <v-text-field
           v-model="formData.password"
           label="Password"
+          type="password"
           prepend-icon="mdi-lock"
-          autocomplete="off"
-          :rules="[v => !!v || 'Password is required']"
+          autocomplete="new-password"
+          :rules="[
+            v => (!user || changePassword) ? (!!v || 'Password is required') : true,
+            v => !v || v.length >= 8 || 'Password must be at least 8 characters'
+          ]"
+        ></v-text-field>
+      </v-col>
+      
+      <v-col cols="12" md="6" v-if="!user || changePassword">
+        <v-text-field
+          v-model="formData.password_confirmation"
+          label="Confirm Password"
+          type="password"
+          prepend-icon="mdi-lock-check"
+          autocomplete="new-password"
+          :rules="[
+            v => (!user || changePassword) ? (!!v || 'Password confirmation is required') : true,
+            v => v === formData.password || 'Passwords must match'
+          ]"
         ></v-text-field>
       </v-col>
     </v-row>
@@ -73,11 +99,13 @@ export default {
   data() {
     return {
       roles: ['admin', 'freelancer'],
+      changePassword: false,
       formData: {
         name: '',
         email: '',
         role: 'freelancer',
         password: '',
+        password_confirmation: '',
         hourly_rate: 0
       }
     };
@@ -87,7 +115,8 @@ export default {
     if (this.user) {
       this.formData = {
         ...this.user,
-        password: ''
+        password: '',
+        password_confirmation: ''
       };
     }
   },
@@ -101,9 +130,13 @@ export default {
       }
       
       const data = { ...this.formData };
-      if (!data.password) {
+      
+      // Only include password if creating new user or change password is checked
+      if (!data.password || (this.user && !this.changePassword)) {
         delete data.password;
+        delete data.password_confirmation;
       }
+      
       this.$emit('save', data);
     }
   }

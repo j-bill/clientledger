@@ -1,7 +1,8 @@
 <template>
-  <v-container>
+  <v-container fluid>
     <h1 class="text-h4 mb-4">Invoices</h1>
     
+    <!-- Search & Actions -->
     <v-row class="mb-4">
       <v-col cols="12" sm="6">
         <v-text-field
@@ -11,11 +12,13 @@
           single-line
           hide-details
           clearable
-          @input="fetchInvoices"
         ></v-text-field>
       </v-col>
-      <v-col cols="12" sm="6" class="text-right d-flex justify-end gap-2">
-        <v-btn color="secondary" data-test="btn-generate" prepend-icon="mdi-file-plus" class="mr-2" @click="openGenerateDialog">
+      <v-col cols="12" sm="6" class="d-flex justify-end">
+        <v-btn color="secondary" @click="toggleFilters" class="mr-2">
+          <v-icon>mdi-filter</v-icon>
+        </v-btn>
+        <v-btn color="secondary" data-test="btn-generate" prepend-icon="mdi-file-plus" @click="openGenerateDialog" class="mr-2">
           Generate from Work Logs
         </v-btn>
         <v-btn color="primary" data-test="btn-new" prepend-icon="mdi-plus" @click="openCreateDialog">
@@ -23,6 +26,40 @@
         </v-btn>
       </v-col>
     </v-row>
+    
+    <!-- Filters -->
+    <v-card v-if="showFilters" class="mb-4">
+      <v-card-title>Filters</v-card-title>
+      <v-card-text>
+        <v-row>
+          <v-col cols="12" md="4">
+            <v-select
+              v-model="selectedCustomerId"
+              :items="customers"
+              item-title="name"
+              item-value="id"
+              label="Customer"
+              prepend-inner-icon="mdi-account"
+              clearable
+              @update:model-value="applyFilters"
+            ></v-select>
+          </v-col>
+          <v-col cols="12" md="4">
+            <v-select
+              v-model="selectedStatus"
+              :items="statuses"
+              label="Status"
+              prepend-inner-icon="mdi-flag"
+              clearable
+              @update:model-value="applyFilters"
+            ></v-select>
+          </v-col>
+          <v-col cols="12" class="text-right">
+            <v-btn @click="resetFilters">Reset</v-btn>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
     
     <v-card>
       <v-data-table
@@ -32,8 +69,8 @@
         class="elevation-1"
         :search="search"
       >
-        <template v-slot:item.issue_date="{ item }">
-          {{ formatDate(item.issue_date) }}
+        <template v-slot:item.created_at="{ item }">
+          {{ formatDate(item.created_at) }}
         </template>
         <template v-slot:item.status="{ item }">
           <v-chip
@@ -44,7 +81,7 @@
           </v-chip>
         </template>
         <template v-slot:item.total_amount="{ item }">
-          {{ Number(item.total_amount).toFixed(2) }}
+          {{ currencySymbol + Number(item.total_amount).toFixed(2) }}
         </template>
         <template v-slot:item.actions="{ item }">
           <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)">
@@ -104,13 +141,10 @@
               />
             </v-col>
             <v-col cols="12" md="3">
-              <v-text-field v-model="generateForm.issue_date" data-test="gen-issue-date" type="date" label="Issue Date" />
-            </v-col>
-            <v-col cols="12" md="3">
               <v-text-field v-model="generateForm.due_date" data-test="gen-due-date" type="date" label="Due Date" />
             </v-col>
             <v-col cols="12" md="3">
-              <v-select v-model="generateForm.status" data-test="gen-status" :items="['pending','paid']" label="Status" />
+              <v-select v-model="generateForm.status" data-test="gen-status" :items="['draft','sent','paid','overdue','cancelled']" label="Status" />
             </v-col>
           </v-row>
         </v-card-text>
@@ -154,10 +188,11 @@
 </template>
 
 <script>
-import { mapActions } from 'pinia';
+import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
 import axios from 'axios';
 import InvoiceForm from '../components/forms/InvoiceForm.vue';
+import { formatDate } from '../utils/formatters';
 
 export default {
   name: 'InvoicesIndex',
@@ -165,6 +200,7 @@ export default {
   data() {
     return {
       invoices: [],
+      allInvoices: [], // Store all invoices for filtering
       loading: false,
       search: '',
       deleteDialog: false,
@@ -178,20 +214,27 @@ export default {
       generateForm: {
         customer_id: null,
         work_log_ids: [],
-        issue_date: new Date().toISOString().slice(0, 10),
         due_date: new Date().toISOString().slice(0, 10),
-        status: 'pending'
+        status: 'draft'
       },
+      showFilters: false,
+      selectedCustomerId: null,
+      selectedStatus: null,
+      statuses: ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled'],
       
       headers: [
         { title: 'Invoice #', key: 'id' },
         { title: 'Customer', key: 'customer.name' },
-        { title: 'Issue Date', key: 'issue_date' },
+        { title: 'Created', key: 'created_at' },
         { title: 'Total', key: 'total_amount' },
         { title: 'Status', key: 'status' },
         { title: 'Actions', key: 'actions', sortable: false }
       ]
     };
+  },
+  
+  computed: {
+    ...mapState(store, ['currencySymbol', 'settings'])
   },
   
   created() {
@@ -204,13 +247,48 @@ export default {
       this.loading = true;
       try {
         const { data } = await axios.get('/api/invoices');
-        this.invoices = data;
+        this.allInvoices = data;
+        this.applyFilters();
+        
+        // Fetch customers for filter dropdown
+        if (this.customers.length === 0) {
+          const customersResponse = await axios.get('/api/customers');
+          this.customers = customersResponse.data;
+        }
       } catch (error) {
         const message = error.response?.data?.message || 'Failed to fetch invoices. Please try again.';
         this.showSnackbar(message, 'error');
       } finally {
         this.loading = false;
       }
+    },
+    
+    toggleFilters() {
+      this.showFilters = !this.showFilters;
+    },
+    
+    resetFilters() {
+      this.selectedCustomerId = null;
+      this.selectedStatus = null;
+      this.applyFilters();
+    },
+    
+    applyFilters() {
+      let filtered = [...this.allInvoices];
+      
+      // Filter by customer
+      if (this.selectedCustomerId) {
+        filtered = filtered.filter(invoice => invoice.customer_id === this.selectedCustomerId);
+      }
+      
+      // Filter by status
+      if (this.selectedStatus) {
+        filtered = filtered.filter(invoice => 
+          invoice.status.toLowerCase() === this.selectedStatus.toLowerCase()
+        );
+      }
+      
+      this.invoices = filtered;
     },
     
     confirmDelete(item) {
@@ -221,7 +299,8 @@ export default {
     async deleteInvoice() {
       try {
         await axios.delete(`/api/invoices/${this.itemToDelete.id}`);
-        this.invoices = this.invoices.filter(i => i.id !== this.itemToDelete.id);
+        this.allInvoices = this.allInvoices.filter(i => i.id !== this.itemToDelete.id);
+        this.applyFilters();
         this.deleteDialog = false;
         this.showSnackbar('Invoice deleted successfully', 'success');
       } catch (error) {
@@ -231,13 +310,16 @@ export default {
     },
     
     formatDate(dateStr) {
-      return new Date(dateStr).toLocaleDateString();
+      return formatDate(dateStr, this.settings);
     },
     
     getStatusColor(status) {
       const colors = {
         'paid': 'success',
-        'pending': 'warning'
+        'sent': 'info',
+        'draft': 'grey',
+        'overdue': 'error',
+        'cancelled': 'warning'
       };
       return colors[status.toLowerCase()] || 'grey';
     },
@@ -251,7 +333,8 @@ export default {
     async saveInvoice(payload) {
       try {
         const { data } = await axios.post('/api/invoices', payload);
-        this.invoices.unshift(data);
+        this.allInvoices.unshift(data);
+        this.applyFilters();
         this.createDialog = false;
         this.showSnackbar('Invoice created successfully', 'success');
       } catch (e) {
@@ -264,8 +347,9 @@ export default {
     async updateInvoiceRecord(payload) {
       try {
         const { data } = await axios.put(`/api/invoices/${this.currentInvoice.id}`, payload);
-        const idx = this.invoices.findIndex(i => i.id === data.id);
-        if (idx !== -1) this.invoices.splice(idx, 1, data);
+        const idx = this.allInvoices.findIndex(i => i.id === data.id);
+        if (idx !== -1) this.allInvoices.splice(idx, 1, data);
+        this.applyFilters();
         this.editDialog = false;
         this.showSnackbar('Invoice updated successfully', 'success');
       } catch (e) {
@@ -304,7 +388,8 @@ export default {
       try {
         const payload = { ...this.generateForm };
         const { data } = await axios.post('/api/invoices/generate', payload);
-        this.invoices.unshift(data);
+        this.allInvoices.unshift(data);
+        this.applyFilters();
         this.generateDialog = false;
         this.showSnackbar('Invoice generated from work logs', 'success');
       } catch (e) {

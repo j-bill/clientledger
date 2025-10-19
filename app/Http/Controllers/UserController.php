@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\Rules\Password as PasswordRule;
 
 class UserController extends Controller
 {
@@ -19,7 +20,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => ['required', Password::defaults()],
+            'password' => ['required', 'confirmed', PasswordRule::defaults()],
             'role' => 'required|string|in:admin,freelancer',
             'hourly_rate' => 'required|numeric|min:0',
         ]);
@@ -39,7 +40,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
-            'password' => ['sometimes', Password::defaults()],
+            'password' => ['sometimes', 'confirmed', PasswordRule::defaults()],
             'role' => 'sometimes|string|in:admin,freelancer',
             'hourly_rate' => 'sometimes|numeric|min:0',
         ]);
@@ -56,5 +57,16 @@ class UserController extends Controller
     {
         $user->delete();
         return response()->noContent();
+    }
+
+    public function resetPassword(User $user)
+    {
+        $status = Password::sendResetLink(['email' => $user->email]);
+
+        if ($status === Password::RESET_LINK_SENT) {
+            return response()->json(['message' => 'Password reset link sent successfully']);
+        }
+
+        return response()->json(['message' => 'Unable to send password reset link'], 500);
     }
 }

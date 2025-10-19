@@ -10,6 +10,7 @@ class Invoice extends Model
     protected $fillable = [
         'customer_id',
         'invoice_number', // User must provide this now
+        'issue_date',
         'due_date',       // User must provide this now
         'total_amount',
         'status',

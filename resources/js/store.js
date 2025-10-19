@@ -22,7 +22,11 @@ export const store = defineStore("store", {
     // ...existing getters...
     isAuthenticated(state) { return !!state.user; },
     getUser(state) { return state.user; },
-    isAdmin(state) { return state.user && state.user.role === 'admin'; }
+    isAdmin(state) { return state.user && state.user.role === 'admin'; },
+    has2FAEnabled(state) { 
+      return state.user?.has_two_factor_enabled === true;
+    },
+    currencySymbol(state) { return state.settings.currency_symbol || '$'; }
   },
   actions: {
     showSnackbar(message, color = 'success', timeout = 3000) {
@@ -47,7 +51,10 @@ export const store = defineStore("store", {
         this.customers = response.data;
         return this.customers;
       } catch (error) {
-        this.showSnackbar(error.response?.data?.message || "Failed to fetch customers", "error");
+        // Don't show snackbar if it's a 2FA redirect
+        if (!error.suppressSnackbar) {
+          this.showSnackbar(error.response?.data?.message || "Failed to fetch customers", "error");
+        }
         throw error;
       }
     },
@@ -97,13 +104,16 @@ export const store = defineStore("store", {
     },
     
     // Project actions
-    async fetchProjects() {
+    async fetchProjects(params = {}) {
       try {
-        const response = await axios.get("/api/projects");
+        const response = await axios.get("/api/projects", { params });
         this.projects = response.data;
         return this.projects;
       } catch (error) {
-        this.showSnackbar(error.response?.data?.message || "Failed to fetch projects", "error");
+        // Don't show snackbar if it's a 2FA redirect
+        if (!error.suppressSnackbar) {
+          this.showSnackbar(error.response?.data?.message || "Failed to fetch projects", "error");
+        }
         throw error;
       }
     },
@@ -222,6 +232,21 @@ export const store = defineStore("store", {
           });
 
           if (response.status === 200) {
+            // Check if 2FA verification is required
+            if (response.data.requires_2fa_verification) {
+              // Store email for 2FA challenge
+              sessionStorage.setItem('2fa_pending_email', user);
+              resolve({ requires_2fa_verification: true, email: user });
+              return;
+            }
+
+            // Check if 2FA setup is required
+            if (response.data.requires_2fa_setup) {
+              await this.getAuthUser();
+              resolve({ requires_2fa_setup: true });
+              return;
+            }
+
             await this.getAuthUser();
             resolve(); // Resolve promise if login is successful
           } else {
@@ -238,14 +263,22 @@ export const store = defineStore("store", {
       return new Promise(async (resolve, reject) => {
         try {
           const response = await axios.get("/api/user");
+          console.log('[store.js] getAuthUser response:', response.data);
           this.user = response.data;
+          console.log('[store.js] user set in store:', this.user);
           // Initialize users array with the authenticated user
           this.users = [this.user];
           resolve(this.user); // Resolve promise with authenticated user
         } catch (error) {
+          console.error('[store.js] getAuthUser error:', error);
           reject(error.response?.data?.message || "Failed to get user info"); // Reject promise with error message
         }
       });
+    },
+    
+    // Update the current authenticated user's data in the store
+    updateAuthUser(userData) {
+      this.user = userData;
     },
     
     async logout() {
@@ -400,6 +433,27 @@ export const store = defineStore("store", {
         } finally {
             this.hideLoading();
         }
+    },
+    
+    // Settings actions
+    async fetchSettings() {
+      try {
+        const response = await axios.get('/api/settings');
+        // Convert array of {key, value} to object
+        const settingsObj = {};
+        response.data.forEach(setting => {
+          settingsObj[setting.key] = setting.value;
+        });
+        this.settings = settingsObj;
+        return this.settings;
+      } catch (error) {
+        console.error('Failed to fetch settings:', error);
+        // Set default values if fetch fails
+        this.settings = {
+          currency_symbol: '$'
+        };
+        return this.settings;
+      }
     }
   }
 });

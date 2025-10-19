@@ -23,6 +23,8 @@ class User extends Authenticatable
         'password',
         'role',
         'hourly_rate',
+        'avatar',
+        'notify_on_project_assignment',
     ];
 
     /**
@@ -33,6 +35,9 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'email_verification_code',
     ];
 
     /**
@@ -44,7 +49,18 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'hourly_rate' => 'decimal:2',
+        'two_factor_confirmed_at' => 'datetime',
+        'two_factor_device_fingerprints' => 'array',
+        'notify_on_project_assignment' => 'boolean',
+        'email_verification_code_expires_at' => 'datetime',
     ];
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['has_two_factor_enabled'];
 
     // Relationships
     public function workLogs()
@@ -94,5 +110,85 @@ class User extends Authenticatable
         return $this->workLogs()
             ->whereBetween('date', [$startDate, $endDate])
             ->sum('amount');
+    }
+
+    // 2FA Methods
+    public function hasTwoFactorEnabled()
+    {
+        return !is_null($this->two_factor_secret) && !is_null($this->two_factor_confirmed_at);
+    }
+
+    public function twoFactorEnabled()
+    {
+        return $this->hasTwoFactorEnabled();
+    }
+
+    public function isDeviceTrusted($fingerprint)
+    {
+        if (!$this->two_factor_device_fingerprints) {
+            return false;
+        }
+
+        foreach ($this->two_factor_device_fingerprints as $device) {
+            if ($device['fingerprint'] === $fingerprint && $device['expires_at'] > now()->timestamp) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function addTrustedDevice($fingerprint, $userAgent)
+    {
+        $devices = $this->two_factor_device_fingerprints ?: [];
+        
+        // Remove old device with same fingerprint if exists
+        $devices = array_filter($devices, function($device) use ($fingerprint) {
+            return $device['fingerprint'] !== $fingerprint;
+        });
+
+        // Add new device (trust for 2 weeks)
+        $devices[] = [
+            'fingerprint' => $fingerprint,
+            'user_agent' => $userAgent,
+            'added_at' => now()->timestamp,
+            'expires_at' => now()->addWeeks(2)->timestamp,
+        ];
+
+        // Keep only last 10 devices
+        $devices = array_slice($devices, -10);
+
+        $this->two_factor_device_fingerprints = array_values($devices);
+        $this->save();
+    }
+
+    public function removeTrustedDevice($fingerprint)
+    {
+        if (!$this->two_factor_device_fingerprints) {
+            return;
+        }
+
+        $devices = array_filter($this->two_factor_device_fingerprints, function($device) use ($fingerprint) {
+            return $device['fingerprint'] !== $fingerprint;
+        });
+
+        $this->two_factor_device_fingerprints = array_values($devices);
+        $this->save();
+    }
+
+    public function clearAllTrustedDevices()
+    {
+        $this->two_factor_device_fingerprints = [];
+        $this->save();
+    }
+
+    /**
+     * Get the has_two_factor_enabled attribute.
+     *
+     * @return bool
+     */
+    public function getHasTwoFactorEnabledAttribute()
+    {
+        return $this->hasTwoFactorEnabled();
     }
 }

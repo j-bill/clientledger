@@ -1,14 +1,23 @@
 <template>
-  <v-container>
+  <v-container fluid>
     <h1 class="text-h4 mb-4">Projects</h1>
     
-    <!-- Action Bar -->
+    <!-- Search & Actions -->
     <v-row class="mb-4">
-      <v-col cols="12" class="d-flex justify-space-between">
-        <v-btn color="secondary" @click="toggleFilters" prepend-icon="mdi-filter">
-          Display Filters
+      <v-col cols="12" sm="6">
+        <v-text-field
+          v-model="search"
+          label="Search"
+          prepend-inner-icon="mdi-magnify"
+          single-line
+          hide-details
+          clearable
+        ></v-text-field>
+      </v-col>
+      <v-col cols="12" sm="6" class="d-flex justify-end">
+        <v-btn color="secondary" @click="toggleFilters" class="mr-2">
+          <v-icon>mdi-filter</v-icon>
         </v-btn>
-
         <v-btn v-if="isAdmin" color="primary" @click="openCreateDialog" prepend-icon="mdi-plus">
           New Project
         </v-btn>
@@ -16,7 +25,7 @@
     </v-row>
     
     <!-- Filters -->
-    <v-card v-if="showFilters" class="mb-6">
+    <v-card v-if="showFilters" class="mb-4">
       <v-card-title>Filters</v-card-title>
       <v-card-text>
         <v-row>
@@ -34,6 +43,7 @@
               prepend-icon="mdi-account"
               :search-input.sync="customerSearch"
               @update:search="searchCustomers"
+              @update:modelValue="applyFilters"
             ></v-autocomplete>
           </v-col>
           <v-col cols="12" sm="6" md="4">
@@ -50,12 +60,10 @@
               prepend-icon="mdi-account"
               :search-input.sync="freelancerSearch"
               @update:search="searchFreelancers"
+              @update:modelValue="applyFilters"
             ></v-autocomplete>
           </v-col>
           <v-col cols="12" class="text-right">
-            <v-btn color="primary" @click="applyFilters">
-              Apply Filters
-            </v-btn>
             <v-btn class="ms-2" @click="resetFilters">
               Reset
             </v-btn>
@@ -72,12 +80,13 @@
         :loading="loading"
         class="elevation-1"
         :search="search"
+        :custom-filter="customSearch"
       >
         <template v-slot:item.deadline="{ item }">
           {{ item.deadline ? formatDate(item.deadline) : 'N/A' }}
         </template>
         <template v-slot:item.hourly_rate="{ item }">
-          <span v-if="isAdmin">${{ Number(item.hourly_rate || 0).toFixed(2) }}</span>
+          <span v-if="isAdmin">{{ currencySymbol }}{{ Number(item.hourly_rate || 0).toFixed(2) }}</span>
           <span v-else>-</span>
         </template>
         <template v-slot:item.users="{ item }">
@@ -94,9 +103,6 @@
           </v-chip-group>
         </template>
         <template v-slot:item.actions="{ item }">
-          <v-btn icon variant="text" size="small" color="primary" @click="openViewDialog(item)">
-            <v-icon>mdi-eye</v-icon>
-          </v-btn>
           <template v-if="isAdmin">
             <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)">
               <v-icon>mdi-pencil</v-icon>
@@ -144,53 +150,12 @@
       <v-card>
         <v-card-title>Edit Project</v-card-title>
         <v-card-text>
-          <project-form ref="editForm" :project="currentProject" :customers="customers" :freelancers="freelancers" @save="updateProject"></project-form>
+          <project-form ref="editForm" :project="currentProject" :customers="customers" :freelancers="freelancers" @save="handleUpdateProject"></project-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="error" variant="text" @click="editDialog = false">Cancel</v-btn>
           <v-btn color="primary" @click="$refs.editForm.submit()">Update</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-    
-    <!-- Project View Dialog -->
-    <v-dialog v-model="viewDialog" max-width="800px">
-      <v-card>
-        <v-card-title>Project Details</v-card-title>
-        <v-card-text>
-          <v-row>
-            <v-col cols="12">
-              <strong>Name:</strong> {{ currentProject?.name }}
-            </v-col>
-            <v-col cols="12">
-              <strong>Customer:</strong> {{ currentProject?.customer?.name }}
-            </v-col>
-            <v-col cols="12" v-if="isAdmin">
-              <strong>Project Rate:</strong> ${{ Number(currentProject?.hourly_rate || 0).toFixed(2) }}
-            </v-col>
-            <v-col cols="12">
-              <strong>Deadline:</strong> {{ formatDate(currentProject?.deadline) }}
-            </v-col>
-            <v-col cols="12">
-              <strong>Description:</strong> {{ currentProject?.description }}
-            </v-col>
-            <v-col cols="12">
-              <strong>Assigned Freelancers:</strong>
-              <v-chip-group class="mt-2">
-                <v-chip v-for="user in currentProject?.users" :key="user.id" color="primary" variant="outlined">
-                  {{ user.name }} 
-                  <template v-if="isAdmin">
-                    (${{ Number(user.pivot?.hourly_rate || 0).toFixed(2) }}/hr)
-                  </template>
-                </v-chip>
-              </v-chip-group>
-            </v-col>
-          </v-row>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" variant="text" @click="viewDialog = false">Close</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -201,6 +166,7 @@
 import ProjectForm from '../components/forms/ProjectForm.vue';
 import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
+import { formatDate } from '../utils/formatters';
 
 export default {
   name: 'ProjectsIndex',
@@ -214,7 +180,6 @@ export default {
       deleteDialog: false,
       createDialog: false,
       editDialog: false,
-      viewDialog: false,
       itemToDelete: null,
       currentProject: null,
       showFilters: false,
@@ -229,7 +194,7 @@ export default {
         { title: 'Name', key: 'name' },
         { title: 'Customer', key: 'customer.name' },
         { title: 'Project Rate', key: 'hourly_rate' },
-        { title: 'Assigned Freelancers', key: 'users' },
+        { title: 'Assigned Freelancers', key: 'users', sortable: false },
         { title: 'Deadline', key: 'deadline' },
         { title: 'Actions', key: 'actions', sortable: false }
       ]
@@ -237,14 +202,15 @@ export default {
   },
   
   computed: {
-    ...mapState(store, ['projects', 'customers', 'users', 'user']),
+    ...mapState(store, ['projects', 'customers', 'users', 'user', 'currencySymbol']),
     
     isAdmin() {
       return this.user?.role === 'admin';
     },
     
     freelancers() {
-      return this.users.filter(user => user.role === 'freelancer');
+      // Return all users (including admins) for project assignment
+      return this.users;
     }
   },
   
@@ -279,6 +245,37 @@ export default {
       }
     },
     
+    customSearch(value, query, item) {
+      if (!query) return true;
+      
+      const searchLower = query.toString().toLowerCase();
+      
+      // Search in project name
+      if (item.raw.name && item.raw.name.toLowerCase().includes(searchLower)) {
+        return true;
+      }
+      
+      // Search in customer name
+      if (item.raw.customer && item.raw.customer.name && item.raw.customer.name.toLowerCase().includes(searchLower)) {
+        return true;
+      }
+      
+      // Search in assigned users
+      if (item.raw.users && item.raw.users.length > 0) {
+        const userMatch = item.raw.users.some(user => 
+          user.name && user.name.toLowerCase().includes(searchLower)
+        );
+        if (userMatch) return true;
+      }
+      
+      // Search in description
+      if (item.raw.description && item.raw.description.toLowerCase().includes(searchLower)) {
+        return true;
+      }
+      
+      return false;
+    },
+    
     openCreateDialog() {
       this.createDialog = true;
     },
@@ -286,11 +283,6 @@ export default {
     openEditDialog(item) {
       this.currentProject = { ...item };
       this.editDialog = true;
-    },
-    
-    openViewDialog(item) {
-      this.currentProject = { ...item };
-      this.viewDialog = true;
     },
     
     async saveProject(project) {
@@ -302,7 +294,7 @@ export default {
       }
     },
     
-    async updateProject(project) {
+    async handleUpdateProject(project) {
       try {
         await this.updateProject(project);
         this.editDialog = false;
@@ -326,13 +318,7 @@ export default {
     },
     
     formatDate(dateStr) {
-      let date = new Date(dateStr)
-
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
-      const day = date.getDate();
-
-      return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+      return formatDate(dateStr);
     },
 
     async checkUserRole() {
@@ -351,7 +337,14 @@ export default {
     },
 
     applyFilters() {
-      this.fetchProjects();
+      const params = {};
+      if (this.filters.customers.length > 0) {
+        params.customers = this.filters.customers;
+      }
+      if (this.filters.freelancers.length > 0) {
+        params.freelancers = this.filters.freelancers;
+      }
+      this.fetchProjects(params);
     },
 
     resetFilters() {

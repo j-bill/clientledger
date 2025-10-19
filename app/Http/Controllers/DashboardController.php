@@ -185,10 +185,10 @@ class DashboardController extends Controller
             // --- Admin: Revenue KPIs ---
             $invoiceQueryBase = Invoice::where('status', 'paid');
             $yearlyRevenue = (clone $invoiceQueryBase)
-                ->whereYear('issue_date', $now->year)
+                ->whereYear('created_at', $now->year)
                 ->sum('total_amount');
             $lastYearRevenue = (clone $invoiceQueryBase)
-                ->whereBetween('issue_date', [$lastYearStart, $lastYearEnd])
+                ->whereBetween('created_at', [$lastYearStart, $lastYearEnd])
                 ->sum('total_amount');
             
             // For current month, we need to calculate from work logs since invoices haven't been created yet
@@ -198,7 +198,7 @@ class DashboardController extends Controller
             $monthlyRevenue = number_format($currentMonthRevenue * $extrapolationFactor, 2, '.', '');
             
             $lastMonthRevenue = (clone $invoiceQueryBase)
-                ->whereBetween('issue_date', [$lastMonthStart, $lastMonthEnd])
+                ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
                 ->sum('total_amount');
 
             // --- Admin: Revenue by Customer ---
@@ -213,14 +213,15 @@ class DashboardController extends Controller
 
             // --- Admin: Yearly Revenue Trend ---
             $yearlyRevenueTrend = Invoice::where('status', 'paid')
-                ->whereYear('issue_date', $now->year)
-                ->selectRaw('DATE(issue_date) as date, SUM(total_amount) as total')
-                ->groupBy('date')
-                ->orderBy('date')
+                ->whereYear('created_at', $now->year)
+                ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, SUM(total_amount) as total')
+                ->groupBy('year', 'month')
+                ->orderBy('year')
+                ->orderBy('month')
                 ->get()
                 ->map(function ($item) {
                     return [
-                        'date' => $item->date,
+                        'date' => Carbon::createFromDate($item->year, $item->month, 1)->format('Y-m'),
                         'amount' => $item->total
                     ];
                 });

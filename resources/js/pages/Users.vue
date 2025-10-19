@@ -1,7 +1,8 @@
 <template>
-  <v-container>
+  <v-container fluid>
     <h1 class="text-h4 mb-4">Users</h1>
     
+    <!-- Search & Actions -->
     <v-row class="mb-4">
       <v-col cols="12" sm="6">
         <v-text-field
@@ -11,10 +12,9 @@
           single-line
           hide-details
           clearable
-          @input="fetchUsers"
         ></v-text-field>
       </v-col>
-      <v-col cols="12" sm="6" class="text-right">
+      <v-col cols="12" sm="6" class="d-flex justify-end">
         <v-btn color="primary" @click="openCreateDialog" prepend-icon="mdi-plus">
           New User
         </v-btn>
@@ -30,11 +30,11 @@
         :search="search"
       >
         <template v-slot:item.actions="{ item }">
-          <v-btn icon variant="text" size="small" color="info" @click="openEditDialog(item)">
-            <v-icon>mdi-eye</v-icon>
-          </v-btn>
           <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)">
             <v-icon>mdi-pencil</v-icon>
+          </v-btn>
+          <v-btn icon variant="text" size="small" color="warning" @click="confirmResetPassword(item)">
+            <v-icon>mdi-lock-reset</v-icon>
           </v-btn>
           <v-btn icon variant="text" size="small" color="error" @click="confirmDelete(item)">
             <v-icon>mdi-delete</v-icon>
@@ -47,7 +47,7 @@
           {{ new Date(item.updated_at).toLocaleDateString() }}
         </template>
         <template v-slot:item.hourly_rate="{ item }">
-          <span v-if="item.role === 'freelancer'">${{ Number(item.hourly_rate || 0).toFixed(2) }}</span>
+          <span v-if="item.role === 'freelancer'">{{ currencySymbol }}{{ Number(item.hourly_rate || 0).toFixed(2) }}</span>
           <span v-else>-</span>
         </template>
       </v-data-table>
@@ -63,6 +63,23 @@
           <v-spacer></v-spacer>
           <v-btn color="primary" variant="text" @click="deleteDialog = false">Cancel</v-btn>
           <v-btn color="error" @click="deleteUserRecord">Delete</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Reset Password Dialog -->
+    <v-dialog v-model="resetPasswordDialog" max-width="500px">
+      <v-card>
+        <v-card-title>Reset Password</v-card-title>
+        <v-card-text>
+          Send a password reset link to <strong>{{ resetPasswordUser?.email }}</strong>?
+          <br><br>
+          The user will receive an email with instructions to reset their password.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" variant="text" @click="resetPasswordDialog = false">Cancel</v-btn>
+          <v-btn color="warning" @click="resetPassword">Send Reset Link</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -103,6 +120,7 @@
 import UserForm from '../components/forms/UserForm.vue';
 import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
+import axios from 'axios';
 
 export default {
   name: 'UsersIndex',
@@ -118,6 +136,8 @@ export default {
       createDialog: false,
       editDialog: false,
       currentUser: null,
+      resetPasswordDialog: false,
+      resetPasswordUser: null,
       
       headers: [
         { title: 'Name', key: 'name' },
@@ -132,7 +152,7 @@ export default {
   },
   
   computed: {
-    ...mapState(store, ['users'])
+    ...mapState(store, ['users', 'currencySymbol'])
   },
   
   created() {
@@ -186,6 +206,22 @@ export default {
         this.editDialog = false;
       } catch (error) {
         console.error('Error updating user:', error);
+      }
+    },
+    
+    confirmResetPassword(item) {
+      this.resetPasswordUser = item;
+      this.resetPasswordDialog = true;
+    },
+    
+    async resetPassword() {
+      try {
+        await axios.post(`/api/users/${this.resetPasswordUser.id}/reset-password`);
+        this.resetPasswordDialog = false;
+        this.showSnackbar('Password reset link sent successfully', 'success');
+      } catch (error) {
+        const message = error.response?.data?.message || 'Failed to send reset link. Please try again.';
+        this.showSnackbar(message, 'error');
       }
     }
   }

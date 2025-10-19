@@ -1,18 +1,24 @@
 <template>
-	<v-container>
+	<v-container fluid>
 		<h1 class="text-h4 mb-4">Work Logs</h1>
 
-		<!-- Action Bar -->
+		<!-- Search & Actions -->
 		<v-row class="mb-4">
-			<v-col cols="12"
-				   class="d-flex justify-space-between">
-
-				<v-btn color="secondary"
-					   @click="toggleFilters"
-					   prepend-icon="mdi-filter">
-					Display Filters
+			<v-col cols="12" sm="6">
+				<v-text-field
+					v-model="filters.search"
+					label="Search"
+					prepend-inner-icon="mdi-magnify"
+					single-line
+					hide-details
+					clearable
+					@input="loadWorkLogs"
+				></v-text-field>
+			</v-col>
+			<v-col cols="12" sm="6" class="d-flex justify-end">
+				<v-btn color="secondary" @click="toggleFilters" class="mr-2">
+					<v-icon>mdi-filter</v-icon>
 				</v-btn>
-
 				<v-btn color="primary"
 					   @click="openCreateDialog"
 					   prepend-icon="mdi-plus">
@@ -23,7 +29,7 @@
 
 		<!-- Filters -->
 		<v-card v-if="showFilters"
-				class="mb-6">
+				class="mb-4">
 			<v-card-title>Filters</v-card-title>
 			<v-card-text>
 				<v-row>
@@ -84,6 +90,18 @@
 					<v-col cols="12"
 						   sm="6"
 						   md="3">
+						<v-select v-model="filters.user_id"
+								  :items="users"
+								  item-title="name"
+								  item-value="id"
+								  label="User/Freelancer"
+								  clearable
+								  prepend-icon="mdi-account"></v-select>
+					</v-col>
+
+					<v-col cols="12"
+						   sm="6"
+						   md="3">
 						<v-select v-model="filters.billable"
 								  :items="billableOptions"
 								  label="Billable"
@@ -94,27 +112,9 @@
 
 				<v-row>
 					<v-col cols="12"
-						   sm="6"
-						   md="3">
-						<v-select v-model="filters.sort_by"
-								  :items="sortOptions"
-								  label="Sort By"
-								  prepend-icon="mdi-sort"></v-select>
-					</v-col>
-
-					<v-col cols="12"
-						   sm="6"
-						   md="3">
-						<v-select v-model="filters.sort_dir"
-								  :items="sortDirections"
-								  label="Sort Direction"
-								  prepend-icon="mdi-sort-ascending"></v-select>
-					</v-col>
-
-					<v-col cols="12"
 						   class="text-right">
 						<v-btn color="primary"
-							   @click="fetchWorkLogs">
+							   @click="loadWorkLogs">
 							Apply Filters
 						</v-btn>
 						<v-btn class="ms-2"
@@ -133,22 +133,28 @@
 								 :items="workLogs"
 								 :items-length="totalItems"
 								 item-value="name"
-								 @update:options="fetchWorkLogs">
+								 @update:options="loadWorkLogs">
 
-				<template v-slot:item.user="{ item }">
-					{{ item.user?.name || 'N/A' }}
-				</template>
+			<template v-slot:item.user="{ item }">
+				{{ item.user?.name || 'N/A' }}
+			</template>
+			
+			<template v-slot:item.start_time="{ item }">
+				{{ formatTime(item.start_time) }}
+			</template>
+			
+			<template v-slot:item.end_time="{ item }">
+				{{ item.end_time ? formatTime(item.end_time) : 'N/A' }}
+			</template>
 
-				<template v-slot:item.hours="{ item }">
-					{{ Number(item.hours_worked || 0).toFixed(2) }}
-				</template>
-
-				<template v-slot:item.hourly_rate="{ item }">
-					${{ Number(item.user_hourly_rate || 0).toFixed(2) }}
+			<template v-slot:item.hours="{ item }">
+				{{ Number(item.hours_worked || 0).toFixed(2) }}
+			</template>				<template v-slot:item.hourly_rate="{ item }">
+					{{ currencySymbol }}{{ Number(item.user_hourly_rate || 0).toFixed(2) }}
 				</template>
 
 				<template v-slot:item.amount="{ item }">
-					${{ Number(item.amount || 0).toFixed(2) }}
+					{{ currencySymbol }}{{ Number(item.amount || 0).toFixed(2) }}
 				</template>
 
 				<template v-slot:item.billable="{ item }">
@@ -259,6 +265,7 @@ import WorkLogForm from '../components/forms/WorkLogForm.vue';
 import eventBus from '../eventBus';
 import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
+import { formatDate, formatTime } from '../utils/formatters';
 
 export default {
 	name: 'WorkLogsIndex',
@@ -280,57 +287,45 @@ export default {
 			currentWorkLog: null,
 			showFilters: false,
 			totalItems: 0,
-			search: '',
 			
 			filters: {
+				search: '',
 				start_date: null,
 				end_date: null,
 				project_id: null,
+				user_id: null,
 				billable: null,
-				sort_by: 'date',
-				sort_dir: 'desc',
 				per_page: 10
 			},
 
-			headers: [
-				{ title: 'Date', key: 'date', sortable: true },
-				{ title: 'Project', key: 'project.name', sortable: true },
-				{ title: 'Freelancer', key: 'user', sortable: true },
-				{ title: 'Start Time', key: 'start_time', sortable: true },
-				{ title: 'End Time', key: 'end_time', sortable: true },
-				{ title: 'Hours', key: 'hours', sortable: true },
-				{ title: 'Rate', key: 'hourly_rate', sortable: true },
-				{ title: 'Amount', key: 'amount', sortable: true },
-				{ title: 'Billable', key: 'billable', sortable: true },
-				{ title: 'Description', key: 'description', sortable: true },
-				{ title: 'Actions', key: 'actions', sortable: false }
-			],
-
-			projects: [],
-			billableOptions: [
+		headers: [
+			{ title: 'Date', key: 'date', sortable: true },
+			{ title: 'Project', key: 'project.name', sortable: true },
+			{ title: 'Freelancer', key: 'user.name', sortable: true },
+			{ title: 'Start Time', key: 'start_time', sortable: true },
+			{ title: 'End Time', key: 'end_time', sortable: true },
+			{ title: 'Hours', key: 'hours_worked', sortable: true },
+			{ title: 'Rate', key: 'user_hourly_rate', sortable: true },
+			{ title: 'Amount', key: 'amount', sortable: true },
+			{ title: 'Billable', key: 'billable', sortable: true },
+			{ title: 'Description', key: 'description', sortable: true },
+			{ title: 'Actions', key: 'actions', sortable: false }
+		],			billableOptions: [
 				{ title: 'Yes', value: true },
 				{ title: 'No', value: false }
 			],
-			sortOptions: [
-				{ title: 'Date', value: 'date' },
-				{ title: 'Project', value: 'project_id' },
-				{ title: 'Hours', value: 'hours_worked' }
-			],
-			sortDirections: [
-				{ title: 'Ascending', value: 'asc' },
-				{ title: 'Descending', value: 'desc' }
-				],
 		};
 	},
 
 	created() {
-		this.fetchWorkLogs();
+		this.loadWorkLogs();
 		this.fetchProjects();
+		this.fetchUsers();
 		this.checkForCompletingTracking();
 	},
 	
 	computed: {
-		...mapState(store, ['projects'])
+		...mapState(store, ['projects', 'users', 'currencySymbol'])
 	},
 	
 	// Add navigation guard to handle when already on worklogs page
@@ -361,6 +356,7 @@ export default {
 			'showLoading', 
 			'hideLoading',
 			'fetchProjects',
+			'fetchUsers',
 			'fetchWorkLogs',
 			'getWorkLog',
 			'createWorkLog',
@@ -452,37 +448,63 @@ export default {
 			}
 		},
 		
-		async loadWorkLogs(options = {}) {
-			this.showLoading();
+	async loadWorkLogs(options = {}) {
+		this.showLoading();
 
-			try {
-				// Filter out null values
-				const params = { ...this.filters, page: this.page, ...options };
-				Object.keys(params).forEach(key => {
-					if (params[key] === null) delete params[key];
-				});
-
-				const response = await this.fetchWorkLogs(params);
-				this.workLogs = response.data;
-				this.totalItems = response.total;
-				this.totalPages = Math.ceil(response.total / this.filters.per_page);
-                return response; // Return the response for promise chaining
-			} catch (error) {
-				console.error('Error fetching work logs:', error);
-                throw error; // Re-throw for promise chaining
-			} finally {
-				this.hideLoading();
+		try {
+			// Extract sorting from Vuetify table options if provided
+			let params = { ...this.filters, page: this.page };
+			
+			if (options.sortBy && options.sortBy.length > 0) {
+				let sortKey = options.sortBy[0].key;
+				
+				// Map frontend sort keys to backend sort fields
+				const sortKeyMap = {
+					'project.name': 'project',
+					'user.name': 'user',
+					'hours_worked': 'hours',
+					'user_hourly_rate': 'hourly_rate'
+				};
+				
+				params.sort_by = sortKeyMap[sortKey] || sortKey;
+				params.sort_dir = options.sortBy[0].order;
+			} else {
+				// Default sorting
+				params.sort_by = 'date';
+				params.sort_dir = 'desc';
 			}
-		},
+			
+			if (options.page) {
+				params.page = options.page;
+			}
+			
+			if (options.itemsPerPage) {
+				params.per_page = options.itemsPerPage;
+			}
+			
+			// Filter out null values
+			Object.keys(params).forEach(key => {
+				if (params[key] === null) delete params[key];
+			});
 
-		resetFilters() {
+			const response = await this.fetchWorkLogs(params);
+			this.workLogs = response.data;
+			this.totalItems = response.total;
+			this.totalPages = Math.ceil(response.total / (params.per_page || this.filters.per_page));
+            return response; // Return the response for promise chaining
+		} catch (error) {
+			console.error('Error fetching work logs:', error);
+            throw error; // Re-throw for promise chaining
+		} finally {
+			this.hideLoading();
+		}
+	},		resetFilters() {
 			this.filters = {
 				start_date: null,
 				end_date: null,
 				project_id: null,
+				user_id: null,
 				billable: null,
-				sort_by: 'date',
-				sort_dir: 'desc',
 				per_page: 10
 			};
 			this.page = 1;
@@ -534,7 +556,11 @@ export default {
 		},
 
 		formatDate(dateStr) {
-			return new Date(dateStr).toLocaleDateString();
+			return formatDate(dateStr);
+		},
+		
+		formatTime(timeStr) {
+			return formatTime(timeStr);
 		}
 	}
 };

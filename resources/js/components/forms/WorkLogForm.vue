@@ -103,9 +103,9 @@
 			<v-col cols="12"
 				   md="6" v-if="isAdmin">
 				<v-text-field v-model="formData.hourly_rate"
-							  label="Freelancer Hourly Rate ($)"
+							  label="Freelancer Hourly Rate"
 							  type="number"
-							  prepend-icon="mdi-currency-usd"
+							  prepend-icon="mdi-cash"
 							  :disabled="isNewWorkLog && formData.user_id"
 							  hint="Rate is inherited from freelancer for new work logs"></v-text-field>
 			</v-col>
@@ -193,6 +193,11 @@ export default {
 		}
 		this.fetchCustomers();
 		this.filteredProjects = [...this.projects];
+		
+		// If editing a work log with a project, populate the project users
+		if (this.workLog && this.workLog.project_id) {
+			this.updateProjectDetails();
+		}
 	},
 
 	methods: {

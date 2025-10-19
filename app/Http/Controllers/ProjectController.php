@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\User;
+use App\Notifications\ProjectAssigned;
 use Illuminate\Http\Request;
 
 class ProjectController extends Controller
@@ -33,6 +34,13 @@ class ProjectController extends Controller
         // Filter by customers
         if ($request->has('customers') && is_array($request->customers) && !empty($request->customers)) {
             $query->whereIn('customer_id', $request->customers);
+        }
+
+        // Filter by freelancers
+        if ($request->has('freelancers') && is_array($request->freelancers) && !empty($request->freelancers)) {
+            $query->whereHas('users', function ($q) use ($request) {
+                $q->whereIn('users.id', $request->freelancers);
+            });
         }
 
         // Hide the pivot data for users
@@ -74,11 +82,17 @@ class ProjectController extends Controller
             'deadline' => $validated['deadline'],
         ]);
 
-        // Attach users with their hourly rates
+        // Attach users with their hourly rates and send notifications
         foreach ($validated['users'] as $userData) {
             $project->users()->attach($userData['id'], [
                 'hourly_rate' => $userData['hourly_rate']
             ]);
+            
+            // Send notification to the assigned user
+            $user = User::find($userData['id']);
+            if ($user) {
+                $user->notify(new ProjectAssigned($project->load('customer'), $userData['hourly_rate']));
+            }
         }
 
         return response()->json($project->load('customer', 'users'), 201);
@@ -114,11 +128,22 @@ class ProjectController extends Controller
 
         // Update users if provided
         if (isset($validated['users'])) {
+            // Get current user IDs before detaching
+            $previousUserIds = $project->users()->pluck('users.id')->toArray();
+            
             $project->users()->detach();
             foreach ($validated['users'] as $userData) {
                 $project->users()->attach($userData['id'], [
                     'hourly_rate' => $userData['hourly_rate']
                 ]);
+                
+                // Only send notification to newly assigned users (not previously assigned)
+                if (!in_array($userData['id'], $previousUserIds)) {
+                    $user = User::find($userData['id']);
+                    if ($user) {
+                        $user->notify(new ProjectAssigned($project->load('customer'), $userData['hourly_rate']));
+                    }
+                }
             }
         }
 

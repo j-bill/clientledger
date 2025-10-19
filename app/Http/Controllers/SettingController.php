@@ -59,4 +59,81 @@ class SettingController extends Controller
         $setting->delete();
         return response()->json(null, 204);
     }
+
+    /**
+     * Get all settings as a key-value object
+     */
+    public function getBatch()
+    {
+        $settings = Setting::all()->pluck('value', 'key');
+        return response()->json($settings);
+    }
+
+    /**
+     * Save multiple settings at once (upsert)
+     */
+    public function saveBatch(Request $request)
+    {
+        $data = $request->all();
+        
+        // Validate that we have an object/array
+        if (!is_array($data)) {
+            return response()->json(['message' => 'Invalid data format'], 400);
+        }
+
+        try {
+            // Upsert all settings
+            foreach ($data as $key => $value) {
+                // Skip if key is empty
+                if (empty($key)) {
+                    continue;
+                }
+                
+                // Convert boolean to string for storage
+                if (is_bool($value)) {
+                    $value = $value ? '1' : '0';
+                }
+                
+                // Convert null to empty string
+                if (is_null($value)) {
+                    $value = '';
+                }
+                
+                // Ensure value is a string
+                $value = (string) $value;
+                
+                Setting::updateOrCreate(
+                    ['key' => $key],
+                    ['value' => $value]
+                );
+            }
+
+            // Clear settings cache
+            \App\Helpers\SettingsHelper::clearCache();
+
+            return response()->json([
+                'message' => 'Settings saved successfully',
+                'settings' => Setting::all()->pluck('value', 'key')
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to save settings',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get public settings (no authentication required)
+     * Returns only safe-to-display settings like company logo
+     */
+    public function getPublicSettings()
+    {
+        $publicSettings = Setting::whereIn('key', [
+            'company_logo',
+            'company_name',
+        ])->pluck('value', 'key');
+
+        return response()->json($publicSettings);
+    }
 }

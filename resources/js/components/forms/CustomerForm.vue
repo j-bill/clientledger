@@ -87,7 +87,7 @@
         <v-text-field
           v-model="formData.hourly_rate"
           label="Hourly Rate"
-          prepend-icon="mdi-currency-usd"
+          prepend-icon="mdi-cash"
           type="number"
         ></v-text-field>
       </v-col>

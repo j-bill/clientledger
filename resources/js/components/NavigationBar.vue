@@ -5,6 +5,12 @@
 				   color="primary"
 				   dark>
 			<v-app-bar-nav-icon v-if="isAdmin" @click="drawer = !drawer"></v-app-bar-nav-icon>
+			
+			<!-- Company Logo -->
+			<router-link v-if="companyLogo" to="/" class="logo-link">
+				<img :src="companyLogo" alt="Company Logo" class="nav-company-logo" />
+			</router-link>
+			
 			<v-toolbar-title>
 				<router-link to="/" class="text-decoration-none text-white">
 					<h4>Clientledger</h4>
@@ -63,7 +69,14 @@
 				<template v-slot:activator="{ props }">
 					<v-btn icon
 						   v-bind="props">
-						<v-icon>mdi-account-circle</v-icon>
+						<v-avatar size="36">
+							<v-img 
+								v-if="userAvatar" 
+								:src="userAvatar"
+								cover
+							></v-img>
+							<v-icon v-else>mdi-account-circle</v-icon>
+						</v-avatar>
 					</v-btn>
 				</template>
 				<v-list>
@@ -147,7 +160,7 @@
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'pinia'
+import { mapActions, mapGetters, mapState } from 'pinia'
 import { store } from '../store'
 import axios from 'axios'
 
@@ -170,19 +183,35 @@ export default {
 			filteredProjects: [],
 			hourlyRate: 0,
 			secondsElapsed: 0,
-			earnings: 0
+			earnings: 0,
+			companyLogo: null
 		}
 	},
 	computed: {
-		...mapGetters(store, ['isAdmin']),
+		...mapGetters(store, ['isAdmin', 'getUser', 'has2FAEnabled']),
+		...mapState(store, ['currencySymbol', 'settings']),
 		formattedEarnings() {
-			return this.earnings > 0 ? `$${this.earnings.toFixed(2)}` : '';
+			return this.earnings > 0 ? `${this.currencySymbol}${this.earnings.toFixed(2)}` : '';
+		},
+		userAvatar() {
+			return this.getUser?.avatar || null;
 		}
 	},
 	created() {
-		this.checkForActiveWorkLog();
-		this.fetchCustomers();
-		this.fetchProjects();
+		// Only load data if 2FA is enabled
+		if (this.has2FAEnabled) {
+			this.checkForActiveWorkLog();
+			this.fetchCustomers();
+			this.fetchProjects();
+		}
+		
+		// Load company logo from settings
+		this.companyLogo = this.settings?.company_logo || null;
+	},
+	watch: {
+		'settings.company_logo'(newValue) {
+			this.companyLogo = newValue;
+		}
 	},
 	beforeUnmount() {
 		if (this.timerInterval) {
@@ -495,5 +524,18 @@ export default {
 	color: #8aff8a;
 	font-size: 0.75rem;
 	line-height: 1;
+}
+
+.logo-link {
+	display: flex;
+	align-items: center;
+	margin-left: 6px;
+	text-decoration: none;
+}
+
+.nav-company-logo {
+	max-height: 40px;
+	max-width: 120px;
+	object-fit: contain;
 }
 </style>

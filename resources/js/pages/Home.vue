@@ -1,5 +1,12 @@
 <template>
-  <v-container fluid>
+  <div>
+    <EmailVerificationDialog 
+      v-model="showEmailVerificationDialog"
+      @verified="onEmailVerified"
+      @skipped="onVerificationSkipped"
+    />
+    
+    <v-container fluid>
     <v-row>
       <!-- Last Year -->
       <v-col cols="12" sm="6" md="3">
@@ -238,6 +245,7 @@
       </v-col>
     </v-row>
   </v-container>
+  </div>
 </template>
 
 <script>
@@ -245,14 +253,19 @@ import { GChart } from "vue-google-charts";
 import axios from "axios";
 import { mapState, mapActions } from 'pinia';
 import { store } from '../store';
+import EmailVerificationDialog from '../components/EmailVerificationDialog.vue';
+import { formatCurrency, formatDate } from '../utils/formatters';
 
 export default {
   name: "Home",
   components: {
     GChart,
+    EmailVerificationDialog,
   },
   data() {
     return {
+      showEmailVerificationDialog: false,
+      verificationCheckTimeout: null,
       kpis: {
         revenue: {
           yearly: 0,
@@ -386,7 +399,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(store, ['user']),
+    ...mapState(store, ['user', 'settings']),
     isAdmin() {
       return this.user?.role === 'admin';
     },
@@ -433,14 +446,39 @@ export default {
   },
   methods: {
     ...mapActions(store, ['showSnackbar', 'showLoading', 'hideLoading']),
-    formatCurrency(value) {
-      return new Intl.NumberFormat("de-DE", {
-        style: "currency",
-        currency: "EUR",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(parseFloat(value));
+    
+    async checkEmailVerificationStatus() {
+      try {
+        const response = await axios.get('/api/email-verification/status');
+        
+        // If user has 2FA enabled but email not verified, show dialog after 10 seconds
+        if (response.data.should_verify) {
+          this.verificationCheckTimeout = setTimeout(() => {
+            this.showEmailVerificationDialog = true;
+          }, 10000); // 10 seconds
+        }
+      } catch (error) {
+        console.error('Error checking email verification status:', error);
+      }
     },
+    
+    onEmailVerified() {
+      this.showSnackbar('Email verified successfully!', 'success');
+    },
+    
+    onVerificationSkipped() {
+      // User skipped verification, could show a reminder later
+      console.log('Email verification skipped');
+    },
+    
+    formatCurrency(value) {
+      return formatCurrency(value, this.settings);
+    },
+    
+    formatDate(dateStr) {
+      return formatDate(dateStr, this.settings);
+    },
+    
     formatHours(value) {
       return `${parseFloat(value).toFixed(1)}h`;
     },
@@ -484,8 +522,17 @@ export default {
   },
   mounted() {
     this.fetchDashboardData();
+    // Check if email verification is needed
+    this.checkEmailVerificationStatus();
     // Refresh data every 5 minutes
     setInterval(this.fetchDashboardData, 300000);
+  },
+  
+  beforeUnmount() {
+    // Clean up timeout if component is destroyed
+    if (this.verificationCheckTimeout) {
+      clearTimeout(this.verificationCheckTimeout);
+    }
   },
 };
 </script>

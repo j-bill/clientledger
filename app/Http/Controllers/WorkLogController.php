@@ -30,6 +30,11 @@ class WorkLogController extends Controller
             $query->where('project_id', $request->project_id);
         }
 
+        // User filter
+        if ($request->has('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
         // Billable filter
         if ($request->has('billable')) {
             $query->where('billable', $request->boolean('billable'));
@@ -38,7 +43,37 @@ class WorkLogController extends Controller
         // Sort options
         $sortField = $request->input('sort_by', 'date');
         $sortDirection = $request->input('sort_dir', 'desc');
-        $query->orderBy($sortField, $sortDirection);
+        
+        // Handle special sorting cases
+        switch ($sortField) {
+            case 'project':
+            case 'project.name':
+                $query->join('projects', 'work_logs.project_id', '=', 'projects.id')
+                    ->orderBy('projects.name', $sortDirection)
+                    ->select('work_logs.*');
+                break;
+            case 'user':
+            case 'freelancer':
+            case 'user.name':
+                $query->join('users', 'work_logs.user_id', '=', 'users.id')
+                    ->orderBy('users.name', $sortDirection)
+                    ->select('work_logs.*');
+                break;
+            case 'hours':
+                $query->orderBy('hours_worked', $sortDirection);
+                break;
+            case 'hourly_rate':
+            case 'rate':
+                $query->orderBy('user_hourly_rate', $sortDirection);
+                break;
+            case 'amount':
+                // Sort by calculated amount (hours * rate)
+                $query->orderByRaw("(hours_worked * user_hourly_rate) {$sortDirection}");
+                break;
+            default:
+                $query->orderBy($sortField, $sortDirection);
+                break;
+        }
 
         // Pagination
         $perPage = $request->input('per_page', 15);
@@ -136,7 +171,7 @@ class WorkLogController extends Controller
             abort(403, 'Unauthorized access to this work log.');
         }
 
-        return response()->json($workLog->load('project', 'project.customer'));
+        return response()->json($workLog->load('project', 'project.customer', 'user'));
     }
 
     /**

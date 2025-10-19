@@ -1,22 +1,17 @@
 <template>
-	<div class="forbidden-container">
-		<div class="forbidden-content">
-			<!-- Animated 403 -->
+	<div class="not-found-container">
+		<div class="not-found-content">
+			<!-- Animated 404 -->
 			<div class="error-code">
 				<span class="four">4</span>
 				<span class="zero">0</span>
-				<span class="three">3</span>
-			</div>
-			
-			<!-- Lock Icon -->
-			<div class="lock-icon-wrapper">
-				<v-icon class="lock-icon" size="80">mdi-lock-outline</v-icon>
+				<span class="four">4</span>
 			</div>
 			
 			<!-- Message -->
-			<h1 class="error-title">Access Denied</h1>
+			<h1 class="error-title">Page Not Found</h1>
 			<p class="error-message">
-				Sorry, you don't have permission to access this page. This area is restricted to administrators only.
+				Oops! The page you're looking for seems to have wandered off into the digital void.
 			</p>
 			
 			<!-- Action Buttons -->
@@ -45,7 +40,7 @@
 
 <script>
 export default {
-	name: 'NoPermission',
+	name: 'NotFound',
 	methods: {
 		goHome() {
 			this.$router.push('/')
@@ -58,7 +53,7 @@ export default {
 </script>
 
 <style scoped>
-.forbidden-container {
+.not-found-container {
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -82,7 +77,7 @@ export default {
 	}
 }
 
-.forbidden-content {
+.not-found-content {
 	text-align: center;
 	padding: 2rem;
 	border-radius: 16px;
@@ -96,9 +91,9 @@ export default {
 	z-index: 2;
 }
 
-/* Animated 403 */
+/* Animated 404 */
 .error-code {
-	font-size: 100px;
+	font-size: 120px;
 	font-weight: 900;
 	line-height: 1;
 	margin-bottom: 1rem;
@@ -110,22 +105,23 @@ export default {
 
 .error-code span {
 	display: inline-block;
-	background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+	background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
 	-webkit-background-clip: text;
 	-webkit-text-fill-color: transparent;
 	background-clip: text;
 	animation: pulse 2s ease-in-out infinite;
 }
 
-.error-code .four {
+.error-code .four:first-child {
 	animation-delay: 0s;
 }
 
 .error-code .zero {
 	animation-delay: 0.2s;
+	animation: spin 3s linear infinite;
 }
 
-.error-code .three {
+.error-code .four:last-child {
 	animation-delay: 0.4s;
 }
 
@@ -140,28 +136,12 @@ export default {
 	}
 }
 
-/* Lock Icon */
-.lock-icon-wrapper {
-	margin: 1rem 0 1.5rem;
-}
-
-.lock-icon {
-	color: rgba(255, 107, 107, 0.8);
-	animation: shake 3s ease-in-out infinite;
-}
-
-@keyframes shake {
-	0%, 100% {
+@keyframes spin {
+	0% {
 		transform: rotate(0deg);
 	}
-	10%, 30% {
-		transform: rotate(-5deg);
-	}
-	20%, 40% {
-		transform: rotate(5deg);
-	}
-	50%, 90% {
-		transform: rotate(0deg);
+	100% {
+		transform: rotate(360deg);
 	}
 }
 
@@ -179,9 +159,6 @@ export default {
 	color: rgba(255, 255, 255, 0.85);
 	margin-bottom: 2rem;
 	line-height: 1.6;
-	max-width: 500px;
-	margin-left: auto;
-	margin-right: auto;
 }
 
 /* Action Buttons */
@@ -197,7 +174,7 @@ export default {
 /* Responsive Design */
 @media (max-width: 768px) {
 	.error-code {
-		font-size: 70px;
+		font-size: 80px;
 	}
 	
 	.error-title {
@@ -206,10 +183,6 @@ export default {
 	
 	.error-message {
 		font-size: 1rem;
-	}
-	
-	.lock-icon {
-		font-size: 60px !important;
 	}
 	
 	.action-buttons {
@@ -225,19 +198,15 @@ export default {
 
 @media (max-width: 480px) {
 	.error-code {
-		font-size: 50px;
+		font-size: 60px;
 	}
 	
 	.error-title {
 		font-size: 1.5rem;
 	}
 	
-	.lock-icon {
-		font-size: 50px !important;
-	}
-	
-	.forbidden-content {
+	.not-found-content {
 		padding: 1.5rem;
 	}
 }
-</style> 
+</style>

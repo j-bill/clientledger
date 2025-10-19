@@ -18,7 +18,7 @@ class InvoiceController extends Controller
     {
         return response()->json(
             Invoice::with(['customer', 'workLogs'])
-                ->orderByDesc('issue_date')
+                ->orderByDesc('created_at')
                 ->get()
         );
     }
@@ -30,11 +30,12 @@ class InvoiceController extends Controller
     {
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
+            'invoice_number' => 'nullable|string',
             'issue_date' => 'required|date',
-            'due_date' => 'required|date|after_or_equal:issue_date',
+            'due_date' => 'required|date',
             'total_amount' => 'required|numeric',
             // align with DB enum
-            'status' => 'required|string|in:pending,paid',
+            'status' => 'required|string|in:draft,sent,paid,overdue,cancelled',
             'notes' => 'nullable|string',
             'work_logs' => 'sometimes|array',
             'work_logs.*' => 'exists:work_logs,id',
@@ -71,10 +72,11 @@ class InvoiceController extends Controller
     {
         $validated = $request->validate([
             'customer_id' => 'sometimes|required|exists:customers,id',
+            'invoice_number' => 'sometimes|nullable|string',
             'issue_date' => 'sometimes|required|date',
-            'due_date' => 'sometimes|required|date|after_or_equal:issue_date',
+            'due_date' => 'sometimes|required|date',
             'total_amount' => 'sometimes|required|numeric',
-            'status' => 'sometimes|required|string|in:pending,paid',
+            'status' => 'sometimes|required|string|in:draft,sent,paid,overdue,cancelled',
             'notes' => 'nullable|string',
             'work_logs' => 'sometimes|array',
             'work_logs.*' => 'exists:work_logs,id',
@@ -114,9 +116,8 @@ class InvoiceController extends Controller
             'customer_id' => 'required|exists:customers,id',
             'work_log_ids' => 'required|array',
             'work_log_ids.*' => 'exists:work_logs,id',
-            'issue_date' => 'required|date',
-            'due_date' => 'required|date|after_or_equal:issue_date',
-            'status' => 'required|string|in:pending,paid',
+            'due_date' => 'required|date',
+            'status' => 'required|string|in:draft,sent,paid,overdue,cancelled',
         ]);
 
         // Get customer and work logs
@@ -140,7 +141,6 @@ class InvoiceController extends Controller
         // Create invoice
         $invoice = Invoice::create([
             'customer_id' => $validated['customer_id'],
-            'issue_date' => $validated['issue_date'],
             'due_date' => $validated['due_date'],
             'total_amount' => $totalAmount,
             'status' => $validated['status'],

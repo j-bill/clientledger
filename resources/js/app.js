@@ -31,7 +31,15 @@ const pinia = createPinia();
 const dark = {
   dark: true,
   colors: {
-    primary: "#8640ea",
+    background: '#0f172a',      // Deep navy background
+    surface: '#1e293b',         // Charcoal blue for cards/surfaces
+    primary: '#3b82f6',         // Bright blue - complements your logo
+    secondary: '#8b5cf6',       // Purple - matches your logo
+    accent: '#06b6d4',          // Cyan accent
+    error: '#ef4444',           // Modern red
+    warning: '#f59e0b',         // Amber
+    info: '#3b82f6',            // Blue
+    success: '#10b981',         // Emerald green
   },
 };
 

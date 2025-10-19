@@ -24,9 +24,9 @@
 			<v-col cols="12"
 				   md="6">
 				<v-text-field v-model="formData.hourly_rate"
-							  label="Project Hourly Rate ($)"
+							  label="Project Hourly Rate"
 							  type="number"
-							  prepend-icon="mdi-currency-usd"
+							  prepend-icon="mdi-cash"
 							  hint="Inherited from customer by default, but can be customized"
 							  persistent-hint></v-text-field>
 			</v-col>
@@ -59,24 +59,24 @@
 							prepend-icon="mdi-text"></v-textarea>
 			</v-col>
 
-			<v-col cols="12">
-				<v-select v-model="formData.users"
-						  :items="freelancers"
-						  item-title="name"
-						  item-value="id"
-						  label="Assigned Freelancers"
-						  prepend-icon="mdi-account-group"
-						  multiple
-						  chips
-						  :rules="[v => v.length > 0 || 'At least one freelancer is required']"
-						  @update:model-value="updateUserRates">
-					<template v-slot:item="{ props, item }">
-						<v-list-item v-bind="props">
-							<v-list-item-subtitle>Rate: ${{ item.raw.hourly_rate }}/hr</v-list-item-subtitle>
-						</v-list-item>
-					</template>
-				</v-select>
-			</v-col>
+		<v-col cols="12">
+			<v-select v-model="formData.users"
+					  :items="freelancers"
+					  item-title="name"
+					  item-value="id"
+					  label="Assigned Users"
+					  prepend-icon="mdi-account-group"
+					  multiple
+					  chips
+					  :rules="[v => v.length > 0 || 'At least one user is required']"
+					  @update:model-value="updateUserRates">
+				<template v-slot:item="{ props, item }">
+					<v-list-item v-bind="props">
+						<v-list-item-subtitle>Rate: ${{ item.raw.hourly_rate }}/hr</v-list-item-subtitle>
+					</v-list-item>
+				</template>
+			</v-select>
+		</v-col>
 		</v-row>
 	</v-form>
 </template>

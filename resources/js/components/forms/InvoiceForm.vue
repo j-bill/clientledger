@@ -11,7 +11,8 @@
           label="Customer"
           :rules="[rules.required]"
           required
-          :disabled="!!invoice" 
+          :disabled="!!invoice"
+          data-test="invoice-customer"
         ></v-select>
       </v-col>
 
@@ -25,6 +26,18 @@
         ></v-text-field>
       </v-col>
 
+      <!-- Issue Date -->
+      <v-col cols="12" md="6">
+        <v-text-field
+          v-model="formData.issue_date"
+          label="Issue Date"
+          type="date"
+          :rules="[rules.required]"
+          required
+          data-test="invoice-issue-date"
+        ></v-text-field>
+      </v-col>
+
       <!-- Due Date -->
        <v-col cols="12" md="6">
          <v-text-field
@@ -33,6 +46,7 @@
             type="date"
             :rules="[rules.required]"
             required
+            data-test="invoice-due-date"
           ></v-text-field>
       </v-col>
 
@@ -47,16 +61,16 @@
         ></v-select>
       </v-col>
 
-       <!-- Total Amount (Readonly for now, calculated later) -->
+       <!-- Total Amount -->
       <v-col cols="12" md="6">
         <v-text-field
           v-model="formData.total_amount"
           label="Total Amount"
           type="number"
           step="0.01"
-          prefix="$"
-          readonly 
-          disabled 
+          :prefix="currencySymbol"
+          :rules="[rules.required]"
+          data-test="invoice-total"
         ></v-text-field>
       </v-col>
 
@@ -86,6 +100,7 @@ export default {
       formData: {
         customer_id: null,
         invoice_number: '',
+        issue_date: null,
         due_date: null,
         total_amount: 0.00, // Initialize or calculate later
         status: 'draft', // Default status
@@ -99,7 +114,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(store, ['customers']), // Need customers for the dropdown
+    ...mapState(store, ['customers', 'currencySymbol']), // Need customers for the dropdown
     formTitle() {
       return this.invoice ? 'Edit Invoice' : 'Create Invoice';
     }
@@ -107,11 +122,13 @@ export default {
   created() {
     // Pre-populate form if editing an existing invoice
     if (this.invoice) {
-      // Format date for the input type="date"
-       const dueDate = this.invoice.due_date ? new Date(this.invoice.due_date).toISOString().split('T')[0] : null;
+      // Format dates for the input type="date"
+      const issueDate = this.invoice.issue_date ? new Date(this.invoice.issue_date).toISOString().split('T')[0] : null;
+      const dueDate = this.invoice.due_date ? new Date(this.invoice.due_date).toISOString().split('T')[0] : null;
       this.formData = { 
           ...this.invoice,
-          due_date: dueDate // Use formatted date
+          issue_date: issueDate,
+          due_date: dueDate // Use formatted dates
       };
     }
     // Fetch customers if not already loaded (optional, depends on app flow)

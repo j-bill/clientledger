@@ -1,7 +1,8 @@
 <template>
-  <v-container>
+  <v-container fluid>
     <h1 class="text-h4 mb-4">Customers</h1>
     
+    <!-- Search & Actions -->
     <v-row class="mb-4">
       <v-col cols="12" sm="6">
         <v-text-field
@@ -11,10 +12,9 @@
           single-line
           hide-details
           clearable
-          @input="fetchCustomers"
         ></v-text-field>
       </v-col>
-      <v-col cols="12" sm="6" class="text-right">
+      <v-col cols="12" sm="6" class="d-flex justify-end">
         <v-btn color="primary" @click="openCreateDialog" prepend-icon="mdi-plus">
           New Customer
         </v-btn>
@@ -29,10 +29,10 @@
         class="elevation-1"
         :search="search"
       >
+        <template v-slot:item.hourly_rate="{ item }">
+          {{ currencySymbol + Number(item.hourly_rate || 0).toFixed(2) }}
+        </template>
         <template v-slot:item.actions="{ item }">
-          <v-btn icon variant="text" size="small" color="info" @click="viewCustomer(item)">
-            <v-icon>mdi-eye</v-icon>
-          </v-btn>
           <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)">
             <v-icon>mdi-pencil</v-icon>
           </v-btn>
@@ -86,50 +86,6 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    
-    <!-- View Customer Dialog -->
-    <v-dialog v-model="viewDialog" max-width="800px">
-      <v-card v-if="currentCustomer">
-        <v-card-title>{{ currentCustomer.name }}</v-card-title>
-        <v-card-text>
-          <v-list>
-            <v-list-item>
-              <v-list-item-title>Contact Person:</v-list-item-title>
-              <v-list-item-subtitle>{{ currentCustomer.contact_person || 'N/A' }}</v-list-item-subtitle>
-            </v-list-item>
-            <v-list-item>
-              <v-list-item-title>Contact Email:</v-list-item-title>
-              <v-list-item-subtitle>{{ currentCustomer.contact_email || 'N/A' }}</v-list-item-subtitle>
-            </v-list-item>
-            <v-list-item>
-              <v-list-item-title>Contact Phone:</v-list-item-title>
-              <v-list-item-subtitle>{{ currentCustomer.contact_phone || 'N/A' }}</v-list-item-subtitle>
-            </v-list-item>
-            <v-list-item>
-              <v-list-item-title>Address:</v-list-item-title>
-              <v-list-item-subtitle>
-                {{ currentCustomer.address_line_1 }}<br v-if="currentCustomer.address_line_2"/>
-                {{ currentCustomer.address_line_2 || '' }}<br/>
-                {{ currentCustomer.city }} {{ currentCustomer.state }} {{ currentCustomer.postcode }}<br/>
-                {{ currentCustomer.country }}
-              </v-list-item-subtitle>
-            </v-list-item>
-            <v-list-item>
-              <v-list-item-title>VAT Number:</v-list-item-title>
-              <v-list-item-subtitle>{{ currentCustomer.vat_number || 'N/A' }}</v-list-item-subtitle>
-            </v-list-item>
-            <v-list-item>
-              <v-list-item-title>Hourly Rate:</v-list-item-title>
-              <v-list-item-subtitle>{{ currentCustomer.hourly_rate || 'N/A' }}</v-list-item-subtitle>
-            </v-list-item>
-          </v-list>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" @click="viewDialog = false">Close</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </v-container>
 </template>
 
@@ -150,7 +106,6 @@ export default {
       deleteDialog: false,
       createDialog: false,
       editDialog: false,
-      viewDialog: false,
       itemToDelete: null,
       currentCustomer: null,
       
@@ -168,7 +123,7 @@ export default {
   },
   
   computed: {
-    ...mapState(store, ['customers'])
+    ...mapState(store, ['customers', 'currencySymbol'])
   },
   
   created() {
@@ -179,6 +134,9 @@ export default {
     ...mapActions(store, [
       'showSnackbar',
       'fetchCustomers',
+      'createCustomer',
+      'updateCustomer',
+      'deleteCustomer',
     ]),
     
     confirmDelete(item) {
@@ -202,11 +160,6 @@ export default {
     openEditDialog(item) {
       this.currentCustomer = { ...item };
       this.editDialog = true;
-    },
-    
-    viewCustomer(item) {
-      this.currentCustomer = { ...item };
-      this.viewDialog = true;
     },
     
     async saveCustomerRecord(customer) {
