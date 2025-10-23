@@ -335,7 +335,7 @@ export default {
 	},
 	
 	computed: {
-		...mapState(store, ['projects', 'users', 'currencySymbol'])
+		...mapState(store, ['projects', 'users', 'currencySymbol', 'settings'])
 	},
 	
 	// Add navigation guard to handle when already on worklogs page
@@ -566,7 +566,7 @@ export default {
 		},
 
 		formatDate(dateStr) {
-			return formatDate(dateStr);
+			return formatDate(dateStr, this.settings);
 		},
 		
 		formatTime(timeStr) {

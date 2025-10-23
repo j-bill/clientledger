@@ -29,14 +29,27 @@
 
       <!-- Due Date -->
        <v-col cols="12" md="6">
-         <v-text-field
-            v-model="formData.due_date"
-            label="Due Date"
-            type="date"
-            :rules="[rules.required]"
-            required
-            data-test="invoice-due-date"
-          ></v-text-field>
+         <v-menu
+            v-model="dueDateMenu"
+            :close-on-content-click="false"
+            transition="scale-transition"
+            offset-y
+            min-width="auto">
+            <template v-slot:activator="{ props }">
+              <v-text-field
+                :model-value="formattedDueDate"
+                label="Due Date"
+                prepend-icon="mdi-calendar"
+                readonly
+                :rules="[rules.required]"
+                required
+                data-test="invoice-due-date"
+                v-bind="props"></v-text-field>
+            </template>
+            <v-date-picker 
+              v-model="internalDueDate"
+              @update:model-value="updateDueDate"></v-date-picker>
+         </v-menu>
       </v-col>
 
       <!-- Status -->
@@ -70,6 +83,7 @@
 <script>
 import { mapState, mapActions } from 'pinia';
 import { store } from '../../store'; // Assuming store path
+import { formatDate } from '../../utils/formatters';
 
 export default {
   name: 'InvoiceForm',
@@ -85,35 +99,44 @@ export default {
         customer_id: null,
         invoice_number: '',
         due_date: null,
-        total_amount: 0.00, // Initialize or calculate later
-        status: 'draft', // Default status
+        total_amount: 0.00,
+        status: 'draft',
       },
+      internalDueDate: null,
+      dueDateMenu: false,
       statusOptions: ['draft', 'sent', 'paid', 'overdue', 'cancelled'],
       rules: {
         required: value => !!value || 'Required.',
-        // Add more rules as needed
       },
-      loading: false, // Local loading state for the form submission
+      loading: false,
     };
   },
   computed: {
-    ...mapState(store, ['customers', 'currencySymbol']), // Need customers for the dropdown
+    ...mapState(store, ['customers', 'currencySymbol', 'settings']), // Need customers for the dropdown
     formTitle() {
       return this.invoice ? 'Edit Invoice' : 'Create Invoice';
+    },
+    formattedDueDate() {
+      if (!this.formData.due_date) return '';
+      // Display the due date in the user's preferred format
+      return formatDate(this.formData.due_date, this.settings);
     }
   },
   created() {
     // Pre-populate form if editing an existing invoice
     if (this.invoice) {
-      // Format dates for the input type="date"
-      const dueDate = this.invoice.due_date ? new Date(this.invoice.due_date).toISOString().split('T')[0] : null;
+      // Store the ISO date format in formData
       this.formData = { 
           customer_id: this.invoice.customer_id,
           invoice_number: this.invoice.invoice_number,
-          due_date: dueDate,
+          due_date: this.invoice.due_date,
           total_amount: this.invoice.total_amount,
           status: this.invoice.status
       };
+      // Initialize the internal date picker value with the ISO date as a Date object
+      if (this.invoice.due_date) {
+        this.internalDueDate = new Date(this.invoice.due_date);
+      }
     }
     // Fetch customers if not already loaded (optional, depends on app flow)
     if (!this.customers || this.customers.length === 0) {
@@ -121,7 +144,21 @@ export default {
     }
   },
   methods: {
-     ...mapActions(store, ['createInvoice', 'updateInvoice', 'fetchCustomers']), // Map store actions
+     ...mapActions(store, ['createInvoice', 'updateInvoice', 'fetchCustomers']),
+
+    updateDueDate(date) {
+      // Convert Date object to ISO string format (YYYY-MM-DD)
+      if (date instanceof Date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        this.formData.due_date = `${year}-${month}-${day}`;
+      } else if (typeof date === 'string') {
+        // Already a string, store as is
+        this.formData.due_date = date;
+      }
+      this.dueDateMenu = false;
+    },
 
     async submit() {
       const { valid } = await this.$refs.form.validate();

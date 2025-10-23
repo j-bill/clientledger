@@ -240,7 +240,7 @@
                     </v-icon>
                   </template>
                   <v-list-item-title class="font-weight-medium">{{ deadline.name }}</v-list-item-title>
-                  <v-list-item-subtitle>{{ deadline.customer }}</v-list-item-subtitle>
+                  <v-list-item-subtitle>{{ deadline.customer }} • {{ formatDate(deadline.deadline) }}</v-list-item-subtitle>
                   <template v-slot:append>
                     <v-chip
                       :color="deadline.days_until <= 3 ? 'error' : (deadline.days_until <= 7 ? 'warning' : 'success')"

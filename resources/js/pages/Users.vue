@@ -42,10 +42,10 @@
           </v-btn>
         </template>
         <template v-slot:item.created_at="{ item }">
-          {{ new Date(item.created_at).toLocaleDateString() }}
+          {{ formatDate(item.created_at) }}
         </template>
         <template v-slot:item.updated_at="{ item }">
-          {{ new Date(item.updated_at).toLocaleDateString() }}
+          {{ formatDate(item.updated_at) }}
         </template>
         <template v-slot:item.hourly_rate="{ item }">
           <span v-if="item.role === 'freelancer'">{{ currencySymbol }}{{ Number(item.hourly_rate || 0).toFixed(2) }}</span>
@@ -121,6 +121,7 @@
 import UserForm from '../components/forms/UserForm.vue';
 import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
+import { formatDate } from '../utils/formatters';
 import axios from 'axios';
 
 export default {
@@ -155,7 +156,7 @@ export default {
   },
   
   computed: {
-    ...mapState(store, ['users', 'currencySymbol'])
+    ...mapState(store, ['users', 'currencySymbol', 'settings'])
   },
   
   created() {
@@ -226,6 +227,10 @@ export default {
         const message = error.response?.data?.message || 'Failed to send reset link. Please try again.';
         this.showSnackbar(message, 'error');
       }
+    },
+    
+    formatDate(dateStr) {
+      return formatDate(dateStr, this.settings);
     }
   }
 };

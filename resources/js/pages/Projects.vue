@@ -205,7 +205,7 @@ export default {
   },
   
   computed: {
-    ...mapState(store, ['projects', 'customers', 'users', 'user', 'currencySymbol']),
+    ...mapState(store, ['projects', 'customers', 'users', 'user', 'currencySymbol', 'settings']),
     
     isAdmin() {
       return this.user?.role === 'admin';
@@ -321,7 +321,7 @@ export default {
     },
     
     formatDate(dateStr) {
-      return formatDate(dateStr);
+      return formatDate(dateStr, this.settings);
     },
 
     async checkUserRole() {

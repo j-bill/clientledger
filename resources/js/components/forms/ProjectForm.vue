@@ -47,9 +47,9 @@
 									  clearable
 									  @click:clear="clearDate"></v-text-field>
 					</template>
-					<v-date-picker v-model="dateValue"
+					<v-date-picker v-model="internalDeadline"
 								   locale="en-de"
-								   @update:model-value="updateDate"></v-date-picker>
+								   @update:model-value="updateDeadline"></v-date-picker>
 				</v-menu>
 			</v-col>
 
@@ -82,6 +82,10 @@
 </template>
 
 <script>
+import { formatDate } from '../../utils/formatters';
+import { mapState } from 'pinia';
+import { store } from '../../store';
+
 export default {
 	name: 'ProjectForm',
 	props: {
@@ -100,25 +104,20 @@ export default {
 	},
 
 	computed: {
+		...mapState(store, ['settings']),
+		
 		formattedDate() {
 			if (!this.formData.deadline) return '';
 
-			let deadline = new Date(this.formData.deadline);
-
-			const year = deadline.getFullYear();
-			const month = deadline.getMonth() + 1;
-			const day = deadline.getDate();
-
-			const formattedDate = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-
-			return formattedDate;
+			// Display the deadline in the user's preferred format
+			return formatDate(this.formData.deadline, this.settings);
 		}
 	},
 
 	data() {
 		return {
 			dateMenu: false,
-			dateValue: null,
+			internalDeadline: null,
 			formData: {
 				name: '',
 				customer_id: null,
@@ -137,15 +136,9 @@ export default {
 				users: this.project.users?.map(user => user.id) || []
 			};
 
-			// convert deadline to Date object
+			// Store deadline in ISO format (yyyy-mm-dd)
 			if (this.formData.deadline) {
-				// deadline is stored in yyyy-mm-dd format
-				this.formData.deadline = new Date(this.formData.deadline);
-			}
-
-			// Initialize the date picker value
-			if (this.formData.deadline) {
-				this.dateValue = this.formData.deadline;
+				this.internalDeadline = this.formData.deadline;
 			}
 		}
 	},
@@ -187,21 +180,23 @@ export default {
 		},
 
 		updateDate(date) {
-			const year = date.getFullYear();
-			const month = date.getMonth() + 1;
-			const day = date.getDate();
-
-			const formattedDate = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-
-			this.formData.deadline = formattedDate;
-			this.dateValue = date;
-
+			// Ensure we're storing the ISO format string (yyyy-mm-dd)
+			if (date instanceof Date) {
+				const year = date.getFullYear();
+				const month = (date.getMonth() + 1).toString().padStart(2, '0');
+				const day = date.getDate().toString().padStart(2, '0');
+				this.formData.deadline = `${year}-${month}-${day}`;
+			} else if (typeof date === 'string') {
+				// Already a string, store as is
+				this.formData.deadline = date;
+			}
+			this.internalDeadline = date;
 			this.dateMenu = false;
 		},
 
 		clearDate() {
 			this.formData.deadline = null;
-			this.dateValue = null;
+			this.internalDeadline = null;
 		}
 	}
 };

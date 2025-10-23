@@ -46,15 +46,15 @@
 						offset-y
 						min-width="auto">
 					<template v-slot:activator="{ props }">
-						<v-text-field v-model="formData.date"
+						<v-text-field :model-value="formattedDate"
 									  label="Date"
 									  prepend-icon="mdi-calendar"
 									  readonly
 									  :rules="[v => !!v || 'Date is required']"
 									  v-bind="props"></v-text-field>
 					</template>
-					<v-date-picker v-model="formData.date"
-								   @change="dateMenu = false"></v-date-picker>
+					<v-date-picker v-model="internalDate"
+								   @update:model-value="updateDate"></v-date-picker>
 				</v-menu>
 			</v-col>
 
@@ -135,6 +135,7 @@
 <script>
 import { mapState } from 'pinia'
 import { store } from '../../store'
+import { formatDate } from '../../utils/formatters';
 import axios from 'axios'
 
 export default {
@@ -155,6 +156,7 @@ export default {
 			dateMenu: false,
 			startTimeMenu: false,
 			endTimeMenu: false,
+			internalDate: null,
 			formData: {
 				date: new Date().toISOString().substr(0, 10),
 				project_id: null,
@@ -175,7 +177,13 @@ export default {
 	},
 
 	computed: {
-		...mapState(store, ['user'])
+		...mapState(store, ['user', 'settings']),
+		
+		formattedDate() {
+			if (!this.formData.date) return '';
+			// Display the date in the user's preferred format
+			return formatDate(this.formData.date, this.settings);
+		}
 	},
 
 	created() {
@@ -186,6 +194,10 @@ export default {
 			this.formData = { ...this.workLog };
 			if (this.workLog.project && this.workLog.project.customer_id) {
 				this.selectedCustomer = this.workLog.project.customer_id;
+			}
+			// Initialize the internal date for the date picker with a Date object
+			if (this.workLog.date) {
+				this.internalDate = new Date(this.workLog.date);
 			}
 		} else {
 			// For new work logs, set the user_id to the authenticated user

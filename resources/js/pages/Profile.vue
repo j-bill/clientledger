@@ -911,7 +911,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapState(store, [])
+		...mapState(store, ['settings'])
 	},
 	methods: {
 		...mapActions(store, ['showSnackbar', 'updateAuthUser']),
@@ -1313,7 +1313,7 @@ export default {
 		},
 	
 	formatDate(date) {
-		return formatDate(date);
+		return formatDate(date, this.settings);
 	},		formatHours(hours) {
 			if (!hours) return '0h'
 			return `${parseFloat(hours).toFixed(1)}h`
