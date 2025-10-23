@@ -15,7 +15,8 @@ class UsersSeeder extends Seeder
             'email' => 'admin@admin.de',
             'password' => bcrypt('adminadmin'),
             'role' => 'admin',
-            'hourly_rate' => 120
+            'hourly_rate' => 120,
+            'email_verified_at' => now()
         ]);
 
         // Create freelancers with different hourly rates

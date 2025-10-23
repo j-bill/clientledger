@@ -41,13 +41,15 @@
 									   @click="generateQRCode">
 									Generate QR Code
 								</v-btn>
-								<v-btn v-if="isAdminDemo"
+								
+							</div>
+
+							<v-btn v-if="isAdminDemo" class="mt-4"
 									   variant="outlined"
 									   size="large"
 									   @click="skipSetup">
 									Skip Setup (Demo)
 								</v-btn>
-							</div>
 						</div>
 					</v-stepper-window-item>						<!-- Step 2: Scan QR Code and Verify -->
 						<v-stepper-window-item :value="2">
