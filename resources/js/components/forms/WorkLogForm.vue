@@ -271,6 +271,20 @@ export default {
 			}
 		},
 
+		updateDate(date) {
+			// Convert Date object to ISO string format (YYYY-MM-DD)
+			if (date instanceof Date) {
+				const year = date.getFullYear();
+				const month = String(date.getMonth() + 1).padStart(2, '0');
+				const day = String(date.getDate()).padStart(2, '0');
+				this.formData.date = `${year}-${month}-${day}`;
+			} else if (typeof date === 'string') {
+				// Already a string, store as is
+				this.formData.date = date;
+			}
+			this.dateMenu = false;
+		},
+
 		async submit() {
 			const { valid } = await this.$refs.form.validate();
 

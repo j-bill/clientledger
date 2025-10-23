@@ -179,7 +179,7 @@ export default {
 			// This method can be used to handle any user-specific rate updates if needed
 		},
 
-		updateDate(date) {
+		updateDeadline(date) {
 			// Ensure we're storing the ISO format string (yyyy-mm-dd)
 			if (date instanceof Date) {
 				const year = date.getFullYear();
