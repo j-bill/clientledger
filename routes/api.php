@@ -106,6 +106,7 @@ Route::middleware('auth:sanctum')->group(function () {
             // Put specific routes before the parameter route to prevent shadowing
             Route::post('/invoices/generate', [InvoiceController::class, 'generateFromWorkLogs']);
             Route::get('/invoices/unbilled-worklogs', [InvoiceController::class, 'unbilledWorkLogs']);
+            Route::get('/invoices/customer-projects', [InvoiceController::class, 'customerProjects']);
             Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
             Route::put('/invoices/{invoice}', [InvoiceController::class, 'update']);
             Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy']);

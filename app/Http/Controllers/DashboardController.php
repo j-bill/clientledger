@@ -42,10 +42,10 @@ class DashboardController extends Controller
         $responseData = [
             'kpis' => [
                 'revenue' => [
-                    'yearly' => 0,
-                    'last_year' => 0,
-                    'monthly' => 0,
-                    'last_month' => 0,
+                    'yearly' => ['actual' => 0, 'extrapolated' => 0],
+                    'last_year' => ['paid' => 0, 'due' => 0],
+                    'monthly' => ['actual' => 0, 'extrapolated' => 0],
+                    'last_month' => ['paid' => 0, 'due' => 0],
                     'is_extrapolated' => false
                 ],
                 'hours' => [
@@ -58,16 +58,17 @@ class DashboardController extends Controller
                     'active' => 0,
                     'overdue' => 0
                 ],
-                'earnings' => [ // Add default earnings structure
-                    'yearly' => 0,
-                    'last_year' => 0,
-                    'monthly' => 0,
-                    'last_month' => 0,
+                'earnings' => [
+                    'yearly' => ['actual' => 0, 'extrapolated' => 0],
+                    'last_year' => ['paid' => 0, 'due' => 0],
+                    'monthly' => ['actual' => 0, 'extrapolated' => 0],
+                    'last_month' => ['paid' => 0, 'due' => 0],
                     'is_extrapolated' => false
                 ]
             ],
             'revenue_by_customer' => [],
             'yearly_revenue_trend' => [],
+            'hero_trend_data' => [],
             'monthly_hours' => [],
             'upcoming_deadlines' => [],
             'earnings_by_project' => [],
@@ -183,27 +184,43 @@ class DashboardController extends Controller
         // --- Role-Specific KPIs & Data ---
         if ($isAdmin) {
             // --- Admin: Revenue KPIs ---
-            $invoiceQueryBase = Invoice::where('status', 'paid');
-            $yearlyRevenue = (clone $invoiceQueryBase)
+            
+            // THIS MONTH: Actual from work logs + Extrapolated
+            $currentMonthActual = WorkLog::where('billable', true)
+                ->whereBetween('date', [$thisMonthStart, $now])
+                ->sum(DB::raw('hours_worked * hourly_rate'));
+            $currentMonthExtrapolated = $currentMonthActual * $extrapolationFactor;
+            
+            // LAST MONTH: Paid invoices + Due invoices + Uninvoiced work logs
+            $lastMonthPaid = Invoice::where('status', 'paid')
+                ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
+                ->sum('total_amount');
+            $lastMonthDue = Invoice::whereIn('status', ['sent', 'draft'])
+                ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
+                ->sum('total_amount');
+            // Include uninvoiced work logs valued at their hourly rate
+            $lastMonthUninvoiced = WorkLog::where('billable', true)
+                ->whereBetween('date', [$lastMonthStart, $lastMonthEnd])
+                ->sum(DB::raw('hours_worked * hourly_rate'));
+            $lastMonthDue += $lastMonthUninvoiced;
+            
+            // THIS YEAR: All issued invoices + Extrapolated estimate
+            $thisYearActual = Invoice::whereIn('status', ['paid', 'sent', 'draft'])
                 ->whereYear('created_at', $now->year)
                 ->sum('total_amount');
-            $lastYearRevenue = (clone $invoiceQueryBase)
+            $thisYearExtrapolated = $thisYearActual * $extrapolationFactor;
+            
+            // LAST YEAR: Paid + Due
+            $lastYearPaid = Invoice::where('status', 'paid')
                 ->whereBetween('created_at', [$lastYearStart, $lastYearEnd])
                 ->sum('total_amount');
-            
-            // For current month, we need to calculate from work logs since invoices haven't been created yet
-            $currentMonthRevenue = WorkLog::where('billable', true)
-                ->whereBetween('date', [$thisMonthStart, $now])
-                ->sum(DB::raw('hours_worked * hourly_rate')); // Use client hourly rate
-            $monthlyRevenue = number_format($currentMonthRevenue * $extrapolationFactor, 2, '.', '');
-            
-            $lastMonthRevenue = (clone $invoiceQueryBase)
-                ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
+            $lastYearDue = Invoice::whereIn('status', ['sent', 'draft'])
+                ->whereBetween('created_at', [$lastYearStart, $lastYearEnd])
                 ->sum('total_amount');
 
             // --- Admin: Revenue by Customer ---
             $revenueByCustomer = Invoice::with('customer')
-                ->where('status', 'paid')
+                ->whereIn('status', ['paid', 'sent', 'draft'])
                 ->get()
                 ->groupBy('customer.name')
                 ->map(function ($invoices) {
@@ -211,7 +228,7 @@ class DashboardController extends Controller
                 })
                 ->sortDesc();
 
-            // --- Admin: Yearly Revenue Trend ---
+            // --- Admin: Yearly Revenue Trend (PAID INVOICES ONLY) ---
             $yearlyRevenueTrend = Invoice::where('status', 'paid')
                 ->whereYear('created_at', $now->year)
                 ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, SUM(total_amount) as total')
@@ -225,6 +242,46 @@ class DashboardController extends Controller
                         'amount' => $item->total
                     ];
                 });
+
+            // --- Admin: Hero Trend (ALL INVOICES + UNINVOICED WORK) ---
+            // Combine all invoices (paid, sent, draft) with uninvoiced work logs valued at project/customer rates
+            $heroTrendData = [];
+            
+            // Get all invoices by month
+            $allInvoices = Invoice::whereIn('status', ['paid', 'sent', 'draft'])
+                ->whereYear('created_at', $now->year)
+                ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, SUM(total_amount) as total')
+                ->groupBy('year', 'month')
+                ->orderBy('year')
+                ->orderBy('month')
+                ->get()
+                ->keyBy(function ($item) {
+                    return $item->year . '-' . str_pad($item->month, 2, '0', STR_PAD_LEFT);
+                });
+
+            // Get all work logs by month, valued at their hourly rate
+            $allWorkLogs = WorkLog::where('billable', true)
+                ->whereYear('date', $now->year)
+                ->selectRaw('YEAR(date) as year, MONTH(date) as month, SUM(hours_worked * hourly_rate) as total')
+                ->groupBy('year', 'month')
+                ->orderBy('year')
+                ->orderBy('month')
+                ->get()
+                ->keyBy(function ($item) {
+                    return $item->year . '-' . str_pad($item->month, 2, '0', STR_PAD_LEFT);
+                });
+
+            // Merge invoices and work logs by month
+            $allMonthKeys = array_unique(array_merge(array_keys($allInvoices->toArray()), array_keys($allWorkLogs->toArray())));
+            foreach ($allMonthKeys as $monthKey) {
+                $invoiceAmount = $allInvoices->get($monthKey)?->total ?? 0;
+                $workLogAmount = $allWorkLogs->get($monthKey)?->total ?? 0;
+                list($year, $month) = explode('-', $monthKey);
+                $heroTrendData[] = [
+                    'date' => Carbon::createFromDate($year, $month, 1)->format('Y-m'),
+                    'amount' => $invoiceAmount + $workLogAmount
+                ];
+            }
 
             // --- Admin: Monthly Hours Worked Trend (All Users) ---
             $monthlyHoursData = WorkLog::whereYear('date', $now->year)
@@ -250,15 +307,28 @@ class DashboardController extends Controller
 
             // Populate Admin Response Data (overwriting defaults)
             $responseData['kpis']['revenue'] = [
-                'yearly' => $yearlyRevenue,
-                'last_year' => $lastYearRevenue,
-                'monthly' => floatval($monthlyRevenue), // Convert from string to float
-                'last_month' => $lastMonthRevenue,
+                'yearly' => [
+                    'actual' => $thisYearActual,
+                    'extrapolated' => floatval(number_format($thisYearExtrapolated, 2, '.', ''))
+                ],
+                'last_year' => [
+                    'paid' => $lastYearPaid,
+                    'due' => $lastYearDue
+                ],
+                'monthly' => [
+                    'actual' => floatval(number_format($currentMonthActual, 2, '.', '')),
+                    'extrapolated' => floatval(number_format($currentMonthExtrapolated, 2, '.', ''))
+                ],
+                'last_month' => [
+                    'paid' => $lastMonthPaid,
+                    'due' => $lastMonthDue
+                ],
                 'is_extrapolated' => ($extrapolationFactor > 1)
             ];
             $responseData['monthly_hours'] = $monthlyHoursWorked; // Admin sees all hours trend
             $responseData['revenue_by_customer'] = $revenueByCustomer; // Assign revenue by customer
-            $responseData['yearly_revenue_trend'] = $yearlyRevenueTrend; // Assign yearly revenue trend
+            $responseData['yearly_revenue_trend'] = $yearlyRevenueTrend; // Assign yearly revenue trend (paid only)
+            $responseData['hero_trend_data'] = $heroTrendData; // Assign hero trend (all invoices + work logs)
 
         } else {
             // --- Non-Admin: Earnings KPIs ---
@@ -343,15 +413,28 @@ class DashboardController extends Controller
 
             // Populate Non-Admin Response Data (overwriting defaults)
             $responseData['kpis']['earnings'] = [
-                'yearly' => $yearlyEarnings,
-                'last_year' => $lastYearEarnings,
-                'monthly' => floatval($monthlyEarnings), // Convert from string to float
-                'last_month' => $lastMonthEarnings,
+                'yearly' => [
+                    'actual' => floatval($yearlyEarnings),
+                    'extrapolated' => 0 // Freelancer views years as-is, no extrapolation for full years
+                ],
+                'last_year' => [
+                    'paid' => floatval($lastYearEarnings), // All last year earnings are "earned"
+                    'due' => 0 // No unpaid earnings for freelancer
+                ],
+                'monthly' => [
+                    'actual' => floatval($currentMonthEarnings),
+                    'extrapolated' => floatval(number_format($currentMonthEarnings * $extrapolationFactor, 2, '.', ''))
+                ],
+                'last_month' => [
+                    'paid' => floatval($lastMonthEarnings), // All last month earnings are "earned"
+                    'due' => 0 // No unpaid earnings for freelancer
+                ],
                 'is_extrapolated' => ($extrapolationFactor > 1)
             ];
             $responseData['monthly_hours'] = $monthlyHoursWorked; // Non-admin sees own hours trend
             $responseData['earnings_by_project'] = $earningsByProject; // Assign earnings by project
             $responseData['yearly_earnings_trend'] = $yearlyEarningsTrend; // Assign yearly earnings trend
+            $responseData['hero_trend_data'] = $yearlyEarningsTrend; // Use same for hero trend
         }
 
         return response()->json($responseData);

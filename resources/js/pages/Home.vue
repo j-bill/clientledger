@@ -6,178 +6,169 @@
       @skipped="onVerificationSkipped"
     />
     
-    <v-container fluid>
+    <v-container fluid class="dashboard-container">
+      <!-- Hero Section - This Month Focus -->
+      <v-row class="">
+        <v-col cols="12" class="pa-2">
+          <div class="hero-section">
+            <div class="hero-backdrop"></div>
+            <v-row class="hero-content">
+              <v-col cols="12" md="6" class="d-flex flex-column justify-center">
+                <div class="hero-text">
+                  <h1 class="text-h4 font-weight-bold mb-2">Your Money Today</h1>
+                  <p class="text-subtitle-1 mb-6">Track your {{ isAdmin ? 'revenue' : 'earnings' }} growth in real-time</p>
+                  <div class="hero-stat">
+                    <div class="hero-label">{{ isAdmin ? 'This Month Revenue' : 'This Month Earnings' }}</div>
+                    <div class="hero-value animate-scale">{{ formatCurrency(isAdmin ? kpis.revenue.monthly.actual : kpis.earnings.monthly.actual) }}</div>
+                    <div class="hero-meta" v-if="(isAdmin ? kpis.revenue.is_extrapolated : kpis.earnings.is_extrapolated)">
+                      <v-icon size="small" color="warning" class="mr-1">mdi-lightning-bolt</v-icon>
+                      <span>Extrapolated estimate: {{ formatCurrency(isAdmin ? kpis.revenue.monthly.extrapolated : kpis.earnings.monthly.extrapolated) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </v-col>
+              <v-col cols="12" md="6" class="hero-chart-wrapper">
+                <div class="hero-chart-container">
+                  <GChart
+                    type="LineChart"
+                    :data="heroTrendData"
+                    :options="heroTrendChartOptions"
+                  />
+                </div>
+              </v-col>
+            </v-row>
+          </div>
+        </v-col>
+      </v-row>
+
+      <!-- Key Metrics Row -->
+      <v-row>
+        <!-- This Year -->
+        <v-col cols="12" sm="6" md="3" class="pa-2">
+          <v-card class="kpi-card kpi-accent-primary" :elevation="0">
+            <v-card-text class="kpi-card-content">
+              <div class="kpi-icon-bg primary">
+                <v-icon>mdi-calendar</v-icon>
+              </div>
+              <div class="kpi-label">This Year</div>
+              <div class="kpi-primary-value animate-counter">{{
+                formatCurrency(isAdmin ? kpis.revenue.yearly.actual : kpis.earnings.yearly.actual)
+              }}</div>
+              <div class="kpi-meta mt-3">
+                <div class="meta-row" v-if="(isAdmin ? kpis.revenue.yearly.extrapolated : kpis.earnings.yearly.extrapolated)">
+                  <span class="meta-label">Estimated:</span>
+                  <span class="meta-value">{{ formatCurrency(isAdmin ? kpis.revenue.yearly.extrapolated : kpis.earnings.yearly.extrapolated) }}</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Hours:</span>
+                  <span class="meta-value">{{ formatHours(kpis.hours.yearly.total) }}</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Billable:</span>
+                  <span class="meta-value">{{ formatHours(kpis.hours.yearly.billable) }}</span>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <!-- This Month - Featured -->
+        <v-col cols="12" sm="6" md="3" class="pa-2">
+          <v-card class="kpi-card kpi-featured" :elevation="0">
+            <v-card-text class="kpi-card-content">
+              <div class="kpi-icon-bg accent">
+                <v-icon>mdi-lightning-bolt</v-icon>
+              </div>
+              <div class="kpi-label">This Month</div>
+              <div class="kpi-primary-value animate-counter">{{
+                formatCurrency(isAdmin ? kpis.revenue.monthly.actual : kpis.earnings.monthly.actual)
+              }}</div>
+              <div class="kpi-meta mt-3">
+                <div class="meta-row" v-if="(isAdmin ? kpis.revenue.is_extrapolated : kpis.earnings.is_extrapolated)">
+                  <span class="meta-label">Estimated:</span>
+                  <span class="meta-value">{{ formatCurrency(isAdmin ? kpis.revenue.monthly.extrapolated : kpis.earnings.monthly.extrapolated) }}</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Total Hours:</span>
+                  <span class="meta-value">{{ formatHours(kpis.hours.monthly.total) }}</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Billable:</span>
+                  <span class="meta-value">{{ formatHours(kpis.hours.monthly.billable) }}</span>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <!-- Last Month -->
+        <v-col cols="12" sm="6" md="3" class="pa-2">
+          <v-card class="kpi-card kpi-accent-success" :elevation="0">
+            <v-card-text class="kpi-card-content">
+              <div class="kpi-icon-bg success">
+                <v-icon>mdi-history</v-icon>
+              </div>
+              <div class="kpi-label">Last Month</div>
+              <div class="kpi-primary-value">{{
+                formatCurrency(isAdmin ? kpis.revenue.last_month.paid : kpis.earnings.last_month.paid)
+              }}</div>
+              <div class="kpi-meta mt-3">
+                <div class="meta-row" v-if="(isAdmin ? kpis.revenue.last_month.due : kpis.earnings.last_month.due) > 0">
+                  <span class="meta-label">Due:</span>
+                  <span class="meta-value text-warning">{{ formatCurrency(isAdmin ? kpis.revenue.last_month.due : kpis.earnings.last_month.due) }}</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Hours:</span>
+                  <span class="meta-value">{{ formatHours(kpis.hours.last_month.total) }}</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Billable:</span>
+                  <span class="meta-value">{{ formatHours(kpis.hours.last_month.billable) }}</span>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <!-- Last Year -->
+        <v-col cols="12" sm="6" md="3" class="pa-2">
+          <v-card class="kpi-card kpi-accent-info" :elevation="0">
+            <v-card-text class="kpi-card-content">
+              <div class="kpi-icon-bg info">
+                <v-icon>mdi-trending-up</v-icon>
+              </div>
+              <div class="kpi-label">Last Year</div>
+              <div class="kpi-primary-value">{{
+                formatCurrency(isAdmin ? kpis.revenue.last_year.paid : kpis.earnings.last_year.paid)
+              }}</div>
+              <div class="kpi-meta mt-3">
+                <div class="meta-row" v-if="(isAdmin ? kpis.revenue.last_year.due : kpis.earnings.last_year.due) > 0">
+                  <span class="meta-label">Due:</span>
+                  <span class="meta-value text-warning">{{ formatCurrency(isAdmin ? kpis.revenue.last_year.due : kpis.earnings.last_year.due) }}</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Hours:</span>
+                  <span class="meta-value">{{ formatHours(kpis.hours.last_year.total) }}</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Billable:</span>
+                  <span class="meta-value">{{ formatHours(kpis.hours.last_year.billable) }}</span>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+    <!-- Charts Row 1: Trends -->
     <v-row>
-      <!-- Last Year -->
-      <v-col cols="12" sm="6" md="3">
-        <v-card class="kpi-card">
-          <v-card-text>
-            <div class="d-flex align-center">
-              <div class="text-h6">Last Year</div>
-              <v-tooltip location="top">
-                <template v-slot:activator="{ props }">
-                  <v-icon v-bind="props" size="small" class="ml-1"
-                    >mdi-information</v-icon
-                  >
-                </template>
-                <span>Last year's {{ isAdmin ? 'revenue' : 'earnings' }} and hours</span>
-              </v-tooltip>
-            </div>
-            <div class="mt-2">
-              <div class="d-flex justify-space-between">
-                <span>{{ isAdmin ? 'Revenue:' : 'Earnings:' }}</span>
-                <span class="font-weight-bold">{{
-                  formatCurrency(isAdmin ? kpis.revenue.last_year : kpis.earnings.last_year)
-                }}</span>
-              </div>
-              <div class="d-flex justify-space-between">
-                <span>Total Hours:</span>
-                <span class="font-weight-bold">{{
-                  formatHours(kpis.hours.last_year.total)
-                }}</span>
-              </div>
-              <div class="d-flex justify-space-between">
-                <span>Billable:</span>
-                <span class="font-weight-bold">{{
-                  formatHours(kpis.hours.last_year.billable)
-                }}</span>
-              </div>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <!-- This Year -->
-      <v-col cols="12" sm="6" md="3">
-        <v-card class="kpi-card">
-          <v-card-text>
-            <div class="d-flex align-center">
-              <div class="text-h6">This Year</div>
-              <v-tooltip location="top">
-                <template v-slot:activator="{ props }">
-                  <v-icon v-bind="props" size="small" class="ml-1"
-                    >mdi-information</v-icon
-                  >
-                </template>
-                <span>Current year's {{ isAdmin ? 'revenue' : 'earnings' }} and hours</span>
-              </v-tooltip>
-            </div>
-            <div class="mt-2">
-              <div class="d-flex justify-space-between">
-                <span>{{ isAdmin ? 'Revenue:' : 'Earnings:' }}</span>
-                <span class="font-weight-bold">{{
-                  formatCurrency(isAdmin ? kpis.revenue.yearly : kpis.earnings.yearly)
-                }}</span>
-              </div>
-              <div class="d-flex justify-space-between">
-                <span>Total Hours:</span>
-                <span class="font-weight-bold">{{
-                  formatHours(kpis.hours.yearly.total)
-                }}</span>
-              </div>
-              <div class="d-flex justify-space-between">
-                <span>Billable:</span>
-                <span class="font-weight-bold">{{
-                  formatHours(kpis.hours.yearly.billable)
-                }}</span>
-              </div>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <!-- Last Month -->
-      <v-col cols="12" sm="6" md="3">
-        <v-card class="kpi-card">
-          <v-card-text>
-            <div class="d-flex align-center">
-              <div class="text-h6">Last Month</div>
-              <v-tooltip location="top">
-                <template v-slot:activator="{ props }">
-                  <v-icon v-bind="props" size="small" class="ml-1"
-                    >mdi-information</v-icon
-                  >
-                </template>
-                <span>Last month's actual {{ isAdmin ? 'revenue' : 'earnings' }} and hours</span>
-              </v-tooltip>
-            </div>
-            <div class="mt-2">
-              <div class="d-flex justify-space-between">
-                <span>{{ isAdmin ? 'Revenue:' : 'Earnings:' }}</span>
-                <span class="font-weight-bold">{{
-                  formatCurrency(isAdmin ? kpis.revenue.last_month : kpis.earnings.last_month)
-                }}</span>
-              </div>
-              <div class="d-flex justify-space-between">
-                <span>Total Hours:</span>
-                <span class="font-weight-bold">{{
-                  formatHours(kpis.hours.last_month.total)
-                }}</span>
-              </div>
-              <div class="d-flex justify-space-between">
-                <span>Billable:</span>
-                <span class="font-weight-bold">{{
-                  formatHours(kpis.hours.last_month.billable)
-                }}</span>
-              </div>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <!-- This Month -->
-      <v-col cols="12" sm="6" md="3">
-        <v-card class="kpi-card">
-          <v-card-text>
-            <div class="d-flex align-center">
-              <div class="text-h6">This Month</div>
-              <v-tooltip location="top">
-                <template v-slot:activator="{ props }">
-                  <v-icon v-bind="props" size="small" class="ml-1"
-                    >mdi-information</v-icon
-                  >
-                </template>
-                <span>Current month's extrapolated {{ isAdmin ? 'revenue' : 'earnings' }} and hours</span>
-              </v-tooltip>
-            </div>
-            <div class="mt-2">
-              <div class="d-flex justify-space-between">
-                <span>{{ isAdmin ? 'Revenue:' : 'Earnings:' }}</span>
-                <span class="font-weight-bold">
-                  {{ formatCurrency(isAdmin ? kpis.revenue.monthly : kpis.earnings.monthly) }}
-                  <v-tooltip v-if="(isAdmin ? kpis.revenue.is_extrapolated : kpis.earnings.is_extrapolated)" location="top">
-                    <template v-slot:activator="{ props }">
-                      <v-icon v-bind="props" size="small" color="warning"
-                        >mdi-alert</v-icon
-                      >
-                    </template>
-                    <span>Extrapolated based on current day of month</span>
-                  </v-tooltip>
-                </span>
-              </div>
-              <div class="d-flex justify-space-between">
-                <span>Total Hours:</span>
-                <span class="font-weight-bold">{{
-                  formatHours(kpis.hours.monthly.total)
-                }}</span>
-              </div>
-              <div class="d-flex justify-space-between">
-                <span>Billable:</span>
-                <span class="font-weight-bold">{{
-                  formatHours(kpis.hours.monthly.billable)
-                }}</span>
-              </div>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <v-row class="mt-4">
       <!-- Revenue/Earnings Trend Chart -->
-      <v-col cols="12" md="8">
-        <v-card class="chart-card">
-          <v-card-title>{{ isAdmin ? 'Revenue' : 'Earnings' }} Trend ({{ new Date().getFullYear() }})</v-card-title>
+      <v-col cols="12" md="8" class="pa-2">
+        <v-card class="chart-card" :elevation="0">
+          <v-card-title class="chart-title">
+            <v-icon size="24" class="mr-2">mdi-chart-line-variant</v-icon>
+            {{ isAdmin ? 'Revenue' : 'Earnings' }} Trend ({{ new Date().getFullYear() }})
+          </v-card-title>
           <v-card-text>
             <GChart
               type="LineChart"
@@ -188,13 +179,16 @@
         </v-card>
       </v-col>
 
-      <!-- Revenue by Customer or Earnings by Project Chart -->
-      <v-col cols="12" md="4">
-        <v-card class="chart-card">
-          <v-card-title>{{ isAdmin ? 'Revenue by Customer' : 'Earnings by Project' }}</v-card-title>
+      <!-- Top Customers or Top Projects Chart -->
+      <v-col cols="12" md="4" class="pa-2">
+        <v-card class="chart-card" :elevation="0">
+          <v-card-title class="chart-title">
+            <v-icon size="24" class="mr-2">mdi-crown</v-icon>
+            {{ isAdmin ? 'Top Customers' : 'Top Projects' }}
+          </v-card-title>
           <v-card-text>
             <GChart
-              type="PieChart"
+              type="BarChart"
               :data="isAdmin ? customerChartData : projectEarningsChartData"
               :options="customerChartOptions"
             />
@@ -203,11 +197,15 @@
       </v-col>
     </v-row>
 
-    <v-row class="mt-4">
+    <!-- Charts Row 2: Hours & Deadlines -->
+    <v-row>
       <!-- Hours Worked Chart -->
-      <v-col cols="12" md="8">
-        <v-card class="chart-card">
-          <v-card-title>Hours Worked (This Month)</v-card-title>
+      <v-col cols="12" md="8" class="pa-2">
+        <v-card class="chart-card" :elevation="0">
+          <v-card-title class="chart-title">
+            <v-icon size="24" class="mr-2">mdi-clock-check</v-icon>
+            Hours Worked (This Month)
+          </v-card-title>
           <v-card-text>
             <GChart
               type="ColumnChart"
@@ -219,25 +217,44 @@
       </v-col>
 
       <!-- Upcoming Deadlines -->
-      <v-col cols="12" md="4">
-        <v-card class="chart-card">
-          <v-card-title>Upcoming Deadlines</v-card-title>
-          <v-card-text>
-            <v-list>
-              <v-list-item
-                v-for="deadline in upcomingDeadlines"
-                :key="deadline.id"
-                :title="deadline.name"
-                :subtitle="deadline.customer"
-              >
-                <template v-slot:append>
-                  <v-chip
-                    :color="deadline.days_until <= 3 ? 'error' : 'warning'"
-                    size="small"
-                  >
-                    {{ deadline.days_until }} days
-                  </v-chip>
-                </template>
+      <v-col cols="12" md="4" class="pa-2">
+        <v-card class="chart-card" :elevation="0">
+          <v-card-title class="chart-title">
+            <v-icon size="24" class="mr-2">mdi-calendar-alert</v-icon>
+            Upcoming Deadlines
+          </v-card-title>
+          <v-card-text class="pb-0">
+            <v-list class="deadline-list pb-0">
+              <template v-if="upcomingDeadlines.length > 0">
+                <v-list-item
+                  v-for="(deadline, index) in upcomingDeadlines.slice(0, 5)"
+                  :key="deadline.id"
+                  class="deadline-item"
+                >
+                  <template v-slot:prepend>
+                    <v-icon 
+                      :color="deadline.days_until <= 3 ? 'error' : (deadline.days_until <= 7 ? 'warning' : 'success')"
+                      class="mr-3"
+                    >
+                      {{ deadline.days_until <= 3 ? 'mdi-alert-circle' : 'mdi-clock-outline' }}
+                    </v-icon>
+                  </template>
+                  <v-list-item-title class="font-weight-medium">{{ deadline.name }}</v-list-item-title>
+                  <v-list-item-subtitle>{{ deadline.customer }}</v-list-item-subtitle>
+                  <template v-slot:append>
+                    <v-chip
+                      :color="deadline.days_until <= 3 ? 'error' : (deadline.days_until <= 7 ? 'warning' : 'success')"
+                      size="small"
+                      class="font-weight-bold"
+                    >
+                      {{ deadline.days_until }}d
+                    </v-chip>
+                  </template>
+                </v-list-item>
+              </template>
+              <v-list-item v-else class="text-center py-8">
+                <v-icon size="48" color="rgba(255,255,255,0.2)" class="mb-2">mdi-check-all</v-icon>
+                <div class="text-subtitle-2 text-center">No upcoming deadlines</div>
               </v-list-item>
             </v-list>
           </v-card-text>
@@ -294,14 +311,67 @@ export default {
       },
       revenueByCustomer: {},
       yearlyRevenueTrend: [],
+      heroTrendDataRaw: [],
       earningsByProject: {},
       yearlyEarningsTrend: [],
       monthlyHours: [],
       upcomingDeadlines: [],
+      heroTrendChartOptions: {
+        curveType: "function",
+        legend: "none",
+        height: 200,
+        backgroundColor: "transparent",
+        chartArea: {
+          backgroundColor: "transparent",
+          left: "0%",
+          right: "0%",
+          top: "5%",
+          bottom: "5%",
+        },
+        pointSize: 5,
+        lineWidth: 2,
+        vAxis: {
+          textStyle: { color: "rgba(255,255,255,0)" },
+          gridlines: { color: "transparent" },
+          baselineColor: "transparent",
+        },
+        hAxis: {
+          textStyle: { color: "rgba(255,255,255,0)" },
+          gridlines: { color: "transparent" },
+          baselineColor: "transparent",
+        },
+        series: {
+          0: {
+            color: "#64B5F6",
+            lineWidth: 3,
+            pointSize: 5,
+            lineDashStyle: [1, 0], // Solid line for actual
+          },
+          1: {
+            color: "#FFB74D",
+            lineWidth: 2,
+            pointSize: 0,
+            lineDashStyle: [5, 5], // Dashed line for projection
+          },
+        },
+        annotations: {
+          alwaysOutside: true,
+          textStyle: {
+            fontSize: 10,
+            color: '#FFB74D',
+            bold: true,
+          },
+        },
+        animation: {
+          duration: 1200,
+          easing: 'inAndOut',
+          startup: true,
+        },
+      },
       revenueChartOptions: {
         curveType: "line",
-        legend: { position: "top", textStyle: { color: "#fff" } },
-        height: 300,
+        legend: { position: "top", textStyle: { color: "#fff", fontSize: 13 } },
+        height: 350,
         backgroundColor: "transparent",
         chartArea: {
           backgroundColor: "transparent",
@@ -310,69 +380,75 @@ export default {
           top: "15%",
           bottom: "10%",
         },
+        pointSize: 8,
+        pointShape: "circle",
         vAxis: {
-          format: "currency",
-          textStyle: { color: "#fff" },
+          format: "$#,###",
+          textStyle: { color: "rgba(255,255,255,0.7)", fontSize: 11 },
           gridlines: {
-            color: "rgba(255,255,255,0.05)",
+            color: "rgba(100, 181, 246, 0.1)",
             interval: 1,
           },
         },
         hAxis: {
-          textStyle: { color: "#fff" },
+          textStyle: { color: "rgba(255,255,255,0.7)", fontSize: 11 },
           gridlines: {
-            color: "rgba(255,255,255,0.05)",
+            color: "rgba(100, 181, 246, 0.05)",
             interval: 1,
           },
-            // slantedText: true,
-          //   slantedTextAngle: 45,
           showTextEvery: 7,
-          format: "dd MMM",
+          format: "MMM",
         },
-
         series: {
           0: {
             color: "#64B5F6",
             lineWidth: 3,
             pointSize: 6,
+            areaOpacity: 0.2,
           },
+        },
+        animation: {
+          duration: 800,
+          easing: 'inAndOut',
+          startup: true,
         },
       },
       customerChartOptions: {
         legend: {
-          position: "right",
-          textStyle: { color: "#fff" },
+          position: "none",
         },
-        height: 300,
+        height: 350,
         backgroundColor: "transparent",
         chartArea: {
           backgroundColor: "transparent",
-          left: "5%",
-          right: "15%",
+          left: "25%",
+          right: "5%",
           top: "5%",
           bottom: "5%",
         },
-        pieHole: 0.4,
-        colors: [
-          "#64B5F6",
-          "#81C784",
-          "#FFB74D",
-          "#E57373",
-          "#BA68C8",
-          "#4DD0E1",
-          "#FFD54F",
-          "#A1887F",
-        ],
-        pieSliceTextStyle: {
-          color: "#fff",
+        hAxis: {
+          textStyle: { color: "#fff", fontSize: 12 },
+          gridlines: { color: "rgba(255,255,255,0.1)" },
+          baselineColor: "transparent",
+        },
+        vAxis: {
+          textStyle: { color: "#fff", fontSize: 12 },
+          gridlines: { color: "transparent" },
+          baselineColor: "transparent",
+        },
+        colors: ["#64B5F6"],
+        animation: {
+          duration: 1000,
+          easing: 'inAndOut',
+          startup: true,
         },
       },
       hoursChartOptions: {
         legend: {
           position: "top",
-          textStyle: { color: "#fff" },
+          textStyle: { color: "#fff", fontSize: 13 },
         },
-        height: 300,
+        height: 350,
         backgroundColor: "transparent",
         chartArea: {
           backgroundColor: "transparent",
@@ -381,19 +457,33 @@ export default {
           top: "15%",
           bottom: "10%",
         },
-        isStacked: true,
+        isStacked: false,
+        bar: { groupWidth: "70%" },
+        pointSize: 5,
         vAxis: {
           format: "#.#h",
-          textStyle: { color: "#fff" },
-          gridlines: { color: "rgba(255,255,255,0.1)" },
+          textStyle: { color: "rgba(255,255,255,0.7)", fontSize: 11 },
+          gridlines: { color: "rgba(100, 181, 246, 0.1)" },
         },
         hAxis: {
-          textStyle: { color: "#fff" },
-          gridlines: { color: "rgba(255,255,255,0.1)" },
+          textStyle: { color: "rgba(255,255,255,0.7)", fontSize: 11 },
+          gridlines: { color: "transparent" },
+          showTextEvery: 2,
         },
         series: {
-          0: { color: "#64B5F6" }, // Billable
-          1: { color: "#81C784" }, // Non-billable
+          0: { 
+            color: "#64B5F6",
+            targetAxisIndex: 0,
+          },
+          1: { 
+            color: "#81C784",
+            targetAxisIndex: 0,
+          },
+        },
+        animation: {
+          duration: 600,
+          easing: 'inAndOut',
+          startup: true,
         },
       },
     };
@@ -421,9 +511,10 @@ export default {
     },
     customerChartData() {
       const headers = ["Customer", "Revenue"];
-      const data = Object.entries(this.revenueByCustomer || {}).map(
-        ([customer, amount]) => [customer, parseFloat(amount)]
-      );
+      const data = Object.entries(this.revenueByCustomer || {})
+        .sort((a, b) => parseFloat(b[1]) - parseFloat(a[1])) // Sort by revenue descending
+        .slice(0, 5) // Take only top 5
+        .map(([customer, amount]) => [customer, parseFloat(amount)]);
       return [headers, ...data];
     },
     projectEarningsChartData() {
@@ -442,6 +533,82 @@ export default {
         return [new Date(item.date), billable, nonBillable];
       });
       return [headers, ...data];
+    },
+    heroTrendData() {
+      const trend = this.heroTrendDataRaw || [];
+      
+      if (!trend || trend.length === 0) {
+        return [["Month", "Actual", "Projection", { role: 'annotation' }]];
+      }
+
+      // Get the last 12 months of actual data
+      const actualData = trend.slice(-12).map((item) => [
+        item.date,
+        parseFloat(item.amount),
+      ]);
+
+      // Calculate trend line for projection
+      if (actualData.length < 2) {
+        return [
+          ["Month", "Actual", "Projection", { role: 'annotation' }],
+          ...actualData.map((item, idx) => [
+            new Date(item[0]).toLocaleDateString('en-US', { year: '2-digit', month: 'short' }),
+            item[1],
+            null,
+            null,
+          ]),
+        ];
+      }
+
+      // Simple linear regression to predict next 4 months
+      const n = actualData.length;
+      const xValues = Array.from({ length: n }, (_, i) => i);
+      const yValues = actualData.map((item) => item[1]);
+
+      const xMean = xValues.reduce((a, b) => a + b, 0) / n;
+      const yMean = yValues.reduce((a, b) => a + b, 0) / n;
+
+      const slope = xValues.reduce((sum, x, i) => sum + (x - xMean) * (yValues[i] - yMean), 0) /
+                    xValues.reduce((sum, x) => sum + (x - xMean) ** 2, 0);
+
+      const intercept = yMean - slope * xMean;
+
+      // Get current month info
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      // Format actual data with months and projection line connecting smoothly
+      const formattedActual = actualData.map((item, index) => {
+        const itemDate = new Date(item[0]);
+        const projectedValue = slope * index + intercept;
+        return [
+          itemDate.toLocaleDateString('en-US', { year: '2-digit', month: 'short' }),
+          item[1],
+          projectedValue, // Add projection line through actual data for smooth transition
+          null, // Remove forecast label
+        ];
+      });
+
+      // Create projection data for next 4 months - extended
+      const projectionData = [];
+      for (let i = 1; i <= 6; i++) { // Extended to 6 months for better visibility
+        const projectionMonth = new Date(currentYear, currentMonth + i, 1);
+        const monthIndex = n - 1 + i;
+        const projectedValue = Math.max(0, slope * monthIndex + intercept);
+        projectionData.push([
+          projectionMonth.toLocaleDateString('en-US', { year: '2-digit', month: 'short' }),
+          null,
+          projectedValue,
+          null,
+        ]);
+      }
+
+      return [
+        ["Month", "Actual", "Projection", { role: 'annotation' }],
+        ...formattedActual,
+        ...projectionData,
+      ];
     },
   },
   methods: {
@@ -489,6 +656,9 @@ export default {
       try {
         const response = await axios.get("/api/dashboard");
         this.kpis = response.data.kpis;
+        
+        // Store hero trend data (common for both roles)
+        this.heroTrendDataRaw = response.data.hero_trend_data || [];
         
         // Store data for both admin and freelancer roles
         if (this.isAdmin) {
@@ -538,64 +708,374 @@ export default {
 </script>
 
 <style scoped>
+.dashboard-container {
+  padding-top: 16px;
+  padding-bottom: 32px;
+}
+
+/* Hero Section */
+.hero-section {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(100, 181, 246, 0.15) 0%, rgba(129, 199, 132, 0.15) 100%);
+  border: 2px solid rgba(100, 181, 246, 0.3);
+  min-height: 220px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.hero-section:hover {
+  border: 2px solid rgba(100, 181, 246, 0.5);
+  background: linear-gradient(135deg, rgba(100, 181, 246, 0.2) 0%, rgba(129, 199, 132, 0.2) 100%);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.hero-backdrop {
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(100, 181, 246, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(40px);
+  animation: float 6s ease-in-out infinite;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  padding: 32px;
+}
+
+.hero-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hero-text h1 {
+  background: linear-gradient(135deg, #64B5F6 0%, #81C784 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+
+.hero-text p {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.hero-stat {
+  margin-top: 16px;
+}
+
+.hero-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 8px;
+}
+
+.hero-value {
+  font-size: 48px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #64B5F6 0%, #81C784 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+}
+
+.hero-meta {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: rgba(255, 200, 100, 0.9);
+  font-weight: 500;
+}
+
+.hero-chart-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-chart-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 2px solid rgba(100, 181, 246, 0.15);
+  padding: 0;
+  overflow: hidden;
+}
+
+.hero-chart-container > div {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.hero-chart-container svg {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* KPI Cards */
 .kpi-card {
-  height: 160px;
-  background: rgba(255, 255, 255, 0.05);
+  height: 220px;
+  background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: transform 0.2s ease-in-out;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
 .kpi-card:hover {
-  transform: translateY(-2px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
+.kpi-card:hover::before {
+  opacity: 1;
+}
+
+.kpi-card-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 2;
+  padding: 16px !important;
+}
+
+.kpi-icon-bg {
+  position: absolute;
+  top: -20px;
+  right: -10px;
+  font-size: 120px;
+  opacity: 0.08;
+  z-index: 0;
+  pointer-events: none;
+  margin-right: 16px;
+  margin-top: 16px;
+}
+
+.kpi-icon-bg.primary {
+  color: #64B5F6;
+}
+
+.kpi-icon-bg.accent {
+  color: #FFB74D;
+}
+
+.kpi-icon-bg.success {
+  color: #81C784;
+}
+
+.kpi-icon-bg.info {
+  color: #4DD0E1;
+}
+
+.kpi-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 8px;
+}
+
+.kpi-primary-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.kpi-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.meta-label {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.meta-value {
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+}
+
+/* Chart Cards */
 .chart-card {
-  height: 400px;
-  background: rgba(255, 255, 255, 0.05);
+  height: auto;
+  background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: transform 0.2s ease-in-out;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
 .chart-card:hover {
-  transform: translateY(-2px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
-.v-card-title {
+.chart-title {
   color: #fff;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(100, 181, 246, 0.1) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .v-card-text {
   color: rgba(255, 255, 255, 0.87);
 }
 
-.v-list {
+/* Deadline List Styling */
+.deadline-list {
   background: transparent;
 }
 
-.v-list-item {
+.deadline-item {
   background: rgba(255, 255, 255, 0.05);
   margin-bottom: 8px;
-  border-radius: 8px;
-  transition: background-color 0.2s ease-in-out;
+  border-radius: 10px;
+  border-left: 4px solid transparent;
+  transition: all 0.3s ease;
+  padding: 12px;
 }
 
-.v-list-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+.deadline-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-left: 4px solid #64B5F6;
 }
 
 .v-list-item-title {
-  color: #fff;
+  color: #fff !important;
+  font-weight: 600;
 }
 
 .v-list-item-subtitle {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.6) !important;
 }
 
 .v-chip {
-  font-weight: 500;
+  font-weight: 600;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(255, 167, 38, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 24px rgba(255, 167, 38, 0.6);
+  }
+}
+
+@keyframes scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes count-up {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-scale {
+  animation: scale-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.animate-counter {
+  animation: count-up 0.8s ease-out;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .hero-value {
+    font-size: 36px;
+  }
+
+  .hero-section {
+    min-height: auto;
+  }
+
+  .hero-content {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .kpi-card {
+    height: auto;
+  }
+
+  .hero-value {
+    font-size: 28px;
+  }
+
+  .hero-text h1 {
+    font-size: 24px !important;
+  }
+
+  .hero-backdrop {
+    display: none;
+  }
 }
 </style>

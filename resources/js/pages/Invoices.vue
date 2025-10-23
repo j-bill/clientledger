@@ -68,7 +68,11 @@
         :loading="loading"
         class="elevation-1"
         :search="search"
+        :sort-by="sortBy"
       >
+        <template v-slot:item.invoice_number="{ item }">
+          {{ item.invoice_number || '-' }}
+        </template>
         <template v-slot:item.created_at="{ item }">
           {{ formatDate(item.created_at) }}
         </template>
@@ -99,7 +103,7 @@
       <v-card>
         <v-card-title>New Invoice</v-card-title>
         <v-card-text>
-          <invoice-form ref="createForm" @save="saveInvoice"></invoice-form>
+          <invoice-form ref="createForm" @save="handleInvoiceSave"></invoice-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -110,12 +114,13 @@
     </v-dialog>
 
     <!-- Generate from Work Logs Dialog -->
-    <v-dialog v-model="generateDialog" max-width="800px">
+    <v-dialog v-model="generateDialog" max-width="1200px">
       <v-card>
         <v-card-title>Generate Invoice from Work Logs</v-card-title>
         <v-card-text>
-          <v-row>
-            <v-col cols="12" md="6">
+          <!-- Customer Selection -->
+          <v-row class="mb-4">
+            <v-col cols="12">
               <v-autocomplete
                 v-model="generateForm.customer_id"
                 data-test="gen-customer"
@@ -125,33 +130,173 @@
                 label="Customer"
                 prepend-icon="mdi-account"
                 @update:model-value="onGenerateCustomerChange"
+                :rules="[v => !!v || 'Customer is required']"
+              />
+            </v-col>
+          </v-row>
+
+          <!-- Filters Section -->
+          <v-card v-if="generateForm.customer_id" class="mb-4" variant="outlined">
+            <v-card-title class="text-h6">Filter Work Logs</v-card-title>
+            <v-card-text>
+              <v-row>
+                <v-col cols="12" md="4">
+                  <v-select
+                    v-model="workLogFilters.project_id"
+                    :items="customerProjects"
+                    item-title="name"
+                    item-value="id"
+                    label="Project"
+                    prepend-icon="mdi-folder"
+                    clearable
+                    @update:model-value="loadFilteredWorkLogs"
+                  />
+                </v-col>
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="workLogFilters.start_date"
+                    type="date"
+                    label="Start Date"
+                    prepend-icon="mdi-calendar"
+                    clearable
+                    @update:model-value="loadFilteredWorkLogs"
+                  />
+                </v-col>
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="workLogFilters.end_date"
+                    type="date"
+                    label="End Date"
+                    prepend-icon="mdi-calendar"
+                    clearable
+                    @update:model-value="loadFilteredWorkLogs"
+                  />
+                </v-col>
+              </v-row>
+              <v-row>
+                <v-col cols="12" class="text-right">
+                  <v-btn color="secondary" @click="resetWorkLogFilters" class="mr-2">
+                    <v-icon>mdi-filter-off</v-icon>
+                    Reset Filters
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+
+          <!-- Work Logs Selection -->
+          <v-card v-if="generateForm.customer_id" variant="outlined" class="mb-4">
+            <v-card-title class="d-flex justify-space-between align-center">
+              <span class="text-h6">Available Work Logs ({{ filteredWorkLogs.length }})</span>
+              <div>
+                <v-btn 
+                  color="primary" 
+                  variant="text" 
+                  size="small" 
+                  @click="selectAllWorkLogs"
+                  :disabled="filteredWorkLogs.length === 0"
+                  class="mr-2"
+                >
+                  Select All
+                </v-btn>
+                <v-btn 
+                  color="secondary" 
+                  variant="text" 
+                  size="small" 
+                  @click="clearWorkLogSelection"
+                  :disabled="generateForm.work_log_ids.length === 0"
+                >
+                  Clear Selection
+                </v-btn>
+              </div>
+            </v-card-title>
+            <v-card-text>
+              <v-alert v-if="filteredWorkLogs.length === 0" type="info" variant="tonal">
+                No unbilled work logs found for the selected criteria.
+              </v-alert>
+              <v-list v-else>
+                <v-list-item
+                  v-for="log in filteredWorkLogs"
+                  :key="log.id"
+                  @click="toggleWorkLog(log.id)"
+                  :class="{ 'bg-blue-lighten-5': generateForm.work_log_ids.includes(log.id) }"
+                >
+                  <template v-slot:prepend>
+                    <v-checkbox
+                      :model-value="generateForm.work_log_ids.includes(log.id)"
+                      @update:model-value="toggleWorkLog(log.id)"
+                      color="primary"
+                    />
+                  </template>
+                  <v-list-item-title>
+                    {{ formatDate(log.date) }} - {{ log.project?.name || 'Unknown Project' }}
+                  </v-list-item-title>
+                  <v-list-item-subtitle>
+                    {{ log.user?.name || 'Unknown User' }} • 
+                    {{ log.hours_worked || 0 }}h • 
+                    {{ currencySymbol }}{{ (log.billing_rate * (log.hours_worked || 0)).toFixed(2) }}
+                    <br>
+                    <span class="text-caption">{{ log.description || 'No description' }}</span>
+                  </v-list-item-subtitle>
+                  <template v-slot:append>
+                    <v-chip size="small" color="primary" variant="outlined">
+                      {{ currencySymbol }}{{ (log.billing_rate * (log.hours_worked || 0)).toFixed(2) }}
+                    </v-chip>
+                  </template>
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+          </v-card>
+
+          <!-- Invoice Details -->
+          <v-row v-if="generateForm.customer_id">
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="generateForm.due_date"
+                data-test="gen-due-date"
+                type="date"
+                label="Due Date"
+                prepend-icon="mdi-calendar"
+                :rules="[v => !!v || 'Due date is required']"
               />
             </v-col>
             <v-col cols="12" md="6">
               <v-select
-                v-model="generateForm.work_log_ids"
-                data-test="gen-worklogs"
-                :items="unbilledLogs"
-                item-title="label"
-                item-value="id"
-                chips
-                multiple
-                label="Work Logs"
-                prepend-icon="mdi-timelapse"
+                v-model="generateForm.status"
+                data-test="gen-status"
+                :items="['draft','sent','paid','overdue','cancelled']"
+                label="Status"
+                prepend-icon="mdi-flag"
+                :rules="[v => !!v || 'Status is required']"
               />
             </v-col>
-            <v-col cols="12" md="3">
-              <v-text-field v-model="generateForm.due_date" data-test="gen-due-date" type="date" label="Due Date" />
-            </v-col>
-            <v-col cols="12" md="3">
-              <v-select v-model="generateForm.status" data-test="gen-status" :items="['draft','sent','paid','overdue','cancelled']" label="Status" />
-            </v-col>
           </v-row>
+
+          <!-- Selected Work Logs Summary -->
+          <v-card v-if="generateForm.work_log_ids.length > 0" class="mt-4" color="primary" variant="tonal">
+            <v-card-text>
+              <div class="d-flex justify-space-between align-center">
+                <div>
+                  <strong>{{ generateForm.work_log_ids.length }}</strong> work log{{ generateForm.work_log_ids.length !== 1 ? 's' : '' }} selected
+                </div>
+                <div class="text-h6">
+                  Total: {{ currencySymbol }}{{ calculateSelectedTotal() }}
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="error" data-test="btn-cancel-generate" variant="text" @click="generateDialog = false">Cancel</v-btn>
-          <v-btn color="primary" data-test="btn-generate-confirm" :disabled="!generateForm.customer_id || generateForm.work_log_ids.length===0" @click="generateInvoice">Generate</v-btn>
+          <v-btn 
+            color="primary" 
+            data-test="btn-generate-confirm" 
+            :disabled="!generateForm.customer_id || generateForm.work_log_ids.length === 0 || !generateForm.due_date || !generateForm.status" 
+            @click="generateInvoice"
+          >
+            Generate Invoice ({{ currencySymbol }}{{ calculateSelectedTotal() }})
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -161,12 +306,12 @@
       <v-card>
         <v-card-title>Edit Invoice</v-card-title>
         <v-card-text>
-          <invoice-form ref="editForm" :invoice="currentInvoice" @save="updateInvoiceRecord"></invoice-form>
+          <invoice-form ref="editForm" :invoice="currentInvoice" @save="handleInvoiceSave"></invoice-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="error" variant="text" @click="editDialog = false">Cancel</v-btn>
-          <v-btn color="primary" @click="$refs.editForm.submit()">Update</v-btn>
+          <v-btn color="primary" @click="$refs.editForm.submit()">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -211,6 +356,13 @@ export default {
       generateDialog: false,
       customers: [],
       unbilledLogs: [],
+      filteredWorkLogs: [],
+      customerProjects: [],
+      workLogFilters: {
+        project_id: null,
+        start_date: null,
+        end_date: null
+      },
       generateForm: {
         customer_id: null,
         work_log_ids: [],
@@ -221,9 +373,11 @@ export default {
       selectedCustomerId: null,
       selectedStatus: null,
       statuses: ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled'],
+      sortBy: [{ key: 'id', order: 'desc' }],
       
       headers: [
-        { title: 'Invoice #', key: 'id' },
+        { title: 'ID', key: 'id' },
+        { title: 'Invoice Number', key: 'invoice_number' },
         { title: 'Customer', key: 'customer.name' },
         { title: 'Created', key: 'created_at' },
         { title: 'Total', key: 'total_amount' },
@@ -243,11 +397,13 @@ export default {
   
   methods: {
     ...mapActions(store, ['showSnackbar']),
+    formatDate,
     async fetchInvoices() {
       this.loading = true;
       try {
         const { data } = await axios.get('/api/invoices');
-        this.allInvoices = data;
+        // Sort by ID descending (newest first)
+        this.allInvoices = data.sort((a, b) => b.id - a.id);
         this.applyFilters();
         
         // Fetch customers for filter dropdown
@@ -287,6 +443,9 @@ export default {
           invoice.status.toLowerCase() === this.selectedStatus.toLowerCase()
         );
       }
+      
+      // Sort by ID descending (newest first)
+      filtered.sort((a, b) => b.id - a.id);
       
       this.invoices = filtered;
     },
@@ -330,6 +489,16 @@ export default {
       this.currentInvoice = { ...item };
       this.editDialog = true;
     },
+    async handleInvoiceSave(payload) {
+      // This handler is used for both create and update via the form's @save event
+      if (this.currentInvoice?.id) {
+        // Update existing invoice
+        await this.updateInvoiceRecord(payload);
+      } else {
+        // Create new invoice
+        await this.saveInvoice(payload);
+      }
+    },
     async saveInvoice(payload) {
       try {
         const { data } = await axios.post('/api/invoices', payload);
@@ -360,7 +529,20 @@ export default {
       }
     },
     async openGenerateDialog() {
+      // Reset the form
+      this.generateForm = {
+        customer_id: null,
+        work_log_ids: [],
+        due_date: new Date().toISOString().slice(0, 10),
+        status: 'draft'
+      };
+      this.unbilledLogs = [];
+      this.filteredWorkLogs = [];
+      this.customerProjects = [];
+      this.resetWorkLogFilters();
+      
       this.generateDialog = true;
+      
       try {
         const { data } = await axios.get('/api/customers');
         this.customers = data;
@@ -369,20 +551,93 @@ export default {
       }
     },
     async onGenerateCustomerChange() {
+      // Reset everything when customer changes
       this.unbilledLogs = [];
+      this.filteredWorkLogs = [];
+      this.customerProjects = [];
       this.generateForm.work_log_ids = [];
+      this.resetWorkLogFilters();
+      
       if (!this.generateForm.customer_id) return;
+      
       try {
-        const { data } = await axios.get('/api/invoices/unbilled-worklogs', {
+        // Load customer projects
+        const projectsResponse = await axios.get('/api/invoices/customer-projects', {
           params: { customer_id: this.generateForm.customer_id }
         });
-        this.unbilledLogs = (data || []).map(l => ({
-          id: l.id,
-          label: `${l.date} - ${l.project?.name || 'Project'} - ${l.hours_worked || 0}h`
-        }));
+        this.customerProjects = projectsResponse.data || [];
+        
+        // Load work logs
+        await this.loadFilteredWorkLogs();
+      } catch (e) {
+        this.showSnackbar('Failed to load customer data', 'error');
+      }
+    },
+    
+    async loadFilteredWorkLogs() {
+      if (!this.generateForm.customer_id) return;
+      
+      try {
+        const params = {
+          customer_id: this.generateForm.customer_id,
+          ...this.workLogFilters
+        };
+        
+        // Remove null/empty values
+        Object.keys(params).forEach(key => {
+          if (params[key] === null || params[key] === '') {
+            delete params[key];
+          }
+        });
+        
+        const { data } = await axios.get('/api/invoices/unbilled-worklogs', { params });
+        this.filteredWorkLogs = data || [];
+        this.unbilledLogs = this.filteredWorkLogs;
+        
+        // Remove any selected work logs that are no longer in the filtered results
+        const filteredIds = this.filteredWorkLogs.map(log => log.id);
+        this.generateForm.work_log_ids = this.generateForm.work_log_ids.filter(id => 
+          filteredIds.includes(id)
+        );
       } catch (e) {
         this.showSnackbar('Failed to load work logs', 'error');
       }
+    },
+    
+    resetWorkLogFilters() {
+      this.workLogFilters = {
+        project_id: null,
+        start_date: null,
+        end_date: null
+      };
+      this.loadFilteredWorkLogs();
+    },
+    
+    toggleWorkLog(logId) {
+      const index = this.generateForm.work_log_ids.indexOf(logId);
+      if (index > -1) {
+        this.generateForm.work_log_ids.splice(index, 1);
+      } else {
+        this.generateForm.work_log_ids.push(logId);
+      }
+    },
+    
+    selectAllWorkLogs() {
+      this.generateForm.work_log_ids = this.filteredWorkLogs.map(log => log.id);
+    },
+    
+    clearWorkLogSelection() {
+      this.generateForm.work_log_ids = [];
+    },
+    
+    calculateSelectedTotal() {
+      const selectedLogs = this.filteredWorkLogs.filter(log => 
+        this.generateForm.work_log_ids.includes(log.id)
+      );
+      const total = selectedLogs.reduce((sum, log) => {
+        return sum + (log.billing_rate * (log.hours_worked || 0));
+      }, 0);
+      return total.toFixed(2);
     },
     async generateInvoice() {
       try {

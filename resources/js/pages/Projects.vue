@@ -81,6 +81,7 @@
         class="elevation-1"
         :search="search"
         :custom-filter="customSearch"
+        :sort-by="sortBy"
       >
         <template v-slot:item.deadline="{ item }">
           {{ item.deadline ? formatDate(item.deadline) : 'N/A' }}
@@ -190,7 +191,9 @@ export default {
       customerSearch: '',
       freelancerSearch: '',
       
+      sortBy: [{ key: 'id', order: 'desc' }],
       headers: [
+        { title: 'ID', key: 'id' },
         { title: 'Name', key: 'name' },
         { title: 'Customer', key: 'customer.name' },
         { title: 'Project Rate', key: 'hourly_rate' },

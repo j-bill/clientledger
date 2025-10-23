@@ -21,20 +21,9 @@
         <v-text-field
           v-model="formData.invoice_number"
           label="Invoice Number"
-          :rules="[rules.required]"
-          required
-        ></v-text-field>
-      </v-col>
-
-      <!-- Issue Date -->
-      <v-col cols="12" md="6">
-        <v-text-field
-          v-model="formData.issue_date"
-          label="Issue Date"
-          type="date"
-          :rules="[rules.required]"
-          required
-          data-test="invoice-issue-date"
+          :rules="[]"
+          hint="Leave empty to auto-generate"
+          persistent-hint
         ></v-text-field>
       </v-col>
 
@@ -75,11 +64,6 @@
       </v-col>
 
     </v-row>
-    <v-card-actions>
-      <v-spacer></v-spacer>
-      <v-btn color="blue darken-1" text @click="$emit('close')">Cancel</v-btn>
-      <v-btn color="blue darken-1" type="submit" :loading="loading">Save</v-btn>
-    </v-card-actions>
   </v-form>
 </template>
 
@@ -100,7 +84,6 @@ export default {
       formData: {
         customer_id: null,
         invoice_number: '',
-        issue_date: null,
         due_date: null,
         total_amount: 0.00, // Initialize or calculate later
         status: 'draft', // Default status
@@ -123,12 +106,13 @@ export default {
     // Pre-populate form if editing an existing invoice
     if (this.invoice) {
       // Format dates for the input type="date"
-      const issueDate = this.invoice.issue_date ? new Date(this.invoice.issue_date).toISOString().split('T')[0] : null;
       const dueDate = this.invoice.due_date ? new Date(this.invoice.due_date).toISOString().split('T')[0] : null;
       this.formData = { 
-          ...this.invoice,
-          issue_date: issueDate,
-          due_date: dueDate // Use formatted dates
+          customer_id: this.invoice.customer_id,
+          invoice_number: this.invoice.invoice_number,
+          due_date: dueDate,
+          total_amount: this.invoice.total_amount,
+          status: this.invoice.status
       };
     }
     // Fetch customers if not already loaded (optional, depends on app flow)
@@ -146,10 +130,14 @@ export default {
       this.loading = true;
       let result = null;
 
-      // Prepare data (ensure total_amount is handled correctly if needed)
-      const payload = { ...this.formData };
-      // Remove total_amount if it should only be set by the backend based on worklogs
-      // delete payload.total_amount; 
+      // Prepare data - only include the fields we need
+      const payload = {
+        customer_id: this.formData.customer_id,
+        invoice_number: this.formData.invoice_number,
+        due_date: this.formData.due_date,
+        total_amount: this.formData.total_amount,
+        status: this.formData.status
+      };
 
       if (this.invoice) {
         // Update existing invoice
@@ -161,8 +149,7 @@ export default {
       this.loading = false;
 
       if (result) {
-        this.$emit('close'); // Close the dialog on success
-        this.$emit('saved', result); // Emit event with saved/created invoice data
+        this.$emit('save', result); // Emit event with saved/created invoice data
       }
       // Error handling is done within the store actions via snackbar
     }

@@ -57,6 +57,35 @@ class WorkLog extends Model
         return 0;
     }
 
+    // Get the billing rate (what customer pays)
+    public function getBillingRate()
+    {
+        // Use the stored hourly_rate if available, otherwise calculate from project/customer
+        if ($this->hourly_rate) {
+            return $this->hourly_rate;
+        }
+
+        // Fallback: get from project or customer
+        if ($this->project?->hourly_rate) {
+            return $this->project->hourly_rate;
+        }
+
+        if ($this->customer?->hourly_rate) {
+            return $this->customer->hourly_rate;
+        }
+
+        return 0;
+    }
+
+    // Calculate the billing amount (what customer pays)
+    public function calculateBillingAmount()
+    {
+        if ($this->hours_worked) {
+            return $this->hours_worked * $this->getBillingRate();
+        }
+        return 0;
+    }
+
     // Scope for freelancers to only see their own work logs
     public function scopeForUser($query, User $user)
     {

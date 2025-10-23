@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\WorkLog;
 use App\Models\Project;
+use App\Services\InvoiceNumberGenerator;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -31,15 +32,19 @@ class InvoiceController extends Controller
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'invoice_number' => 'nullable|string',
-            'issue_date' => 'required|date',
             'due_date' => 'required|date',
             'total_amount' => 'required|numeric',
             // align with DB enum
             'status' => 'required|string|in:draft,sent,paid,overdue,cancelled',
             'notes' => 'nullable|string',
-            'work_logs' => 'sometimes|array',
-            'work_logs.*' => 'exists:work_logs,id',
+            'work_logs' => 'sometimes|array|nullable',
+            'work_logs.*' => 'integer|exists:work_logs,id',
         ]);
+
+        // Generate invoice number if not provided
+        if (empty($validated['invoice_number'])) {
+            $validated['invoice_number'] = InvoiceNumberGenerator::generate();
+        }
 
         // Strip empty notes to avoid issues if column not present yet
         if (array_key_exists('notes', $validated) && ($validated['notes'] === null || $validated['notes'] === '')) {
@@ -73,24 +78,15 @@ class InvoiceController extends Controller
         $validated = $request->validate([
             'customer_id' => 'sometimes|required|exists:customers,id',
             'invoice_number' => 'sometimes|nullable|string',
-            'issue_date' => 'sometimes|required|date',
             'due_date' => 'sometimes|required|date',
             'total_amount' => 'sometimes|required|numeric',
             'status' => 'sometimes|required|string|in:draft,sent,paid,overdue,cancelled',
             'notes' => 'nullable|string',
-            'work_logs' => 'sometimes|array',
-            'work_logs.*' => 'exists:work_logs,id',
         ]);
 
         // Strip empty notes
         if (array_key_exists('notes', $validated) && ($validated['notes'] === null || $validated['notes'] === '')) {
             unset($validated['notes']);
-        }
-
-        if (isset($validated['work_logs'])) {
-            $workLogs = $validated['work_logs'];
-            unset($validated['work_logs']);
-            $invoice->workLogs()->sync($workLogs);
         }
 
         $invoice->update($validated);
@@ -134,13 +130,18 @@ class InvoiceController extends Controller
         $totalAmount = 0;
         foreach ($workLogs as $log) {
             $project = Project::findOrFail($log->project_id);
+            // Use project rate if set, otherwise fall back to customer rate
             $rate = $project->hourly_rate ?? $customer->hourly_rate ?? 0;
             $totalAmount += $log->hours_worked * $rate;
         }
 
+        // Generate unique invoice number
+        $invoiceNumber = InvoiceNumberGenerator::generate();
+
         // Create invoice
         $invoice = Invoice::create([
             'customer_id' => $validated['customer_id'],
+            'invoice_number' => $invoiceNumber,
             'due_date' => $validated['due_date'],
             'total_amount' => $totalAmount,
             'status' => $validated['status'],
@@ -159,17 +160,59 @@ class InvoiceController extends Controller
     {
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
+            'project_id' => 'nullable|exists:projects,id',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
         ]);
 
-        $logs = WorkLog::whereHas('project', function ($q) use ($validated) {
+        $query = WorkLog::whereHas('project', function ($q) use ($validated) {
                 $q->where('customer_id', $validated['customer_id']);
             })
             ->where('billable', true)
-            ->whereDoesntHave('invoices')
-            ->with(['project', 'user'])
+            ->whereDoesntHave('invoices');
+
+        // Apply project filter if specified
+        if (!empty($validated['project_id'])) {
+            $query->where('project_id', $validated['project_id']);
+        }
+
+        // Apply date range filters if specified
+        if (!empty($validated['start_date'])) {
+            $query->where('date', '>=', $validated['start_date']);
+        }
+
+        if (!empty($validated['end_date'])) {
+            $query->where('date', '<=', $validated['end_date']);
+        }
+
+        $logs = $query->with(['project', 'user'])
             ->orderByDesc('date')
             ->get();
 
+        // Append billing rate to each log for the invoice preview
+        $logs = $logs->map(function ($log) {
+            $log->billing_rate = $log->getBillingRate();
+            $log->billing_amount = $log->calculateBillingAmount();
+            return $log;
+        });
+
         return response()->json($logs);
+    }
+
+    /**
+     * Get projects for a customer (for filtering work logs)
+     */
+    public function customerProjects(Request $request)
+    {
+        $validated = $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+        ]);
+
+        $projects = Project::where('customer_id', $validated['customer_id'])
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        return response()->json($projects);
     }
 }

@@ -133,7 +133,12 @@
 								 :items="workLogs"
 								 :items-length="totalItems"
 								 item-value="name"
+								 :sort-by="sortBy"
 								 @update:options="loadWorkLogs">
+
+			<template v-slot:item.date="{ item }">
+				{{ formatDate(item.date) }}
+			</template>
 
 			<template v-slot:item.user="{ item }">
 				{{ item.user?.name || 'N/A' }}
@@ -150,17 +155,20 @@
 			<template v-slot:item.hours="{ item }">
 				{{ Number(item.hours_worked || 0).toFixed(2) }}
 			</template>				<template v-slot:item.hourly_rate="{ item }">
-					{{ currencySymbol }}{{ Number(item.user_hourly_rate || 0).toFixed(2) }}
+					{{ formatCurrency(item.user_hourly_rate) }}
 				</template>
 
 				<template v-slot:item.amount="{ item }">
-					{{ currencySymbol }}{{ Number(item.amount || 0).toFixed(2) }}
+					{{ formatCurrency(item.amount) }}
 				</template>
 
 				<template v-slot:item.billable="{ item }">
 					<v-icon :color="item.billable ? 'success' : 'error'">
 						{{ item.billable ? 'mdi-check' : 'mdi-close' }}
 					</v-icon>
+				</template>
+				<template v-slot:item.description="{ item }">
+					{{ truncateDescription(item.description) }}
 				</template>
 				<template v-slot:item.actions="{ item }">
 					<v-btn icon
@@ -265,7 +273,7 @@ import WorkLogForm from '../components/forms/WorkLogForm.vue';
 import eventBus from '../eventBus';
 import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
-import { formatDate, formatTime } from '../utils/formatters';
+import { formatDate, formatTime, formatCurrency } from '../utils/formatters';
 
 export default {
 	name: 'WorkLogsIndex',
@@ -298,7 +306,9 @@ export default {
 				per_page: 10
 			},
 
+		sortBy: [{ key: 'id', order: 'desc' }],
 		headers: [
+			{ title: 'ID', key: 'id', sortable: true },
 			{ title: 'Date', key: 'date', sortable: true },
 			{ title: 'Project', key: 'project.name', sortable: true },
 			{ title: 'Freelancer', key: 'user.name', sortable: true },
@@ -561,6 +571,19 @@ export default {
 		
 		formatTime(timeStr) {
 			return formatTime(timeStr);
+		},
+		
+		formatCurrency(amount) {
+			return formatCurrency(amount);
+		},
+		
+		truncateDescription(description, maxWords = 78) {
+			if (!description) return '';
+			const words = description.trim().split(/\s+/);
+			if (words.length > maxWords) {
+				return words.slice(0, maxWords).join(' ') + '...';
+			}
+			return description;
 		}
 	}
 };

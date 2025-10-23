@@ -27,23 +27,29 @@
 					</v-stepper-header>
 
 					<v-stepper-window>
-						<!-- Step 1: Generate QR Code -->
-						<v-stepper-window-item :value="1">
-							<div class="text-center py-6">
-								<p class="mb-4">
-									Two-Factor Authentication adds an extra layer of security to your account.
-									You'll need an authenticator app like Google Authenticator or Authy.
-								</p>
+					<!-- Step 1: Generate QR Code -->
+					<v-stepper-window-item :value="1">
+						<div class="text-center py-6">
+							<p class="mb-4">
+								Two-Factor Authentication adds an extra layer of security to your account.
+								You'll need an authenticator app like Google Authenticator or Authy.
+							</p>
+							<div class="d-flex gap-2 justify-center flex-wrap">
 								<v-btn color="primary"
 									   size="large"
 									   :loading="loading"
 									   @click="generateQRCode">
 									Generate QR Code
 								</v-btn>
+								<v-btn v-if="isAdminDemo"
+									   variant="outlined"
+									   size="large"
+									   @click="skipSetup">
+									Skip Setup (Demo)
+								</v-btn>
 							</div>
-						</v-stepper-window-item>
-
-						<!-- Step 2: Scan QR Code and Verify -->
+						</div>
+					</v-stepper-window-item>						<!-- Step 2: Scan QR Code and Verify -->
 						<v-stepper-window-item :value="2">
 							<div class="text-center">
 								<p class="mb-4">
@@ -141,7 +147,7 @@
 </template>
 
 <script>
-import { mapActions } from 'pinia'
+import { mapActions, mapState } from 'pinia'
 import { store } from '../store'
 import axios from 'axios'
 
@@ -163,6 +169,12 @@ export default {
 			}
 		}
 	},
+	computed: {
+		...mapState(store, ['user']),
+		isAdminDemo() {
+			return this.user?.email === 'admin@admin.de'
+		}
+	},
 	async mounted() {
 		// Clear the pending flag if it exists (recovery code flow)
 		if (sessionStorage.getItem('2fa_setup_pending')) {
@@ -181,6 +193,36 @@ export default {
 				this.step = 2
 			} catch (error) {
 				this.showSnackbar(error.response?.data?.message || 'Failed to generate QR code', 'error')
+			} finally {
+				this.loading = false
+			}
+		},
+
+		async skipSetup() {
+			// For demo purposes, auto-verify with the bypass code
+			this.loading = true
+			try {
+				// First generate the QR code (creates the secret)
+				const enableResponse = await axios.post('/api/2fa/enable')
+				
+				// Then verify with the bypass code
+				const confirmResponse = await axios.post('/api/2fa/confirm', {
+					code: '000000'
+				})
+				
+				this.recoveryCodes = confirmResponse.data.recovery_codes
+				this.step = 3
+				this.confirmedSaved = true
+				this.showSnackbar('2FA setup completed successfully!', 'success')
+				
+				// Refresh user data
+				await this.getAuthUser()
+				
+				// Small delay and redirect
+				await new Promise(resolve => setTimeout(resolve, 500))
+				this.$router.push('/')
+			} catch (error) {
+				this.showSnackbar(error.response?.data?.message || 'Failed to complete setup', 'error')
 			} finally {
 				this.loading = false
 			}

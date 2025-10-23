@@ -303,7 +303,33 @@
 											></v-select>
 										</v-col>
 
-										<v-col cols="12" md="6">
+									<v-col cols="12" md="6">
+										<v-switch
+											v-model="settings.invoice_number_random"
+											label="Random Invoice Numbers"
+											color="primary"
+											hint="Generate invoice numbers randomly instead of sequentially"
+											persistent-hint
+										></v-switch>
+									</v-col>
+
+									<v-col cols="12" md="6">
+										<v-text-field
+											v-model="settings.invoice_number_random_length"
+											label="Random Number Length"
+											variant="outlined"
+											prepend-inner-icon="mdi-numeric"
+											density="comfortable"
+											type="number"
+											min="4"
+											max="20"
+											:disabled="!settings.invoice_number_random"
+											hint="Number of digits for random invoice numbers (4-20)"
+											persistent-hint
+										></v-text-field>
+									</v-col>
+
+									<v-col cols="12" md="6">
 											<v-text-field
 												v-model="settings.invoice_number_start"
 												label="Starting Invoice Number"
@@ -311,7 +337,8 @@
 												prepend-inner-icon="mdi-numeric"
 												density="comfortable"
 												type="number"
-												hint="First invoice number to use"
+												:disabled="settings.invoice_number_random"
+												hint="First invoice number to use (disabled when using random)"
 												persistent-hint
 											></v-text-field>
 										</v-col>
@@ -659,6 +686,8 @@ export default {
 				invoice_prefix: 'INV-',
 				invoice_number_format: 'YYYY-MM-number',
 				invoice_number_start: '1',
+				invoice_number_random: false,
+				invoice_number_random_length: 8,
 				invoice_default_status: 'draft',
 				invoice_auto_send: false,
 				invoice_default_message: '',

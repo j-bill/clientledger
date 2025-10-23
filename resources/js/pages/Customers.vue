@@ -28,6 +28,7 @@
         :loading="loading"
         class="elevation-1"
         :search="search"
+        :sort-by="sortBy"
       >
         <template v-slot:item.hourly_rate="{ item }">
           {{ currencySymbol + Number(item.hourly_rate || 0).toFixed(2) }}
@@ -109,7 +110,9 @@ export default {
       itemToDelete: null,
       currentCustomer: null,
       
+      sortBy: [{ key: 'id', order: 'desc' }],
       headers: [
+        { title: 'ID', key: 'id' },
         { title: 'Name', key: 'name' },
         { title: 'Contact Person', key: 'contact_person' },
         { title: 'Email', key: 'contact_email' },

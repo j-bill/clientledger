@@ -28,6 +28,7 @@
         :loading="loading"
         class="elevation-1"
         :search="search"
+        :sort-by="sortBy"
       >
         <template v-slot:item.actions="{ item }">
           <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)">
@@ -139,7 +140,9 @@ export default {
       resetPasswordDialog: false,
       resetPasswordUser: null,
       
+      sortBy: [{ key: 'id', order: 'desc' }],
       headers: [
+        { title: 'ID', key: 'id' },
         { title: 'Name', key: 'name' },
         { title: 'Email', key: 'email' },
         { title: 'Role', key: 'role' },
