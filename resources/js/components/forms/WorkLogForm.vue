@@ -202,6 +202,8 @@ export default {
 		} else {
 			// For new work logs, set the user_id to the authenticated user
 			this.formData.user_id = this.user?.id;
+			// Initialize internal date to today for new work logs
+			this.internalDate = new Date();
 		}
 		this.fetchCustomers();
 		this.filteredProjects = [...this.projects];
