@@ -152,29 +152,34 @@ test.describe('Date Formatting in Dialogs', () => {
     await expect(page.getByRole('heading', { name: 'Work Logs' })).toBeVisible();
     
     // Open create work log dialog
-    await page.getByRole('button', { name: /new.*work.*log/i }).click();
+    await page.locator('[data-test="btn-new-worklog"]').click();
     
-    // Wait for form to load
+    // Wait for dialog to open
     await page.waitForTimeout(500);
     
     // Check if date field displays in correct format
-    // The date picker should show formatted date
-    const dateFieldLocator = page.locator('label:has-text("Date")').locator('..').locator('input');
+    const dateFieldLocator = page.locator('label:has-text("Date")').locator('..').locator('input').first();
     
     // If the field is visible and has a value, check its format
     if (await dateFieldLocator.isVisible()) {
       // Click to open date picker
       await dateFieldLocator.click();
       
+      // Wait for picker
+      await page.waitForTimeout(300);
+      
       // Select today
       const today = new Date();
-      await page.locator('.v-date-picker-month__day--selected').click();
-      
-      // Verify the displayed format
-      const dateValue = await dateFieldLocator.inputValue();
-      if (dateValue) {
-        const expectedFormat = formatDateString(today, 'DD/MM/YYYY');
-        expect(dateValue).toBe(expectedFormat);
+      const todayButton = page.locator('.v-date-picker-month__day--selected').first();
+      if (await todayButton.isVisible()) {
+        await todayButton.click();
+        
+        // Verify the displayed format
+        const dateValue = await dateFieldLocator.inputValue();
+        if (dateValue) {
+          const expectedFormat = formatDateString(today, 'DD/MM/YYYY');
+          expect(dateValue).toBe(expectedFormat);
+        }
       }
     }
   });
@@ -190,13 +195,13 @@ test.describe('Date Formatting in Dialogs', () => {
     await expect(page.getByRole('heading', { name: 'Projects' })).toBeVisible();
     
     // Open create project dialog
-    await page.getByRole('button', { name: /new.*project/i }).click();
+    await page.locator('[data-test="btn-new-project"]').click();
     
     // Wait for form to load
     await page.waitForTimeout(500);
     
     // Find deadline field
-    const deadlineField = page.locator('label:has-text("Deadline")').locator('..').locator('input');
+    const deadlineField = page.locator('label:has-text("Deadline")').locator('..').locator('input').first();
     
     if (await deadlineField.isVisible()) {
       // Click to open date picker

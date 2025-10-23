@@ -20,6 +20,7 @@
 					<v-icon>mdi-filter</v-icon>
 				</v-btn>
 				<v-btn color="primary"
+					   data-test="btn-new-worklog"
 					   @click="openCreateDialog"
 					   prepend-icon="mdi-plus">
 					New Work Log
