@@ -48,7 +48,7 @@
           {{ formatDate(item.updated_at) }}
         </template>
         <template v-slot:item.hourly_rate="{ item }">
-          <span v-if="item.role === 'freelancer'">{{ currencySymbol }}{{ Number(item.hourly_rate || 0).toFixed(2) }}</span>
+          <span v-if="item.role === 'freelancer'">{{ formatCurrency(item.hourly_rate || 0) }}</span>
           <span v-else>-</span>
         </template>
       </v-data-table>
@@ -121,7 +121,7 @@
 import UserForm from '../components/forms/UserForm.vue';
 import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
-import { formatDate } from '../utils/formatters';
+import { formatDate, formatCurrency } from '../utils/formatters';
 import axios from 'axios';
 
 export default {
@@ -231,6 +231,10 @@ export default {
     
     formatDate(dateStr) {
       return formatDate(dateStr, this.settings);
+    },
+    
+    formatCurrency(amount) {
+      return formatCurrency(amount, this.settings);
     }
   }
 };

@@ -153,7 +153,7 @@
 			</template>
 
 			<template v-slot:item.hours="{ item }">
-				{{ Number(item.hours_worked || 0).toFixed(2) }}
+				{{ formatNumber(item.hours_worked || 0, 2) }}
 			</template>				<template v-slot:item.hourly_rate="{ item }">
 					{{ formatCurrency(item.user_hourly_rate) }}
 				</template>
@@ -273,7 +273,7 @@ import WorkLogForm from '../components/forms/WorkLogForm.vue';
 import eventBus from '../eventBus';
 import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
-import { formatDate, formatTime, formatCurrency } from '../utils/formatters';
+import { formatDate, formatTime, formatCurrency, formatNumber } from '../utils/formatters';
 
 export default {
 	name: 'WorkLogsIndex',
@@ -574,7 +574,11 @@ export default {
 		},
 		
 		formatCurrency(amount) {
-			return formatCurrency(amount);
+			return formatCurrency(amount, this.settings);
+		},
+		
+		formatNumber(value, decimals = 2) {
+			return formatNumber(value, decimals, this.settings);
 		},
 		
 		truncateDescription(description, maxWords = 78) {

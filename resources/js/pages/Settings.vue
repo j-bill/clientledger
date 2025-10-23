@@ -472,6 +472,37 @@
 											></v-select>
 										</v-col>
 									</v-row>
+
+									<v-divider class="my-6"></v-divider>
+
+									<div class="text-h6 mb-4 d-flex align-center">
+										<v-icon class="mr-2" color="primary">mdi-numeric</v-icon>
+										Number Formats
+									</div>
+
+									<v-row>
+										<v-col cols="12" md="6">
+											<v-select
+												v-model="settings.number_format"
+												:items="numberFormats"
+												label="Number Format"
+												variant="outlined"
+												prepend-inner-icon="mdi-numeric"
+												density="comfortable"
+												hint="Format for displaying numbers, decimals and currency"
+												persistent-hint
+											></v-select>
+										</v-col>
+
+										<v-col cols="12" md="6">
+											<v-card variant="tonal" color="info">
+												<v-card-text>
+													<div class="text-subtitle-2 mb-2">Preview:</div>
+													<div class="text-h6">{{ formatPreviewNumber(1234567.89) }}</div>
+												</v-card-text>
+											</v-card>
+										</v-col>
+									</v-row>
 								</v-form>
 							</v-window-item>
 
@@ -656,6 +687,7 @@
 <script>
 import { mapActions, mapGetters } from 'pinia'
 import { store } from '../store'
+import { formatNumber } from '../utils/formatters'
 import axios from 'axios'
 
 export default {
@@ -699,6 +731,7 @@ export default {
 				// Date & Time
 				date_format: 'DD/MM/YYYY',
 				time_format: '24h',
+				number_format: 'en-US',
 				
 				// Email
 				mail_host: '',
@@ -748,6 +781,12 @@ export default {
 			timeFormats: [
 				{ title: '24-hour (23:59)', value: '24h' },
 				{ title: '12-hour (11:59 PM)', value: '12h' }
+			],
+			numberFormats: [
+				{ title: '1,234.56 (US, UK, Australia, etc.)', value: 'en-US' },
+				{ title: '1.234,56 (Germany, Most of Europe)', value: 'de-DE' },
+				{ title: '1 234,56 (France)', value: 'fr-FR' },
+				{ title: '12,34,567.89 (India)', value: 'en-IN' }
 			],
 			mailEncryptions: [
 				{ title: 'TLS', value: 'tls' },
@@ -868,6 +907,10 @@ export default {
 			if (currency) {
 				this.settings.currency_code = currency.code
 			}
+		},
+		
+		formatPreviewNumber(value) {
+			return formatNumber(value, 2, this.settings)
 		}
 	}
 }

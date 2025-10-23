@@ -85,7 +85,7 @@
           </v-chip>
         </template>
         <template v-slot:item.total_amount="{ item }">
-          {{ currencySymbol + Number(item.total_amount).toFixed(2) }}
+          {{ formatCurrency(item.total_amount) }}
         </template>
         <template v-slot:item.actions="{ item }">
           <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)">
@@ -233,14 +233,14 @@
                   </v-list-item-title>
                   <v-list-item-subtitle>
                     {{ log.user?.name || 'Unknown User' }} • 
-                    {{ log.hours_worked || 0 }}h • 
-                    {{ currencySymbol }}{{ (log.billing_rate * (log.hours_worked || 0)).toFixed(2) }}
+                    {{ formatNumber(log.hours_worked || 0, 2) }}h • 
+                    {{ formatCurrency(log.billing_rate * (log.hours_worked || 0)) }}
                     <br>
                     <span class="text-caption">{{ log.description || 'No description' }}</span>
                   </v-list-item-subtitle>
                   <template v-slot:append>
                     <v-chip size="small" color="primary" variant="outlined">
-                      {{ currencySymbol }}{{ (log.billing_rate * (log.hours_worked || 0)).toFixed(2) }}
+                      {{ formatCurrency(log.billing_rate * (log.hours_worked || 0)) }}
                     </v-chip>
                   </template>
                 </v-list-item>
@@ -337,7 +337,7 @@ import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
 import axios from 'axios';
 import InvoiceForm from '../components/forms/InvoiceForm.vue';
-import { formatDate } from '../utils/formatters';
+import { formatDate, formatNumber, formatCurrency } from '../utils/formatters';
 
 export default {
   name: 'InvoicesIndex',
@@ -470,6 +470,14 @@ export default {
     
     formatDate(dateStr) {
       return formatDate(dateStr, this.settings);
+    },
+    
+    formatCurrency(amount) {
+      return formatCurrency(amount, this.settings);
+    },
+    
+    formatNumber(value, decimals = 2) {
+      return formatNumber(value, decimals, this.settings);
     },
     
     getStatusColor(status) {

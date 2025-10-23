@@ -31,7 +31,7 @@
         :sort-by="sortBy"
       >
         <template v-slot:item.hourly_rate="{ item }">
-          {{ currencySymbol + Number(item.hourly_rate || 0).toFixed(2) }}
+          {{ formatCurrency(item.hourly_rate || 0) }}
         </template>
         <template v-slot:item.actions="{ item }">
           <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)">
@@ -94,6 +94,7 @@
 import CustomerForm from '../components/forms/CustomerForm.vue';
 import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
+import { formatCurrency } from '../utils/formatters';
 
 export default {
   name: 'CustomersIndex',
@@ -181,6 +182,10 @@ export default {
       } catch (error) {
         console.error('Error updating customer:', error);
       }
+    },
+    
+    formatCurrency(amount) {
+      return formatCurrency(amount, this.settings);
     }
   }
 };
