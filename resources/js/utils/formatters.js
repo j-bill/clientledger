@@ -1,7 +1,7 @@
 /**
- * Date and Time Formatting Utilities
+ * Date, Time and Number Formatting Utilities
  * 
- * These functions format dates and times according to the user's settings.
+ * These functions format dates, times, numbers and currency according to the user's settings.
  * The format settings are stored in the Pinia store and loaded from backend settings.
  */
 
