@@ -59,6 +59,7 @@ A modern, full-stack time tracking and invoicing application built with Laravel 
 ### ⚙️ Customization
 - Company branding (logo upload)
 - Currency and date format preferences
+- Number format preferences (US, European, Indian, French styles)
 - Timezone configuration
 - Legal content management (Privacy Policy, Imprint)
 

@@ -1,7 +1,7 @@
 /**
- * Date and Time Formatting Utilities
+ * Date, Time and Number Formatting Utilities
  * 
- * These functions format dates and times according to the user's settings.
+ * These functions format dates, times, numbers and currency according to the user's settings.
  * The format settings are stored in the Pinia store and loaded from backend settings.
  */
 
@@ -110,6 +110,131 @@ export function formatDateTime(datetimeStr, settings = null) {
 }
 
 /**
+ * Format a number according to user's number format preference
+ * @param {number} value - The number to format
+ * @param {number} decimals - Number of decimal places (default: 2)
+ * @param {object} settings - Optional settings object (uses store if not provided)
+ * @returns {string} Formatted number string
+ */
+export function formatNumber(value, decimals = 2, settings = null) {
+  if (value === null || value === undefined || isNaN(value)) return 'N/A';
+  
+  try {
+    const numberFormat = settings?.number_format || store().settings?.number_format || 'en-US';
+    
+    // Parse the number format to get separators
+    let decimalSeparator = '.';
+    let thousandsSeparator = ',';
+    
+    switch (numberFormat) {
+      case 'en-US': // 1,234.56 (US, UK, etc.)
+        decimalSeparator = '.';
+        thousandsSeparator = ',';
+        break;
+      case 'de-DE': // 1.234,56 (Germany, most of Europe)
+        decimalSeparator = ',';
+        thousandsSeparator = '.';
+        break;
+      case 'fr-FR': // 1 234,56 (France)
+        decimalSeparator = ',';
+        thousandsSeparator = ' ';
+        break;
+      case 'en-IN': // 12,34,567.89 (India - special grouping)
+        decimalSeparator = '.';
+        thousandsSeparator = ',';
+        break;
+      default:
+        decimalSeparator = '.';
+        thousandsSeparator = ',';
+    }
+    
+    // Convert to number and fix decimals
+    const num = Number(value);
+    const parts = num.toFixed(decimals).split('.');
+    
+    // Format integer part with thousands separator
+    let integerPart = parts[0];
+    const isNegative = integerPart.startsWith('-');
+    if (isNegative) integerPart = integerPart.slice(1);
+    
+    // Special handling for Indian numbering system
+    if (numberFormat === 'en-IN') {
+      // Group last 3 digits, then groups of 2
+      const lastThree = integerPart.slice(-3);
+      const otherDigits = integerPart.slice(0, -3);
+      if (otherDigits) {
+        integerPart = otherDigits.replace(/\B(?=(\d{2})+(?!\d))/g, thousandsSeparator) + thousandsSeparator + lastThree;
+      } else {
+        integerPart = lastThree;
+      }
+    } else {
+      // Standard grouping by 3
+      integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandsSeparator);
+    }
+    
+    if (isNegative) integerPart = '-' + integerPart;
+    
+    // Combine with decimal part
+    if (decimals > 0 && parts[1]) {
+      return integerPart + decimalSeparator + parts[1];
+    }
+    
+    return integerPart;
+  } catch (error) {
+    console.error('Error formatting number:', error);
+    return Number(value).toFixed(decimals);
+  }
+}
+
+/**
+ * Parse a formatted number string back to a number
+ * @param {string} formattedValue - The formatted number string
+ * @param {object} settings - Optional settings object (uses store if not provided)
+ * @returns {number} Parsed number
+ */
+export function parseNumber(formattedValue, settings = null) {
+  if (!formattedValue || formattedValue === 'N/A') return 0;
+  
+  try {
+    const numberFormat = settings?.number_format || store().settings?.number_format || 'en-US';
+    
+    // Get the decimal separator for this format
+    let decimalSeparator = '.';
+    
+    switch (numberFormat) {
+      case 'en-US':
+        decimalSeparator = '.';
+        break;
+      case 'de-DE':
+      case 'fr-FR':
+        decimalSeparator = ',';
+        break;
+      case 'en-IN':
+        decimalSeparator = '.';
+        break;
+      default:
+        decimalSeparator = '.';
+    }
+    
+    // Remove all characters except digits, minus sign, and decimal separator
+    let cleanValue = String(formattedValue);
+    
+    // Replace the decimal separator with a period for parsing
+    if (decimalSeparator !== '.') {
+      cleanValue = cleanValue.replace(decimalSeparator, '.');
+    }
+    
+    // Remove all other non-numeric characters except minus and period
+    cleanValue = cleanValue.replace(/[^\d.-]/g, '');
+    
+    return parseFloat(cleanValue) || 0;
+  } catch (error) {
+    console.error('Error parsing number:', error);
+    return 0;
+  }
+}
+
+/**
  * Format currency according to user's currency settings
  * @param {number} amount - The amount to format
  * @param {object} settings - Optional settings object (uses store if not provided)
@@ -119,20 +244,14 @@ export function formatCurrency(amount, settings = null) {
   if (amount === null || amount === undefined) return 'N/A';
   
   try {
-    const currencyCode = settings?.currency_code || store().settings?.currency_code || 'USD';
     const currencySymbol = settings?.currency_symbol || store().settings?.currency_symbol || store().currencySymbol || '$';
     
-    // Use Intl.NumberFormat for proper currency formatting
-    const locale = currencyCode === 'EUR' ? 'de-DE' : 'en-US';
+    // Use the number formatter for the numeric part
+    const formattedNumber = formatNumber(amount, 2, settings);
     
-    const formatter = new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency: currencyCode,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+    if (formattedNumber === 'N/A') return 'N/A';
     
-    return formatter.format(amount);
+    return `${currencySymbol}${formattedNumber}`;
   } catch (error) {
     // Fallback to simple formatting
     const currencySymbol = settings?.currency_symbol || store().currencySymbol || '$';

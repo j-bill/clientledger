@@ -162,6 +162,7 @@
 <script>
 import { mapActions, mapGetters, mapState } from 'pinia'
 import { store } from '../store'
+import { formatCurrency } from '../utils/formatters'
 import axios from 'axios'
 
 export default {
@@ -191,7 +192,7 @@ export default {
 		...mapGetters(store, ['isAdmin', 'getUser', 'has2FAEnabled']),
 		...mapState(store, ['currencySymbol', 'settings']),
 		formattedEarnings() {
-			return this.earnings > 0 ? `${this.currencySymbol}${this.earnings.toFixed(2)}` : '';
+			return this.earnings > 0 ? formatCurrency(this.earnings, this.settings) : '';
 		},
 		userAvatar() {
 			return this.getUser?.avatar || null;

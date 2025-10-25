@@ -87,7 +87,7 @@
           {{ item.deadline ? formatDate(item.deadline) : 'N/A' }}
         </template>
         <template v-slot:item.hourly_rate="{ item }">
-          <span v-if="isAdmin">{{ currencySymbol }}{{ Number(item.hourly_rate || 0).toFixed(2) }}</span>
+          <span v-if="isAdmin">{{ formatCurrency(item.hourly_rate || 0) }}</span>
           <span v-else>-</span>
         </template>
         <template v-slot:item.users="{ item }">
@@ -167,7 +167,7 @@
 import ProjectForm from '../components/forms/ProjectForm.vue';
 import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
-import { formatDate } from '../utils/formatters';
+import { formatDate, formatCurrency } from '../utils/formatters';
 
 export default {
   name: 'ProjectsIndex',
@@ -322,6 +322,10 @@ export default {
     
     formatDate(dateStr) {
       return formatDate(dateStr, this.settings);
+    },
+    
+    formatCurrency(amount) {
+      return formatCurrency(amount, this.settings);
     },
 
     async checkUserRole() {
