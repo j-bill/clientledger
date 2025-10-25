@@ -27,6 +27,31 @@
         ></v-text-field>
       </v-col>
 
+      <!-- Issue Date -->
+      <v-col cols="12" md="6">
+        <v-menu
+          v-model="issueDateMenu"
+          :close-on-content-click="false"
+          transition="scale-transition"
+          offset-y
+          min-width="auto">
+          <template v-slot:activator="{ props }">
+            <v-text-field
+              :model-value="formattedIssueDate"
+              label="Issue Date"
+              prepend-icon="mdi-calendar"
+              readonly
+              :rules="[rules.required]"
+              required
+              data-test="invoice-issue-date"
+              v-bind="props"></v-text-field>
+          </template>
+          <v-date-picker 
+            v-model="internalIssueDate"
+            @update:model-value="updateIssueDate"></v-date-picker>
+        </v-menu>
+      </v-col>
+
       <!-- Due Date -->
        <v-col cols="12" md="6">
          <v-menu
@@ -98,11 +123,14 @@ export default {
       formData: {
         customer_id: null,
         invoice_number: '',
+        issue_date: new Date().toISOString().substr(0, 10),
         due_date: null,
         total_amount: 0.00,
         status: 'draft',
       },
+      internalIssueDate: new Date(),
       internalDueDate: null,
+      issueDateMenu: false,
       dueDateMenu: false,
       statusOptions: ['draft', 'sent', 'paid', 'overdue', 'cancelled'],
       rules: {
@@ -115,6 +143,11 @@ export default {
     ...mapState(store, ['customers', 'currencySymbol', 'settings']), // Need customers for the dropdown
     formTitle() {
       return this.invoice ? 'Edit Invoice' : 'Create Invoice';
+    },
+    formattedIssueDate() {
+      if (!this.formData.issue_date) return '';
+      // Display the issue date in the user's preferred format
+      return formatDate(this.formData.issue_date, this.settings);
     },
     formattedDueDate() {
       if (!this.formData.due_date) return '';
@@ -129,11 +162,15 @@ export default {
       this.formData = { 
           customer_id: this.invoice.customer_id,
           invoice_number: this.invoice.invoice_number,
+          issue_date: this.invoice.issue_date,
           due_date: this.invoice.due_date,
           total_amount: this.invoice.total_amount,
           status: this.invoice.status
       };
-      // Initialize the internal date picker value with the ISO date as a Date object
+      // Initialize the internal date picker values with the ISO dates as Date objects
+      if (this.invoice.issue_date) {
+        this.internalIssueDate = new Date(this.invoice.issue_date);
+      }
       if (this.invoice.due_date) {
         this.internalDueDate = new Date(this.invoice.due_date);
       }
@@ -145,6 +182,20 @@ export default {
   },
   methods: {
      ...mapActions(store, ['createInvoice', 'updateInvoice', 'fetchCustomers']),
+
+    updateIssueDate(date) {
+      // Convert Date object to ISO string format (YYYY-MM-DD)
+      if (date instanceof Date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        this.formData.issue_date = `${year}-${month}-${day}`;
+      } else if (typeof date === 'string') {
+        // Already a string, store as is
+        this.formData.issue_date = date;
+      }
+      this.issueDateMenu = false;
+    },
 
     updateDueDate(date) {
       // Convert Date object to ISO string format (YYYY-MM-DD)
@@ -171,6 +222,7 @@ export default {
       const payload = {
         customer_id: this.formData.customer_id,
         invoice_number: this.formData.invoice_number,
+        issue_date: this.formData.issue_date,
         due_date: this.formData.due_date,
         total_amount: this.formData.total_amount,
         status: this.formData.status

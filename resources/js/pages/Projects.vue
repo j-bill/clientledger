@@ -18,7 +18,7 @@
         <v-btn color="secondary" @click="toggleFilters" class="mr-2">
           <v-icon>mdi-filter</v-icon>
         </v-btn>
-        <v-btn v-if="isAdmin" color="primary" @click="openCreateDialog" prepend-icon="mdi-plus">
+        <v-btn v-if="isAdmin" color="primary" data-test="btn-new-project" @click="openCreateDialog" prepend-icon="mdi-plus">
           New Project
         </v-btn>
       </v-col>
