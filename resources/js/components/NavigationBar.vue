@@ -21,15 +21,15 @@
 			<!-- Desktop Navigation Links -->
 			<div class="d-none d-md-flex">
 				<v-btn to="/"
-					   text>Home</v-btn>
+					   text>{{ $t('navigation.home') }}</v-btn>
 				<v-btn to="/projects"
-					   text>Projects</v-btn>
+					   text>{{ $t('navigation.projects') }}</v-btn>
 				<v-btn v-if="isAdmin" to="/customers"
-					   text>Customers</v-btn>
+					   text>{{ $t('navigation.customers') }}</v-btn>
 				<v-btn v-if="isAdmin" to="/invoices"
-					   text>Invoices</v-btn>
+					   text>{{ $t('navigation.invoices') }}</v-btn>
 				<v-btn to="/work-logs"
-					   text>Work Logs</v-btn>
+					   text>{{ $t('navigation.workLogs') }}</v-btn>
 			</div>
 
 			<!-- Time Tracking Button -->
@@ -40,7 +40,7 @@
 				   @click="startTimeTracking"
 				   :loading="isLoading">
 				<v-tooltip activator="parent" location="bottom">
-					Start Working Now
+					{{ $t('workLogs.startWorking') }}
 				</v-tooltip>
 				<v-icon>mdi-play-circle</v-icon>
 			</v-btn>
@@ -51,7 +51,7 @@
 					   color="error"
 					   @click="stopTimeTracking">
 					<v-tooltip activator="parent" location="bottom">
-						Stop Working
+						{{ $t('workLogs.stopWorking') }}
 					</v-tooltip>
 					<v-icon>mdi-stop-circle</v-icon>
 				</v-btn>
@@ -81,13 +81,13 @@
 				</template>
 				<v-list>
 					<v-list-item to="/profile">
-						<v-list-item-title>Profile</v-list-item-title>
+						<v-list-item-title>{{ $t('navigation.profile') }}</v-list-item-title>
 					</v-list-item>
 					<v-list-item to="/settings">
-						<v-list-item-title>Settings</v-list-item-title>
+						<v-list-item-title>{{ $t('navigation.settings') }}</v-list-item-title>
 					</v-list-item>
 					<v-list-item @click="logout">
-						<v-list-item-title>Logout</v-list-item-title>
+						<v-list-item-title>{{ $t('navigation.logout') }}</v-list-item-title>
 					</v-list-item>
 				</v-list>
 			</v-menu>
@@ -100,22 +100,22 @@
 			<v-list class="py-0">
 				<v-divider></v-divider>
 				<v-list-item prepend-icon="mdi-home"
-							 title="Home"
+							 :title="$t('navigation.home')"
 							 to="/"></v-list-item>
 				<v-list-item prepend-icon="mdi-folder"
-							 title="Projects"
+							 :title="$t('navigation.projects')"
 							 to="/projects"></v-list-item>
 				<v-list-item prepend-icon="mdi-account-multiple"
-							 title="Customers"
+							 :title="$t('navigation.customers')"
 							 to="/customers"></v-list-item>
 				<v-list-item prepend-icon="mdi-receipt"
-							 title="Invoices"
+							 :title="$t('navigation.invoices')"
 							 to="/invoices"></v-list-item>
 				<v-list-item prepend-icon="mdi-account-group"
-							 title="Users"
+							 :title="$t('navigation.users')"
 							 to="/users"></v-list-item>
 				<v-list-item prepend-icon="mdi-clock"
-							 title="Work Logs"
+							 :title="$t('navigation.workLogs')"
 							 to="/work-logs"></v-list-item>
 				<v-divider></v-divider>
 			</v-list>
@@ -124,13 +124,13 @@
 		<!-- Project Selection Dialog -->
 		<v-dialog v-model="projectDialog" max-width="500px" persistent>
 			<v-card>
-				<v-card-title>Select Project</v-card-title>
+				<v-card-title>{{ $t('projects.project') }}</v-card-title>
 				<v-card-text>
 					<v-select v-model="selectedCustomer"
 							  :items="customers"
 							  item-title="name"
 							  item-value="id"
-							  label="Customer"
+							  :label="$t('customers.customer')"
 							  prepend-icon="mdi-account"
 							  @update:model-value="filterProjects"></v-select>
 					
@@ -138,12 +138,12 @@
 							  :items="filteredProjects"
 							  item-title="name"
 							  item-value="id"
-							  label="Project"
+							  :label="$t('projects.project')"
 							  prepend-icon="mdi-folder"
-							  :rules="[v => !!v || 'Project is required']"></v-select>
+							  :rules="[v => !!v || $t('validation.projectRequired')]"></v-select>
 					
 					<v-textarea v-model="workDescription"
-							   label="What are you working on?"
+							   :label="$t('workLogs.description')"
 							   prepend-icon="mdi-text"
 							   counter
 							   rows="3"
@@ -151,8 +151,8 @@
 				</v-card-text>
 				<v-card-actions>
 					<v-spacer></v-spacer>
-					<v-btn color="error" text @click="cancelTimeTracking">Cancel</v-btn>
-					<v-btn color="success" @click="confirmStartTracking" :disabled="!selectedProject">Start</v-btn>
+					<v-btn color="error" text @click="cancelTimeTracking">{{ $t('common.cancel') }}</v-btn>
+					<v-btn color="success" @click="confirmStartTracking" :disabled="!selectedProject">{{ $t('workLogs.startWorking') }}</v-btn>
 				</v-card-actions>
 			</v-card>
 		</v-dialog>
