@@ -27,7 +27,8 @@
     "selectAllVisible": "Seleccionar todo visible",
     "home": "Inicio",
     "profile": "Perfil",
-    "logout": "Cerrar sesión"
+    "logout": "Cerrar sesión",
+    "deleteConfirmation": "¿Está seguro de que desea eliminar este elemento? Esta acción no se puede deshacer."
   },
   "invoices": {
     "title": "Facturas",

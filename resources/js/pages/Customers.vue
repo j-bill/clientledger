@@ -48,7 +48,7 @@
       <v-card>
         <v-card-title>{{ $t('common.delete') }} {{ $t('customers.customer') }}</v-card-title>
         <v-card-text>
-          Are you sure you want to delete this customer? This action cannot be undone.
+          {{ $t('common.deleteConfirmation') }}
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>

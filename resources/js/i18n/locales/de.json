@@ -27,7 +27,8 @@
     "selectAllVisible": "Alle sichtbaren auswählen",
     "home": "Startseite",
     "profile": "Profil",
-    "logout": "Abmelden"
+    "logout": "Abmelden",
+    "deleteConfirmation": "Sind Sie sicher, dass Sie dieses Element löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden."
   },
   "invoices": {
     "title": "Rechnungen",
