@@ -462,6 +462,15 @@
 										</v-col>
 
 										<v-col cols="12" md="6">
+											<v-card variant="tonal" color="info">
+												<v-card-text>
+													<div class="text-subtitle-2 mb-2">Preview:</div>
+													<div class="text-h6">{{ formatPreviewDate(new Date()) }}</div>
+												</v-card-text>
+											</v-card>
+										</v-col>
+
+										<v-col cols="12" md="6">
 											<v-select
 												v-model="settings.time_format"
 												:items="timeFormats"
@@ -470,6 +479,15 @@
 												prepend-inner-icon="mdi-clock"
 												density="comfortable"
 											></v-select>
+										</v-col>
+
+										<v-col cols="12" md="6">
+											<v-card variant="tonal" color="info">
+												<v-card-text>
+													<div class="text-subtitle-2 mb-2">Preview:</div>
+													<div class="text-h6">{{ formatPreviewTime(new Date()) }}</div>
+												</v-card-text>
+											</v-card>
 										</v-col>
 									</v-row>
 
@@ -687,7 +705,7 @@
 <script>
 import { mapActions, mapGetters } from 'pinia'
 import { store } from '../store'
-import { formatNumber } from '../utils/formatters'
+import { formatNumber, formatDate, formatTime } from '../utils/formatters'
 import axios from 'axios'
 
 export default {
@@ -765,7 +783,10 @@ export default {
 			],
 			invoiceStatuses: [
 				{ title: 'Draft', value: 'draft' },
-				{ title: 'Sent', value: 'sent' }
+				{ title: 'Sent', value: 'sent' },
+				{ title: 'Paid', value: 'paid' },
+				{ title: 'Overdue', value: 'overdue' },
+				{ title: 'Cancelled', value: 'cancelled' }
 			],
 			footerColumnOptions: [
 				{ title: 'Company Information', value: 'company_info' },
@@ -776,11 +797,25 @@ export default {
 			dateFormats: [
 				{ title: 'DD/MM/YYYY (31/12/2025)', value: 'DD/MM/YYYY' },
 				{ title: 'MM/DD/YYYY (12/31/2025)', value: 'MM/DD/YYYY' },
-				{ title: 'YYYY-MM-DD (2025-12-31)', value: 'YYYY-MM-DD' }
+				{ title: 'YYYY-MM-DD (2025-12-31)', value: 'YYYY-MM-DD' },
+				{ title: 'D/M/YYYY (31/12/2025 - no leading zeros)', value: 'D/M/YYYY' },
+				{ title: 'DD.MM.YYYY (31.12.2025)', value: 'DD.MM.YYYY' },
+				{ title: 'DD-MM-YYYY (31-12-2025)', value: 'DD-MM-YYYY' },
+				{ title: 'YYYY/MM/DD (2025/12/31)', value: 'YYYY/MM/DD' },
+				{ title: 'DD MMM YYYY (31 Dec 2025)', value: 'DD MMM YYYY' },
+				{ title: 'D MMMM YYYY (31 December 2025)', value: 'D MMMM YYYY' },
+				{ title: 'EEEE, DD MMMM YYYY (Monday, 31 December 2025)', value: 'EEEE, DD MMMM YYYY' },
+				{ title: 'EEE, DD MMM YYYY (Mon, 31 Dec 2025)', value: 'EEE, DD MMM YYYY' },
+				{ title: 'MMM D, YYYY (Dec 31, 2025)', value: 'MMM D, YYYY' },
+				{ title: 'MMMM D, YYYY (December 31, 2025)', value: 'MMMM D, YYYY' },
 			],
 			timeFormats: [
 				{ title: '24-hour (23:59)', value: '24h' },
-				{ title: '12-hour (11:59 PM)', value: '12h' }
+				{ title: '24-hour with seconds (23:59:59)', value: '24h:ss' },
+				{ title: '12-hour (11:59 PM)', value: '12h' },
+				{ title: '12-hour with seconds (11:59:59 PM)', value: '12h:ss' },
+				{ title: '12-hour no leading zero (3:59 PM)', value: '12h-nozero' },
+				{ title: '12-hour no leading zero with seconds (3:59:59 PM)', value: '12h-nozero:ss' },
 			],
 			numberFormats: [
 				{ title: '1,234.56 (US, UK, Australia, etc.)', value: 'en-US' },
@@ -911,6 +946,14 @@ export default {
 		
 		formatPreviewNumber(value) {
 			return formatNumber(value, 2, this.settings)
+		},
+		
+		formatPreviewDate(date) {
+			return formatDate(date, this.settings)
+		},
+		
+		formatPreviewTime(date) {
+			return formatTime(date, this.settings)
 		}
 	}
 }

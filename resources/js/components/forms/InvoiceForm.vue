@@ -101,6 +101,19 @@
         ></v-text-field>
       </v-col>
 
+      <!-- Notes -->
+      <v-col cols="12">
+        <v-textarea
+          v-model="formData.notes"
+          label="Notes"
+          hint="Additional notes or special instructions for this invoice"
+          persistent-hint
+          rows="3"
+          counter
+          maxlength="500"
+        ></v-textarea>
+      </v-col>
+
     </v-row>
   </v-form>
 </template>
@@ -127,6 +140,7 @@ export default {
         due_date: null,
         total_amount: 0.00,
         status: 'draft',
+        notes: '',
       },
       internalIssueDate: new Date(),
       internalDueDate: null,
@@ -165,15 +179,25 @@ export default {
           issue_date: this.invoice.issue_date,
           due_date: this.invoice.due_date,
           total_amount: this.invoice.total_amount,
-          status: this.invoice.status
+          status: this.invoice.status,
+          notes: this.invoice.notes || ''
       };
-      // Initialize the internal date picker values with the ISO dates as Date objects
+      // Initialize the internal date picker values with proper Date objects
       if (this.invoice.issue_date) {
-        this.internalIssueDate = new Date(this.invoice.issue_date);
+        // Parse the ISO date string properly
+        const issueDateParts = this.invoice.issue_date.split('-');
+        this.internalIssueDate = new Date(issueDateParts[0], parseInt(issueDateParts[1]) - 1, issueDateParts[2]);
       }
       if (this.invoice.due_date) {
-        this.internalDueDate = new Date(this.invoice.due_date);
+        // Parse the ISO date string properly
+        const dueDateParts = this.invoice.due_date.split('-');
+        this.internalDueDate = new Date(dueDateParts[0], parseInt(dueDateParts[1]) - 1, dueDateParts[2]);
       }
+    } else {
+      // For new invoice, set issue_date to today
+      const today = new Date();
+      this.formData.issue_date = today.toISOString().substr(0, 10);
+      this.internalIssueDate = today;
     }
     // Fetch customers if not already loaded (optional, depends on app flow)
     if (!this.customers || this.customers.length === 0) {
@@ -225,7 +249,8 @@ export default {
         issue_date: this.formData.issue_date,
         due_date: this.formData.due_date,
         total_amount: this.formData.total_amount,
-        status: this.formData.status
+        status: this.formData.status,
+        notes: this.formData.notes
       };
 
       if (this.invoice) {

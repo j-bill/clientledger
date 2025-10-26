@@ -32,6 +32,7 @@ class InvoiceController extends Controller
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'invoice_number' => 'nullable|string',
+            'issue_date' => 'required|date',
             'due_date' => 'required|date',
             'total_amount' => 'required|numeric',
             // align with DB enum
@@ -78,6 +79,7 @@ class InvoiceController extends Controller
         $validated = $request->validate([
             'customer_id' => 'sometimes|required|exists:customers,id',
             'invoice_number' => 'sometimes|nullable|string',
+            'issue_date' => 'sometimes|required|date',
             'due_date' => 'sometimes|required|date',
             'total_amount' => 'sometimes|required|numeric',
             'status' => 'sometimes|required|string|in:draft,sent,paid,overdue,cancelled',
@@ -138,10 +140,11 @@ class InvoiceController extends Controller
         // Generate unique invoice number
         $invoiceNumber = InvoiceNumberGenerator::generate();
 
-        // Create invoice
+        // Create invoice with today's date as issue_date
         $invoice = Invoice::create([
             'customer_id' => $validated['customer_id'],
             'invoice_number' => $invoiceNumber,
+            'issue_date' => Carbon::now()->toDateString(),
             'due_date' => $validated['due_date'],
             'total_amount' => $totalAmount,
             'status' => $validated['status'],
@@ -214,5 +217,23 @@ class InvoiceController extends Controller
             ->get();
 
         return response()->json($projects);
+    }
+
+    /**
+     * Download invoice as PDF
+     */
+    public function downloadPdf(Invoice $invoice)
+    {
+        $pdfGenerator = new \App\Services\InvoicePdfGenerator();
+        return $pdfGenerator->download($invoice);
+    }
+
+    /**
+     * Stream invoice PDF for viewing
+     */
+    public function viewPdf(Invoice $invoice)
+    {
+        $pdfGenerator = new \App\Services\InvoicePdfGenerator();
+        return $pdfGenerator->stream($invoice);
     }
 }

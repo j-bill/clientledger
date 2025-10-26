@@ -206,16 +206,16 @@ class DashboardController extends Controller
             
             // THIS YEAR: All issued invoices + Extrapolated estimate
             $thisYearActual = Invoice::whereIn('status', ['paid', 'sent', 'draft'])
-                ->whereYear('created_at', $now->year)
+                ->whereYear('issue_date', $now->year)
                 ->sum('total_amount');
             $thisYearExtrapolated = $thisYearActual * $extrapolationFactor;
             
             // LAST YEAR: Paid + Due
             $lastYearPaid = Invoice::where('status', 'paid')
-                ->whereBetween('created_at', [$lastYearStart, $lastYearEnd])
+                ->whereBetween('issue_date', [$lastYearStart, $lastYearEnd])
                 ->sum('total_amount');
             $lastYearDue = Invoice::whereIn('status', ['sent', 'draft'])
-                ->whereBetween('created_at', [$lastYearStart, $lastYearEnd])
+                ->whereBetween('issue_date', [$lastYearStart, $lastYearEnd])
                 ->sum('total_amount');
 
             // --- Admin: Revenue by Customer ---
@@ -230,8 +230,8 @@ class DashboardController extends Controller
 
             // --- Admin: Yearly Revenue Trend (PAID INVOICES ONLY) ---
             $yearlyRevenueTrend = Invoice::where('status', 'paid')
-                ->whereYear('created_at', $now->year)
-                ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, SUM(total_amount) as total')
+                ->whereYear('issue_date', $now->year)
+                ->selectRaw('YEAR(issue_date) as year, MONTH(issue_date) as month, SUM(total_amount) as total')
                 ->groupBy('year', 'month')
                 ->orderBy('year')
                 ->orderBy('month')
@@ -249,8 +249,8 @@ class DashboardController extends Controller
             
             // Get all invoices by month
             $allInvoices = Invoice::whereIn('status', ['paid', 'sent', 'draft'])
-                ->whereYear('created_at', $now->year)
-                ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, SUM(total_amount) as total')
+                ->whereYear('issue_date', $now->year)
+                ->selectRaw('YEAR(issue_date) as year, MONTH(issue_date) as month, SUM(total_amount) as total')
                 ->groupBy('year', 'month')
                 ->orderBy('year')
                 ->orderBy('month')

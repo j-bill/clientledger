@@ -47,9 +47,8 @@
 									  clearable
 									  @click:clear="clearDate"></v-text-field>
 					</template>
-					<v-date-picker v-model="internalDeadline"
-								   locale="en-de"
-								   @update:model-value="updateDeadline"></v-date-picker>
+					<v-date-picker v-model="pickerDate"
+								   locale="en-de"></v-date-picker>
 				</v-menu>
 			</v-col>
 
@@ -117,7 +116,7 @@ export default {
 	data() {
 		return {
 			dateMenu: false,
-			internalDeadline: null,
+			pickerDate: null,  // Will be set to a Date object, not a string
 			formData: {
 				name: '',
 				customer_id: null,
@@ -130,20 +129,81 @@ export default {
 	},
 
 	created() {
-		if (this.project) {
-			this.formData = { 
-				...this.project,
-				users: this.project.users?.map(user => user.id) || []
-			};
+		this.initializeFormData();
+	},
 
-			// Store deadline in ISO format (yyyy-mm-dd)
-			if (this.formData.deadline) {
-				this.internalDeadline = this.formData.deadline;
+	watch: {
+		project: {
+			immediate: true,
+			handler() {
+				this.initializeFormData();
+			}
+		},
+		// Watch pickerDate and sync to formData.deadline as ISO string
+		pickerDate(newVal) {
+			if (newVal && newVal instanceof Date && !isNaN(newVal.getTime())) {
+				const year = newVal.getFullYear();
+				const month = String(newVal.getMonth() + 1).padStart(2, '0');
+				const day = String(newVal.getDate()).padStart(2, '0');
+				const isoDate = `${year}-${month}-${day}`;
+				this.formData.deadline = isoDate;
 			}
 		}
 	},
 
 	methods: {
+		initializeFormData() {
+			if (this.project) {
+				this.formData = { 
+					...this.project,
+					users: this.project.users?.map(user => user.id) || []
+				};
+
+				// Initialize the internal date for the date picker with a Date object
+				// Vuetify's v-date-picker requires Date objects, not ISO strings
+				if (this.formData.deadline) {
+					const date = new Date(this.formData.deadline);
+					if (!isNaN(date.getTime())) {
+						this.pickerDate = date;
+					}
+				}
+			}
+		},
+
+		normalizeDate(dateInput) {
+			if (!dateInput) return null;
+			
+			const dateStr = String(dateInput).trim();
+			
+			// If already in ISO format (YYYY-MM-DD), return as is
+			if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+				return dateStr;
+			}
+			
+			// Try to parse it as a Date
+			const date = new Date(dateStr);
+			if (isNaN(date.getTime())) {
+				return null;
+			}
+			
+			// Convert to ISO format
+			const year = date.getFullYear();
+			const month = (date.getMonth() + 1).toString().padStart(2, '0');
+			const day = date.getDate().toString().padStart(2, '0');
+			return `${year}-${month}-${day}`;
+		},
+
+		convertDateToISO(dateObj) {
+			// Convert Date object to ISO string format (YYYY-MM-DD)
+			if (dateObj instanceof Date && !isNaN(dateObj.getTime())) {
+				const year = dateObj.getFullYear();
+				const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+				const day = String(dateObj.getDate()).padStart(2, '0');
+				return `${year}-${month}-${day}`;
+			}
+			return null;
+		},
+
 		async submit() {
 			const { valid } = await this.$refs.form.validate();
 			
@@ -179,24 +239,9 @@ export default {
 			// This method can be used to handle any user-specific rate updates if needed
 		},
 
-		updateDeadline(date) {
-			// Ensure we're storing the ISO format string (yyyy-mm-dd)
-			if (date instanceof Date) {
-				const year = date.getFullYear();
-				const month = (date.getMonth() + 1).toString().padStart(2, '0');
-				const day = date.getDate().toString().padStart(2, '0');
-				this.formData.deadline = `${year}-${month}-${day}`;
-			} else if (typeof date === 'string') {
-				// Already a string, store as is
-				this.formData.deadline = date;
-			}
-			this.internalDeadline = date;
-			this.dateMenu = false;
-		},
-
 		clearDate() {
+			this.pickerDate = null;
 			this.formData.deadline = null;
-			this.internalDeadline = null;
 		}
 	}
 };

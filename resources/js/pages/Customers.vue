@@ -127,7 +127,7 @@ export default {
   },
   
   computed: {
-    ...mapState(store, ['customers', 'currencySymbol'])
+    ...mapState(store, ['customers', 'settings', 'currencySymbol'])
   },
   
   created() {

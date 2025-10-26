@@ -23,19 +23,7 @@ export function formatDate(dateStr, settings = null) {
     // Get settings from parameter or store
     const dateFormat = settings?.date_format || store().settings?.date_format || 'DD/MM/YYYY';
     
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    
-    switch (dateFormat) {
-      case 'MM/DD/YYYY':
-        return `${month}/${day}/${year}`;
-      case 'YYYY-MM-DD':
-        return `${year}-${month}-${day}`;
-      case 'DD/MM/YYYY':
-      default:
-        return `${day}/${month}/${year}`;
-    }
+    return formatDateByPattern(date, dateFormat);
   } catch (error) {
     console.error('Error formatting date:', error);
     return 'N/A';
@@ -43,8 +31,49 @@ export function formatDate(dateStr, settings = null) {
 }
 
 /**
+ * Format a date by a specific pattern
+ * @param {Date} date - The date object to format
+ * @param {string} pattern - The format pattern
+ * @returns {string} Formatted date string
+ */
+function formatDateByPattern(date, pattern) {
+  const day = date.getDate().toString().padStart(2, '0');
+  const dayNoZero = date.getDate().toString();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const monthNoZero = (date.getMonth() + 1).toString();
+  const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getMonth()];
+  const monthLong = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][date.getMonth()];
+  const year = date.getFullYear();
+  const yearShort = year.toString().slice(-2);
+  const dayOfWeekShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()];
+  const dayOfWeekLong = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()];
+
+  const replacements = {
+    'YYYY': year,
+    'YY': yearShort,
+    'MMMM': monthLong,
+    'MMM': monthShort,
+    'MM': month,
+    'M': monthNoZero,
+    'DD': day,
+    'D': dayNoZero,
+    'EEEE': dayOfWeekLong,
+    'EEE': dayOfWeekShort,
+  };
+
+  let result = pattern;
+  // Sort by length descending to replace longer patterns first
+  const sortedKeys = Object.keys(replacements).sort((a, b) => b.length - a.length);
+  for (const key of sortedKeys) {
+    result = result.replace(new RegExp(key, 'g'), replacements[key]);
+  }
+
+  return result;
+}
+
+/**
  * Format a time string according to user's time format preference
- * @param {string} timeStr - The time to format (HH:mm format expected)
+ * @param {string|Date} timeStr - The time to format (HH:mm format expected or Date object)
  * @param {object} settings - Optional settings object (uses store if not provided)
  * @returns {string} Formatted time string
  */
@@ -52,21 +81,31 @@ export function formatTime(timeStr, settings = null) {
   if (!timeStr) return 'N/A';
   
   try {
-    // Handle both "HH:mm" and full datetime strings
-    let hours, minutes;
+    // Handle both "HH:mm" and full datetime strings, or Date objects
+    let hours, minutes, seconds = 0;
     
-    if (timeStr.includes('T') || timeStr.includes(' ')) {
+    // Check if it's a Date object
+    if (timeStr instanceof Date) {
+      if (isNaN(timeStr.getTime())) return 'N/A';
+      hours = timeStr.getHours();
+      minutes = timeStr.getMinutes();
+      seconds = timeStr.getSeconds();
+    } else if (typeof timeStr === 'string' && (timeStr.includes('T') || timeStr.includes(' '))) {
       // Full datetime string
       const date = new Date(timeStr);
       if (isNaN(date.getTime())) return 'N/A';
       hours = date.getHours();
       minutes = date.getMinutes();
-    } else {
-      // Time string in HH:mm format
+      seconds = date.getSeconds();
+    } else if (typeof timeStr === 'string') {
+      // Time string in HH:mm or HH:mm:ss format
       const parts = timeStr.split(':');
       if (parts.length < 2) return timeStr;
       hours = parseInt(parts[0], 10);
       minutes = parseInt(parts[1], 10);
+      seconds = parts.length > 2 ? parseInt(parts[2], 10) : 0;
+    } else {
+      return 'N/A';
     }
     
     if (isNaN(hours) || isNaN(minutes)) return 'N/A';
@@ -74,22 +113,39 @@ export function formatTime(timeStr, settings = null) {
     // Get settings from parameter or store
     const timeFormat = settings?.time_format || store().settings?.time_format || '24h';
     
-    if (timeFormat === '12h') {
-      // 12-hour format with AM/PM
-      const period = hours >= 12 ? 'PM' : 'AM';
-      const displayHours = hours % 12 || 12; // Convert 0 to 12
-      const displayMinutes = minutes.toString().padStart(2, '0');
-      return `${displayHours}:${displayMinutes} ${period}`;
-    } else {
-      // 24-hour format
-      const displayHours = hours.toString().padStart(2, '0');
-      const displayMinutes = minutes.toString().padStart(2, '0');
-      return `${displayHours}:${displayMinutes}`;
-    }
+    return formatTimeByPattern(hours, minutes, seconds, timeFormat);
   } catch (error) {
     console.error('Error formatting time:', error);
     return 'N/A';
   }
+}
+
+/**
+ * Format time by a specific pattern
+ * @param {number} hours - Hour value (0-23)
+ * @param {number} minutes - Minute value (0-59)
+ * @param {number} seconds - Second value (0-59)
+ * @param {string} format - The format pattern
+ * @returns {string} Formatted time string
+ */
+function formatTimeByPattern(hours, minutes, seconds, format) {
+  const hh = hours.toString().padStart(2, '0');
+  const mm = minutes.toString().padStart(2, '0');
+  const ss = seconds.toString().padStart(2, '0');
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const h12 = (hours % 12 || 12).toString().padStart(2, '0');
+  const h12NoZero = (hours % 12 || 12).toString();
+
+  const patterns = {
+    '24h': `${hh}:${mm}`,
+    '24h:ss': `${hh}:${mm}:${ss}`,
+    '12h': `${h12}:${mm} ${period}`,
+    '12h:ss': `${h12}:${mm}:${ss} ${period}`,
+    '12h-nozero': `${h12NoZero}:${mm} ${period}`,
+    '12h-nozero:ss': `${h12NoZero}:${mm}:${ss} ${period}`,
+  };
+
+  return patterns[format] || patterns['24h'];
 }
 
 /**

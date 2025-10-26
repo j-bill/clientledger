@@ -88,10 +88,16 @@
           {{ formatCurrency(item.total_amount) }}
         </template>
         <template v-slot:item.actions="{ item }">
-          <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)">
+          <v-btn icon variant="text" size="small" color="info" @click="viewPdf(item)" title="View PDF">
+            <v-icon>mdi-file</v-icon>
+          </v-btn>
+          <v-btn icon variant="text" size="small" color="success" @click="downloadPdf(item)" title="Download PDF">
+            <v-icon>mdi-download</v-icon>
+          </v-btn>
+          <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)" title="Edit">
             <v-icon>mdi-pencil</v-icon>
           </v-btn>
-          <v-btn icon variant="text" size="small" color="error" @click="confirmDelete(item)">
+          <v-btn icon variant="text" size="small" color="error" @click="confirmDelete(item)" title="Delete">
             <v-icon>mdi-delete</v-icon>
           </v-btn>
         </template>
@@ -537,11 +543,12 @@ export default {
       }
     },
     async openGenerateDialog() {
-      // Reset the form
+      // Reset the form with proper dates
+      const today = new Date().toISOString().slice(0, 10);
       this.generateForm = {
         customer_id: null,
         work_log_ids: [],
-        due_date: new Date().toISOString().slice(0, 10),
+        due_date: today,
         status: 'draft'
       };
       this.unbilledLogs = [];
@@ -658,6 +665,28 @@ export default {
       } catch (e) {
         const message = e.response?.data?.message || 'Failed to generate invoice';
         this.showSnackbar(message, 'error');
+      }
+    },
+    
+    async viewPdf(invoice) {
+      try {
+        window.open(`/api/invoices/${invoice.id}/pdf`, '_blank');
+      } catch (e) {
+        this.showSnackbar('Failed to view PDF', 'error');
+      }
+    },
+    
+    async downloadPdf(invoice) {
+      try {
+        const link = document.createElement('a');
+        link.href = `/api/invoices/${invoice.id}/pdf-download`;
+        link.download = `invoice-${invoice.invoice_number}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        this.showSnackbar('Invoice PDF downloaded', 'success');
+      } catch (e) {
+        this.showSnackbar('Failed to download PDF', 'error');
       }
     }
   }

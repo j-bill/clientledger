@@ -173,7 +173,7 @@
             <GChart
               type="LineChart"
               :data="isAdmin ? revenueChartData : earningsChartData"
-              :options="revenueChartOptions"
+              :options="isAdmin ? dynamicRevenueChartOptions : dynamicEarningsChartOptions"
             />
           </v-card-text>
         </v-card>
@@ -492,6 +492,56 @@ export default {
     ...mapState(store, ['user', 'settings']),
     isAdmin() {
       return this.user?.role === 'admin';
+    },
+    currencyFormat() {
+      // Google Charts uses ICU number format patterns
+      // Instead of embedding the symbol, we'll rely on basic patterns
+      // and let the chart apply currency symbol via formatter
+      const numberFormat = this.settings?.number_format || 'en-US';
+      
+      switch (numberFormat) {
+        case 'de-DE': // 1.234,56
+          return '#.##0,00';
+        case 'fr-FR': // 1 234,56
+          return '#,##0.00'; // Google Charts doesn't support space as thousands sep in patterns
+        case 'en-IN': // 12,34,567.89
+          return '#,##0.00';
+        case 'en-US': // 1,234.56
+        default:
+          return '#,##0.00';
+      }
+    },
+    numberFormatString() {
+      // Generate number format string (without currency) based on number_format setting
+      const numberFormat = this.settings?.number_format || 'en-US';
+      
+      switch (numberFormat) {
+        case 'de-DE': // 1.234,56
+          return '#.##0,00';
+        case 'fr-FR': // 1 234,56
+          return '#,##0.00';
+        case 'en-IN': // 12,34,567.89
+          return '#,##0.00';
+        case 'en-US': // 1,234.56
+        default:
+          return '#,##0.00';
+      }
+    },
+    dynamicRevenueChartOptions() {
+      // Create a copy and update with dynamic format based on number_format setting
+      const options = JSON.parse(JSON.stringify(this.revenueChartOptions));
+      
+      // Note: Google Charts format property has limited support for custom decimal separators
+      // The format '#,##0.00' works for most locales, but European formats with comma
+      // as decimal separator need to be handled via custom formatters if needed
+      // For now, keep the standard format that works universally
+      options.vAxis.format = '#,##0.00';
+      
+      return options;
+    },
+    dynamicEarningsChartOptions() {
+      // Same as revenue for now
+      return this.dynamicRevenueChartOptions;
     },
     revenueChartData() {
       const headers = ["Date", "Revenue"];

@@ -58,13 +58,15 @@ class InvoicesSeeder extends Seeder
                         $status = $faker->randomElement(['paid', 'paid', 'paid', 'sent']);
                     }
 
-                    // Create invoice with custom created_at timestamp
+                    // Create invoice with custom timestamps
                     $invoice = new Invoice([
                         'invoice_number' => 'INV-' . $currentDate->format('Ym') . '-' . str_pad($customer->id, 3, '0', STR_PAD_LEFT),
                         'customer_id' => $customer->id,
-                        'due_date' => $currentDate->copy()->addMonth()->endOfMonth(),
+                        'issue_date' => $invoiceDate->toDateString(),
+                        'due_date' => $currentDate->copy()->addMonth()->endOfMonth()->toDateString(),
                         'total_amount' => $totalAmount,
-                        'status' => $status
+                        'status' => $status,
+                        'notes' => $faker->optional(0.3)->sentence()
                     ]);
                     
                     // Set custom timestamps
