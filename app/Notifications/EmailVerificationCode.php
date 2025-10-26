@@ -42,14 +42,14 @@ class EmailVerificationCode extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-                    ->subject('Email Verification Code')
-                    ->greeting('Hello ' . $notifiable->name . '!')
-                    ->line('You have requested to verify your email address.')
-                    ->line('Your verification code is:')
+                    ->subject(__('notifications.email_verification_code.subject'))
+                    ->greeting(__('notifications.email_verification_code.greeting', ['name' => $notifiable->name]))
+                    ->line(__('notifications.email_verification_code.requested'))
+                    ->line(__('notifications.email_verification_code.code_is'))
                     ->line('**' . $this->code . '**')
-                    ->line('This code will expire in 1 hour.')
-                    ->line('If you did not request this verification, please ignore this email.')
-                    ->line('Thank you for using our application!');
+                    ->line(__('notifications.email_verification_code.expires'))
+                    ->line(__('notifications.email_verification_code.ignore'))
+                    ->line(__('notifications.email_verification_code.thank_you'));
     }
 
     /**

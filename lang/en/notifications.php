@@ -1,0 +1,39 @@
+<?php
+
+return [
+    'email_verification_code' => [
+        'subject' => 'Email Verification Code',
+        'greeting' => 'Hello :name!',
+        'requested' => 'You have requested to verify your email address.',
+        'code_is' => 'Your verification code is:',
+        'expires' => 'This code will expire in 1 hour.',
+        'ignore' => 'If you did not request this verification, please ignore this email.',
+        'thank_you' => 'Thank you for using our application!',
+    ],
+    'project_assigned' => [
+        'subject' => 'You have been assigned to a new project',
+        'greeting' => 'Hello :name!',
+        'assigned_to' => 'You have been assigned to the project: **:project**',
+        'customer' => 'Customer: :customer',
+        'hourly_rate' => 'Your hourly rate for this project: :rate',
+        'deadline' => 'Deadline: :deadline',
+        'description' => 'Description: :description',
+        'action' => 'View Project',
+        'thank_you' => 'Thank you for your continued work!',
+    ],
+    'invoice' => [
+        'title' => 'INVOICE',
+        'date' => 'Date',
+        'invoice_number' => 'Invoice Number',
+        'bill_to' => 'Bill To',
+        'worker' => 'Worker',
+        'description' => 'Description',
+        'rate_unit' => 'Rate/Unit',
+        'amount' => 'Amount',
+        'total' => 'Total',
+        'project_total' => 'Project Total',
+        'subtotal' => 'Subtotal',
+        'tax' => 'Tax',
+        'no_work_logs_found' => 'No work logs found',
+    ],
+];

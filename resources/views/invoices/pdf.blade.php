@@ -233,10 +233,10 @@
         @endif
 
         <div class="invoice-header">
-            <h1 class="invoice-title">INVOICE</h1>
+            <h1 class="invoice-title">{{ __('notifications.invoice.title') }}</h1>
             <div class="invoice-meta">
                 <div class="invoice-meta-item">
-                    <div class="meta-label">Date</div>
+                    <div class="meta-label">{{ __('notifications.invoice.date') }}</div>
                     <div class="meta-value">
                         @php
                             // Convert Laravel date format to PHP format
@@ -250,14 +250,14 @@
                     </div>
                 </div>
                 <div class="invoice-meta-item" style="text-align: right;">
-                    <div class="meta-label">Invoice Number</div>
+                    <div class="meta-label">{{ __('notifications.invoice.invoice_number') }}</div>
                     <div class="meta-value">{{ $invoice->invoice_number }}</div>
                 </div>
             </div>
         </div>
 
         <div class="customer-info">
-            <div class="customer-info-label">Bill To</div>
+            <div class="customer-info-label">{{ __('notifications.invoice.bill_to') }}</div>
             <div>
                 <strong>{{ $invoice->customer->name ?? 'Customer' }}</strong><br>
                 @if($invoice->customer->address_line_1 ?? false)
@@ -296,12 +296,12 @@
             <table class="worklogs-table">
                 <thead>
                     <tr>
-                        <th>Date</th>
-                        <th>Worker</th>
-                        <th>Description</th>
-                        <th class="text-right">Rate/Unit</th>
-                        <th class="text-right">Amount</th>
-                        <th class="text-right">Total</th>
+                        <th>{{ __('notifications.invoice.date') }}</th>
+                        <th>{{ __('notifications.invoice.worker') }}</th>
+                        <th>{{ __('notifications.invoice.description') }}</th>
+                        <th class="text-right">{{ __('notifications.invoice.rate_unit') }}</th>
+                        <th class="text-right">{{ __('notifications.invoice.amount') }}</th>
+                        <th class="text-right">{{ __('notifications.invoice.total') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -331,26 +331,26 @@
             </table>
 
             <div class="project-total">
-                Project Total: {{ $currency_symbol }}{{ number_format($projectTotal, 2) }}
+                {{ __('notifications.invoice.project_total') }}: {{ $currency_symbol }}{{ number_format($projectTotal, 2) }}
             </div>
         </div>
         @empty
-        <p>No work logs found</p>
+        <p>{{ __('notifications.invoice.no_work_logs_found') }}</p>
         @endforelse
 
         <div style="margin-top: 30px;">
             <div style="text-align: right; margin-bottom: 10px;">
-                <strong>Subtotal: {{ $currency_symbol }}{{ number_format($totalAmount, 2) }}</strong>
+                <strong>{{ __('notifications.invoice.subtotal') }}: {{ $currency_symbol }}{{ number_format($totalAmount, 2) }}</strong>
             </div>
             @if($tax_rate > 0)
             <div style="text-align: right; margin-bottom: 10px; font-size: 11px;">
-                Tax ({{ number_format($tax_rate, 2) }}%): {{ $currency_symbol }}{{ number_format($totalAmount * ($tax_rate / 100), 2) }}
+                {{ __('notifications.invoice.tax') }} ({{ number_format($tax_rate, 2) }}%): {{ $currency_symbol }}{{ number_format($totalAmount * ($tax_rate / 100), 2) }}
             </div>
             @endif
         </div>
 
         <div class="invoice-total">
-            Total: {{ $currency_symbol }}{{ number_format($totalAmount + ($totalAmount * ($tax_rate / 100)), 2) }}
+            {{ __('notifications.invoice.total') }}: {{ $currency_symbol }}{{ number_format($totalAmount + ($totalAmount * ($tax_rate / 100)), 2) }}
         </div>
 
         @if($company['invoice_payment_terms'] ?? false)

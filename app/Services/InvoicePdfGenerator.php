@@ -17,10 +17,14 @@ class InvoicePdfGenerator
         // Load all settings
         $settings = $this->getSettings();
         
+        // Get and set the application language
+        $language = $settings['language'] ?? 'en';
+        app()->setLocale($language);
+        
         // Get tax rate from settings
         $taxRate = floatval($settings['tax_rate'] ?? 0);
 
-        // Prepare invoice data
+        // Prepare invoice data with translations
         $data = [
             'invoice' => $invoice->load(['customer', 'workLogs']),
             'company' => $settings,

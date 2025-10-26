@@ -1,0 +1,39 @@
+<?php
+
+return [
+    'email_verification_code' => [
+        'subject' => 'Codice di verifica e-mail',
+        'greeting' => 'Ciao :name!',
+        'requested' => 'Hai richiesto di verificare il tuo indirizzo e-mail.',
+        'code_is' => 'Il tuo codice di verifica è:',
+        'expires' => 'Questo codice scadrà tra 1 ora.',
+        'ignore' => 'Se non hai richiesto questa verifica, ignora questa e-mail.',
+        'thank_you' => 'Grazie per aver utilizzato la nostra applicazione!',
+    ],
+    'project_assigned' => [
+        'subject' => 'Sei stato assegnato a un nuovo progetto',
+        'greeting' => 'Ciao :name!',
+        'assigned_to' => 'Sei stato assegnato al progetto: **:project**',
+        'customer' => 'Cliente: :customer',
+        'hourly_rate' => 'La tua tariffa oraria per questo progetto: :rate',
+        'deadline' => 'Scadenza: :deadline',
+        'description' => 'Descrizione: :description',
+        'action' => 'Visualizza progetto',
+        'thank_you' => 'Grazie per il tuo lavoro continuo!',
+    ],
+    'invoice' => [
+        'title' => 'FATTURA',
+        'date' => 'Data',
+        'invoice_number' => 'Numero di fattura',
+        'bill_to' => 'Fattura a',
+        'worker' => 'Lavoratore',
+        'description' => 'Descrizione',
+        'rate_unit' => 'Tariffa/Unità',
+        'amount' => 'Importo',
+        'total' => 'Totale',
+        'project_total' => 'Totale progetto',
+        'subtotal' => 'Subtotale',
+        'tax' => 'Imposta',
+        'no_work_logs_found' => 'Nessun registro di lavoro trovato',
+    ],
+];
