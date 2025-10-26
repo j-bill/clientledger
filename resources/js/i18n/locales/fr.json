@@ -14,13 +14,26 @@
     "error": "Erreur",
     "success": "Succès",
     "warning": "Avertissement",
-    "info": "Information"
+    "info": "Information",
+    "reset": "Réinitialiser",
+    "filters": "Filtres",
+    "actions": "Actions",
+    "view": "Voir",
+    "download": "Télécharger",
+    "new": "Nouveau",
+    "generate": "Générer",
+    "selectAll": "Tout sélectionner",
+    "deselectAll": "Tout désélectionner",
+    "selectAllVisible": "Sélectionner tout visible",
+    "home": "Accueil",
+    "profile": "Profil",
+    "logout": "Se déconnecter"
   },
   "invoices": {
     "title": "Factures",
     "invoice": "Facture",
     "invoiceNumber": "Numéro de facture",
-    "invoiceDate": "Date de la facture",
+    "invoiceDate": "Date de facture",
     "dueDate": "Date d'échéance",
     "customer": "Client",
     "description": "Description",
@@ -33,6 +46,18 @@
     "paymentTerms": "Conditions de paiement",
     "bankInfo": "Informations bancaires",
     "pageInfo": "Page",
+    "newInvoice": "Nouvelle facture",
+    "generateFromWorkLogs": "Générer à partir des journaux de travail",
+    "filterWorkLogs": "Filtrer les journaux de travail",
+    "availableWorkLogs": "Journaux de travail disponibles",
+    "viewPdf": "Voir le PDF",
+    "downloadPdf": "Télécharger le PDF",
+    "billTo": "Facturer à",
+    "worker": "Travailleur",
+    "rateUnit": "Taux/Unité",
+    "projectTotal": "Total du projet",
+    "noWorkLogsFound": "Aucun journal de travail trouvé",
+    "issueDate": "Date d'émission",
     "invoiceStatus": {
       "draft": "Brouillon",
       "sent": "Envoyée",
@@ -50,7 +75,10 @@
     "hours": "Heures",
     "minutes": "Minutes",
     "description": "Description",
-    "hourlyRate": "Taux horaire"
+    "hourlyRate": "Taux horaire",
+    "startWorking": "Commencer à travailler maintenant",
+    "stopWorking": "Arrêter de travailler",
+    "timeTracking": "Suivi du temps"
   },
   "customers": {
     "title": "Clients",
@@ -61,7 +89,8 @@
     "address": "Adresse",
     "city": "Ville",
     "country": "Pays",
-    "zipCode": "Code postal"
+    "zipCode": "Code postal",
+    "newCustomer": "Nouveau client"
   },
   "projects": {
     "title": "Projets",
@@ -71,25 +100,34 @@
     "status": "Statut",
     "startDate": "Date de début",
     "endDate": "Date de fin",
-    "budget": "Budget"
+    "budget": "Budget",
+    "newProject": "Nouveau projet",
+    "deadline": "Date limite"
   },
   "settings": {
     "title": "Paramètres",
     "company": "Entreprise",
     "localization": "Localisation",
     "financialInvoices": "Finances & Factures",
-    "dateTime": "Date et heure",
+    "dateTime": "Date & Heure",
     "email": "E-mail",
     "legal": "Légal",
     "language": "Langue",
     "currentLanguage": "Langue actuelle",
-    "selectLanguage": "Sélectionnez la langue de l'application"
+    "selectLanguage": "Sélectionner la langue de l'application"
   },
   "notifications": {
     "invoiceCreated": "Facture créée avec succès",
     "invoiceSent": "Facture envoyée avec succès",
     "settingsSaved": "Paramètres enregistrés avec succès",
-    "operationFailed": "L'opération a échoué"
+    "operationFailed": "Opération échouée",
+    "emailVerified": "E-mail vérifié avec succès!",
+    "failedToLoad": "Échec du chargement des données. Veuillez réessayer plus tard.",
+    "invalidCode": "Code invalide",
+    "enterValidCode": "Veuillez entrer un code à 6 chiffres valide",
+    "loginSuccessful": "Connexion réussie!",
+    "recoveryCodeUsed": "Code de récupération utilisé. Veuillez reconfigurer 2FA pour la sécurité.",
+    "enterRecoveryCode": "Veuillez entrer un code de récupération"
   },
   "email": {
     "subject": "Sujet",
@@ -97,11 +135,23 @@
     "from": "De",
     "to": "À",
     "emailVerification": "Vérification de l'e-mail",
-    "projectAssigned": "Projet attribué"
+    "emailVerificationCode": "Code de vérification de l'e-mail",
+    "projectAssigned": "Projet assigné",
+    "hello": "Bonjour",
+    "verificationRequest": "Vous avez demandé à vérifier votre adresse e-mail.",
+    "verificationCode": "Votre code de vérification est:",
+    "codeExpires": "Ce code expirera dans 1 heure.",
+    "ignoreIfNotYou": "Si vous n'avez pas demandé cette vérification, veuillez ignorer cet e-mail.",
+    "thankYou": "Merci d'utiliser notre application!",
+    "assignedToProject": "Vous avez été assigné au projet:",
+    "yourHourlyRate": "Votre taux horaire pour ce projet:",
+    "viewProject": "Voir le projet",
+    "continuedWork": "Merci pour votre travail continu!",
+    "newProjectAssignment": "Vous avez été assigné à un nouveau projet"
   },
   "auth": {
-    "login": "Connexion",
-    "logout": "Déconnexion",
+    "login": "Se connecter",
+    "logout": "Se déconnecter",
     "email": "E-mail",
     "password": "Mot de passe",
     "rememberMe": "Se souvenir de moi",
@@ -111,6 +161,28 @@
     "required": "Ce champ est requis",
     "email": "Veuillez entrer une adresse e-mail valide",
     "minLength": "Doit contenir au moins {min} caractères",
-    "maxLength": "Ne peut pas dépasser {max} caractères"
+    "maxLength": "Ne peut pas dépasser {max} caractères",
+    "customerRequired": "Client requis",
+    "projectRequired": "Projet requis"
+  },
+  "navigation": {
+    "home": "Accueil",
+    "projects": "Projets",
+    "customers": "Clients",
+    "invoices": "Factures",
+    "workLogs": "Journaux de travail",
+    "users": "Utilisateurs",
+    "profile": "Profil",
+    "settings": "Paramètres",
+    "logout": "Se déconnecter",
+    "clientledger": "Clientledger"
+  },
+  "users": {
+    "title": "Utilisateurs",
+    "user": "Utilisateur",
+    "name": "Nom",
+    "email": "E-mail",
+    "role": "Rôle",
+    "newUser": "Nouvel utilisateur"
   }
 }
