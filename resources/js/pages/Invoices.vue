@@ -281,13 +281,20 @@
           <!-- Selected Work Logs Summary -->
           <v-card v-if="generateForm.work_log_ids.length > 0" class="mt-4" color="primary" variant="tonal">
             <v-card-text>
-              <div class="d-flex justify-space-between align-center">
+              <div class="d-flex justify-space-between align-center mb-3">
                 <div>
                   <strong>{{ generateForm.work_log_ids.length }}</strong> work log{{ generateForm.work_log_ids.length !== 1 ? 's' : '' }} selected
                 </div>
-                <div class="text-h6">
-                  Total: {{ currencySymbol }}{{ calculateSelectedTotal() }}
+                <div>
+                  <strong>Subtotal: {{ currencySymbol }}{{ calculateSelectedTotal() }}</strong>
                 </div>
+              </div>
+              <v-divider class="my-2"></v-divider>
+              <div class="text-caption text-grey">
+                Tax Rate ({{ settings.tax_rate }}%): {{ currencySymbol }}{{ (calculateSelectedTotal() * (settings.tax_rate / 100)).toFixed(2) }}
+              </div>
+              <div class="text-h6 mt-2">
+                Total: {{ currencySymbol }}{{ (calculateSelectedTotal() * (1 + (settings.tax_rate / 100))).toFixed(2) }}
               </div>
             </v-card-text>
           </v-card>
@@ -301,7 +308,7 @@
             :disabled="!generateForm.customer_id || generateForm.work_log_ids.length === 0 || !generateForm.due_date || !generateForm.status" 
             @click="generateInvoice"
           >
-            Generate Invoice ({{ currencySymbol }}{{ calculateSelectedTotal() }})
+            Generate Invoice ({{ currencySymbol }}{{ (calculateSelectedTotal() * (1 + (settings.tax_rate / 100))).toFixed(2) }})
           </v-btn>
         </v-card-actions>
       </v-card>

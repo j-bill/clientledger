@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\WorkLog;
 use App\Models\Project;
+use App\Models\Setting;
 use App\Services\InvoiceNumberGenerator;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -17,11 +18,19 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        return response()->json(
-            Invoice::with(['customer', 'workLogs'])
-                ->orderByDesc('created_at')
-                ->get()
-        );
+        $taxRate = floatval(Setting::where('key', 'tax_rate')->value('value') ?? 0);
+        
+        $invoices = Invoice::with(['customer', 'workLogs'])
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function ($invoice) use ($taxRate) {
+                $invoice->tax_rate = $taxRate;
+                $invoice->tax_amount = $invoice->total_amount * ($taxRate / 100);
+                $invoice->total_with_tax = $invoice->total_amount + $invoice->tax_amount;
+                return $invoice;
+            });
+
+        return response()->json($invoices);
     }
 
     /**
@@ -60,7 +69,14 @@ class InvoiceController extends Controller
             $invoice->workLogs()->attach($workLogs);
         }
         
-        return response()->json($invoice->load(['customer', 'workLogs']), 201);
+        // Add tax rate and calculated tax to response
+        $taxRate = floatval(Setting::where('key', 'tax_rate')->value('value') ?? 0);
+        $invoice->load(['customer', 'workLogs']);
+        $invoice->tax_rate = $taxRate;
+        $invoice->tax_amount = $invoice->total_amount * ($taxRate / 100);
+        $invoice->total_with_tax = $invoice->total_amount + $invoice->tax_amount;
+        
+        return response()->json($invoice, 201);
     }
 
     /**
@@ -68,7 +84,13 @@ class InvoiceController extends Controller
      */
     public function show(Invoice $invoice)
     {
-        return response()->json($invoice->load(['customer', 'workLogs']));
+        $taxRate = floatval(Setting::where('key', 'tax_rate')->value('value') ?? 0);
+        $invoice->load(['customer', 'workLogs']);
+        $invoice->tax_rate = $taxRate;
+        $invoice->tax_amount = $invoice->total_amount * ($taxRate / 100);
+        $invoice->total_with_tax = $invoice->total_amount + $invoice->tax_amount;
+        
+        return response()->json($invoice);
     }
 
     /**
@@ -92,7 +114,15 @@ class InvoiceController extends Controller
         }
 
         $invoice->update($validated);
-        return response()->json($invoice->load(['customer', 'workLogs']));
+        $invoice->load(['customer', 'workLogs']);
+        
+        // Add tax rate and calculated tax to response
+        $taxRate = floatval(Setting::where('key', 'tax_rate')->value('value') ?? 0);
+        $invoice->tax_rate = $taxRate;
+        $invoice->tax_amount = $invoice->total_amount * ($taxRate / 100);
+        $invoice->total_with_tax = $invoice->total_amount + $invoice->tax_amount;
+        
+        return response()->json($invoice);
     }
 
     /**
@@ -153,7 +183,14 @@ class InvoiceController extends Controller
         // Attach work logs to the invoice
         $invoice->workLogs()->attach($validated['work_log_ids']);
 
-        return response()->json($invoice->load(['customer', 'workLogs']), 201);
+        // Add tax rate and calculated tax to response
+        $taxRate = floatval(Setting::where('key', 'tax_rate')->value('value') ?? 0);
+        $invoice->load(['customer', 'workLogs']);
+        $invoice->tax_rate = $taxRate;
+        $invoice->tax_amount = $invoice->total_amount * ($taxRate / 100);
+        $invoice->total_with_tax = $invoice->total_amount + $invoice->tax_amount;
+
+        return response()->json($invoice, 201);
     }
 
     /**

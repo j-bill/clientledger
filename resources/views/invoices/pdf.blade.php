@@ -338,8 +338,19 @@
         <p>No work logs found</p>
         @endforelse
 
+        <div style="margin-top: 30px;">
+            <div style="text-align: right; margin-bottom: 10px;">
+                <strong>Subtotal: {{ $currency_symbol }}{{ number_format($totalAmount, 2) }}</strong>
+            </div>
+            @if($tax_rate > 0)
+            <div style="text-align: right; margin-bottom: 10px; font-size: 11px;">
+                Tax ({{ number_format($tax_rate, 2) }}%): {{ $currency_symbol }}{{ number_format($totalAmount * ($tax_rate / 100), 2) }}
+            </div>
+            @endif
+        </div>
+
         <div class="invoice-total">
-            Total: {{ $currency_symbol }}{{ number_format($totalAmount, 2) }}
+            Total: {{ $currency_symbol }}{{ number_format($totalAmount + ($totalAmount * ($tax_rate / 100)), 2) }}
         </div>
 
         @if($company['invoice_payment_terms'] ?? false)

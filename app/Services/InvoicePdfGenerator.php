@@ -16,6 +16,9 @@ class InvoicePdfGenerator
     {
         // Load all settings
         $settings = $this->getSettings();
+        
+        // Get tax rate from settings
+        $taxRate = floatval($settings['tax_rate'] ?? 0);
 
         // Prepare invoice data
         $data = [
@@ -23,6 +26,7 @@ class InvoicePdfGenerator
             'company' => $settings,
             'currency_symbol' => $settings['currency_symbol'] ?? '$',
             'date_format' => $settings['date_format'] ?? 'DD/MM/YYYY',
+            'tax_rate' => $taxRate,
         ];
 
         // Generate PDF from view
