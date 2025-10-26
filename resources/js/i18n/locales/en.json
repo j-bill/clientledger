@@ -1,0 +1,116 @@
+{
+  "common": {
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Information"
+  },
+  "invoices": {
+    "title": "Invoices",
+    "invoice": "Invoice",
+    "invoiceNumber": "Invoice Number",
+    "invoiceDate": "Invoice Date",
+    "dueDate": "Due Date",
+    "customer": "Customer",
+    "description": "Description",
+    "amount": "Amount",
+    "status": "Status",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "tax": "Tax",
+    "taxRate": "Tax Rate",
+    "paymentTerms": "Payment Terms",
+    "bankInfo": "Bank Information",
+    "pageInfo": "Page",
+    "invoiceStatus": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "paid": "Paid",
+      "overdue": "Overdue",
+      "cancelled": "Cancelled"
+    }
+  },
+  "workLogs": {
+    "title": "Work Logs",
+    "workLog": "Work Log",
+    "project": "Project",
+    "date": "Date",
+    "duration": "Duration",
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "description": "Description",
+    "hourlyRate": "Hourly Rate"
+  },
+  "customers": {
+    "title": "Customers",
+    "customer": "Customer",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "city": "City",
+    "country": "Country",
+    "zipCode": "Zip Code"
+  },
+  "projects": {
+    "title": "Projects",
+    "project": "Project",
+    "name": "Name",
+    "description": "Description",
+    "status": "Status",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "budget": "Budget"
+  },
+  "settings": {
+    "title": "Settings",
+    "company": "Company",
+    "localization": "Localization",
+    "financialInvoices": "Financial & Invoices",
+    "dateTime": "Date & Time",
+    "email": "Email",
+    "legal": "Legal",
+    "language": "Language",
+    "currentLanguage": "Current Language",
+    "selectLanguage": "Select Application Language"
+  },
+  "notifications": {
+    "invoiceCreated": "Invoice created successfully",
+    "invoiceSent": "Invoice sent successfully",
+    "settingsSaved": "Settings saved successfully",
+    "operationFailed": "Operation failed"
+  },
+  "email": {
+    "subject": "Subject",
+    "message": "Message",
+    "from": "From",
+    "to": "To",
+    "emailVerification": "Email Verification",
+    "projectAssigned": "Project Assigned"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot your password?"
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Please enter a valid email address",
+    "minLength": "Must be at least {min} characters",
+    "maxLength": "Cannot exceed {max} characters"
+  }
+}

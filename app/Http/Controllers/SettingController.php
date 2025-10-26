@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Helpers\LanguageHelper;
 use Illuminate\Http\Request;
 
 class SettingController extends Controller
@@ -87,6 +88,14 @@ class SettingController extends Controller
                 // Skip if key is empty
                 if (empty($key)) {
                     continue;
+                }
+                
+                // Validate language setting
+                if ($key === 'language' && !LanguageHelper::isLanguageSupported($value)) {
+                    return response()->json([
+                        'message' => 'Invalid language selected',
+                        'error' => 'Language must be one of: ' . implode(', ', LanguageHelper::getLanguageCodes())
+                    ], 422);
                 }
                 
                 // Convert boolean to string for storage

@@ -1,0 +1,116 @@
+{
+  "common": {
+    "yes": "Sì",
+    "no": "No",
+    "ok": "OK",
+    "cancel": "Annulla",
+    "save": "Salva",
+    "close": "Chiudi",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "add": "Aggiungi",
+    "search": "Cerca",
+    "loading": "Caricamento...",
+    "error": "Errore",
+    "success": "Successo",
+    "warning": "Avviso",
+    "info": "Informazioni"
+  },
+  "invoices": {
+    "title": "Fatture",
+    "invoice": "Fattura",
+    "invoiceNumber": "Numero di fattura",
+    "invoiceDate": "Data della fattura",
+    "dueDate": "Data di scadenza",
+    "customer": "Cliente",
+    "description": "Descrizione",
+    "amount": "Importo",
+    "status": "Stato",
+    "total": "Totale",
+    "subtotal": "Subtotale",
+    "tax": "Imposta",
+    "taxRate": "Aliquota fiscale",
+    "paymentTerms": "Termini di pagamento",
+    "bankInfo": "Informazioni bancarie",
+    "pageInfo": "Pagina",
+    "invoiceStatus": {
+      "draft": "Bozza",
+      "sent": "Inviata",
+      "paid": "Pagata",
+      "overdue": "Scaduta",
+      "cancelled": "Annullata"
+    }
+  },
+  "workLogs": {
+    "title": "Registri di lavoro",
+    "workLog": "Registro di lavoro",
+    "project": "Progetto",
+    "date": "Data",
+    "duration": "Durata",
+    "hours": "Ore",
+    "minutes": "Minuti",
+    "description": "Descrizione",
+    "hourlyRate": "Tariffa oraria"
+  },
+  "customers": {
+    "title": "Clienti",
+    "customer": "Cliente",
+    "name": "Nome",
+    "email": "E-mail",
+    "phone": "Telefono",
+    "address": "Indirizzo",
+    "city": "Città",
+    "country": "Paese",
+    "zipCode": "Codice postale"
+  },
+  "projects": {
+    "title": "Progetti",
+    "project": "Progetto",
+    "name": "Nome",
+    "description": "Descrizione",
+    "status": "Stato",
+    "startDate": "Data di inizio",
+    "endDate": "Data di fine",
+    "budget": "Budget"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "company": "Azienda",
+    "localization": "Localizzazione",
+    "financialInvoices": "Finanze & Fatture",
+    "dateTime": "Data e ora",
+    "email": "E-mail",
+    "legal": "Legale",
+    "language": "Lingua",
+    "currentLanguage": "Lingua attuale",
+    "selectLanguage": "Seleziona la lingua dell'applicazione"
+  },
+  "notifications": {
+    "invoiceCreated": "Fattura creata con successo",
+    "invoiceSent": "Fattura inviata con successo",
+    "settingsSaved": "Impostazioni salvate con successo",
+    "operationFailed": "Operazione non riuscita"
+  },
+  "email": {
+    "subject": "Oggetto",
+    "message": "Messaggio",
+    "from": "Da",
+    "to": "A",
+    "emailVerification": "Verifica e-mail",
+    "projectAssigned": "Progetto assegnato"
+  },
+  "auth": {
+    "login": "Accedi",
+    "logout": "Esci",
+    "email": "E-mail",
+    "password": "Password",
+    "rememberMe": "Ricordami",
+    "forgotPassword": "Password dimenticata?"
+  },
+  "validation": {
+    "required": "Questo campo è obbligatorio",
+    "email": "Inserisci un indirizzo e-mail valido",
+    "minLength": "Deve essere lungo almeno {min} caratteri",
+    "maxLength": "Non può superare {max} caratteri"
+  }
+}

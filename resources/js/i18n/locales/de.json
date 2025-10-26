@@ -1,0 +1,116 @@
+{
+  "common": {
+    "yes": "Ja",
+    "no": "Nein",
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "close": "Schließen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "add": "Hinzufügen",
+    "search": "Suchen",
+    "loading": "Wird geladen...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "warning": "Warnung",
+    "info": "Information"
+  },
+  "invoices": {
+    "title": "Rechnungen",
+    "invoice": "Rechnung",
+    "invoiceNumber": "Rechnungsnummer",
+    "invoiceDate": "Rechnungsdatum",
+    "dueDate": "Fälligkeitsdatum",
+    "customer": "Kunde",
+    "description": "Beschreibung",
+    "amount": "Betrag",
+    "status": "Status",
+    "total": "Summe",
+    "subtotal": "Zwischensumme",
+    "tax": "Steuern",
+    "taxRate": "Steuersatz",
+    "paymentTerms": "Zahlungsbedingungen",
+    "bankInfo": "Bankinformationen",
+    "pageInfo": "Seite",
+    "invoiceStatus": {
+      "draft": "Entwurf",
+      "sent": "Versendet",
+      "paid": "Bezahlt",
+      "overdue": "Überfällig",
+      "cancelled": "Storniert"
+    }
+  },
+  "workLogs": {
+    "title": "Arbeitsprotokolle",
+    "workLog": "Arbeitsprotokoll",
+    "project": "Projekt",
+    "date": "Datum",
+    "duration": "Dauer",
+    "hours": "Stunden",
+    "minutes": "Minuten",
+    "description": "Beschreibung",
+    "hourlyRate": "Stundensatz"
+  },
+  "customers": {
+    "title": "Kunden",
+    "customer": "Kunde",
+    "name": "Name",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "address": "Adresse",
+    "city": "Stadt",
+    "country": "Land",
+    "zipCode": "Postleitzahl"
+  },
+  "projects": {
+    "title": "Projekte",
+    "project": "Projekt",
+    "name": "Name",
+    "description": "Beschreibung",
+    "status": "Status",
+    "startDate": "Startdatum",
+    "endDate": "Enddatum",
+    "budget": "Budget"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "company": "Unternehmen",
+    "localization": "Lokalisierung",
+    "financialInvoices": "Finanzen & Rechnungen",
+    "dateTime": "Datum & Uhrzeit",
+    "email": "E-Mail",
+    "legal": "Rechtlich",
+    "language": "Sprache",
+    "currentLanguage": "Aktuelle Sprache",
+    "selectLanguage": "Wählen Sie die Anwendungssprache"
+  },
+  "notifications": {
+    "invoiceCreated": "Rechnung erfolgreich erstellt",
+    "invoiceSent": "Rechnung erfolgreich versendet",
+    "settingsSaved": "Einstellungen erfolgreich gespeichert",
+    "operationFailed": "Operation fehlgeschlagen"
+  },
+  "email": {
+    "subject": "Betreff",
+    "message": "Nachricht",
+    "from": "Von",
+    "to": "An",
+    "emailVerification": "E-Mail-Bestätigung",
+    "projectAssigned": "Projekt zugewiesen"
+  },
+  "auth": {
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "rememberMe": "Angemeldet bleiben",
+    "forgotPassword": "Passwort vergessen?"
+  },
+  "validation": {
+    "required": "Dieses Feld ist erforderlich",
+    "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+    "minLength": "Muss mindestens {min} Zeichen lang sein",
+    "maxLength": "Darf maximal {max} Zeichen lang sein"
+  }
+}

@@ -20,6 +20,9 @@ import router from "./router";
 import { createPinia } from "pinia";
 import { store } from "./store";
 
+// Vue i18n
+import i18n from "./i18n";
+
 // Components
 import App from "./App.vue";
 import axios from "axios";
@@ -67,6 +70,7 @@ const vuetify = createVuetify({
 // use
 app.use(vuetify);
 app.use(pinia);
+app.use(i18n);
 
 // get store
 const storeStore = store(pinia);

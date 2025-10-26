@@ -43,6 +43,10 @@
 							<v-icon start>mdi-domain</v-icon>
 							Company
 						</v-tab>
+						<v-tab value="localization">
+							<v-icon start>mdi-earth</v-icon>
+							Localization
+						</v-tab>
 						<v-tab value="financial">
 							<v-icon start>mdi-currency-usd</v-icon>
 							Financial & Invoices
@@ -233,6 +237,51 @@
 											</p>
 										</v-col>
 									</v-row>
+								</v-form>
+							</v-window-item>
+
+							<!-- Localization Settings Tab -->
+							<v-window-item value="localization">
+								<v-form ref="localizationForm">
+									<div class="text-h6 mb-4 d-flex align-center">
+										<v-icon class="mr-2" color="primary">mdi-language</v-icon>
+										Language & Localization
+									</div>
+
+									<v-row>
+										<v-col cols="12" md="6">
+											<v-select
+												v-model="settings.language"
+												:items="languageOptions"
+												label="Application Language"
+												variant="outlined"
+												prepend-inner-icon="mdi-earth"
+												density="comfortable"
+												hint="Select the language used for the entire application, invoices, and email notifications"
+												persistent-hint
+											></v-select>
+										</v-col>
+
+										<v-col cols="12" md="6">
+											<v-card variant="tonal" color="info">
+												<v-card-text>
+													<div class="text-subtitle-2 mb-2">Current Language:</div>
+													<div class="text-h6">{{ getLanguageName(settings.language) }}</div>
+												</v-card-text>
+											</v-card>
+										</v-col>
+									</v-row>
+
+									<v-divider class="my-6"></v-divider>
+
+									<v-alert type="info" variant="tonal">
+										<strong>Note:</strong> Changing the language will affect:
+										<ul>
+											<li>All generated invoices</li>
+											<li>Email notifications sent to customers and admins</li>
+											<li>System-wide date, time, and number formats</li>
+										</ul>
+									</v-alert>
 								</v-form>
 							</v-window-item>
 
@@ -706,10 +755,15 @@
 import { mapActions, mapGetters } from 'pinia'
 import { store } from '../store'
 import { formatNumber, formatDate, formatTime } from '../utils/formatters'
+import { useLanguage } from '../composables/useLanguage'
 import axios from 'axios'
 
 export default {
 	name: 'Settings',
+	setup() {
+		const { setLanguage } = useLanguage()
+		return { setLanguage }
+	},
 	data() {
 		return {
 			loading: false,
@@ -728,6 +782,9 @@ export default {
 				company_vat_id: '',
 				company_website: '',
 				company_bank_info: '',
+				
+				// Localization
+				language: 'en',
 				
 				// Financial & Invoice
 				currency_symbol: '$',
@@ -755,7 +812,7 @@ export default {
 				mail_host: '',
 				mail_port: '587',
 				mail_username: '',
-				mail_password: '',
+				 mail_password: '',
 				mail_encryption: 'tls',
 				mail_from_address: '',
 				mail_from_name: '',
@@ -767,6 +824,13 @@ export default {
 			originalSettings: {},
 			
 			// Dropdown options
+			languageOptions: [
+				{ title: 'English', value: 'en' },
+				{ title: 'Deutsch (German)', value: 'de' },
+				{ title: 'Français (French)', value: 'fr' },
+				{ title: 'Italiano (Italian)', value: 'it' },
+				{ title: 'Español (Spanish)', value: 'es' }
+			],
 			currencyOptions: [
 				{ title: '$ - US Dollar', value: '$', code: 'USD' },
 				{ title: '€ - Euro', value: '€', code: 'EUR' },
@@ -881,12 +945,22 @@ export default {
 			try {
 				this.loading = true
 				
+				// Store the language before saving
+				const newLanguage = this.settings.language
+				const oldLanguage = this.originalSettings.language
+				
 				await axios.post('/api/settings/batch', this.settings)
 				
 				this.showSnackbar('Settings saved successfully', 'success')
 				
 				// Update original settings
 				this.originalSettings = { ...this.settings }
+				
+				// Apply language change if it was updated
+				if (newLanguage !== oldLanguage) {
+					this.setLanguage(newLanguage)
+					console.log(`Language changed from ${oldLanguage} to ${newLanguage}`)
+				}
 				
 				// Fetch settings fresh from the backend to update the store
 				await this.fetchSettings()
@@ -954,6 +1028,11 @@ export default {
 		
 		formatPreviewTime(date) {
 			return formatTime(date, this.settings)
+		},
+		
+		getLanguageName(code) {
+			const language = this.languageOptions.find(l => l.value === code)
+			return language ? language.title : code
 		}
 	}
 }

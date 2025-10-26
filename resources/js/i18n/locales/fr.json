@@ -1,0 +1,116 @@
+{
+  "common": {
+    "yes": "Oui",
+    "no": "Non",
+    "ok": "OK",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "close": "Fermer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "search": "Rechercher",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "warning": "Avertissement",
+    "info": "Information"
+  },
+  "invoices": {
+    "title": "Factures",
+    "invoice": "Facture",
+    "invoiceNumber": "Numéro de facture",
+    "invoiceDate": "Date de la facture",
+    "dueDate": "Date d'échéance",
+    "customer": "Client",
+    "description": "Description",
+    "amount": "Montant",
+    "status": "Statut",
+    "total": "Total",
+    "subtotal": "Sous-total",
+    "tax": "Taxe",
+    "taxRate": "Taux de taxe",
+    "paymentTerms": "Conditions de paiement",
+    "bankInfo": "Informations bancaires",
+    "pageInfo": "Page",
+    "invoiceStatus": {
+      "draft": "Brouillon",
+      "sent": "Envoyée",
+      "paid": "Payée",
+      "overdue": "En retard",
+      "cancelled": "Annulée"
+    }
+  },
+  "workLogs": {
+    "title": "Journaux de travail",
+    "workLog": "Journal de travail",
+    "project": "Projet",
+    "date": "Date",
+    "duration": "Durée",
+    "hours": "Heures",
+    "minutes": "Minutes",
+    "description": "Description",
+    "hourlyRate": "Taux horaire"
+  },
+  "customers": {
+    "title": "Clients",
+    "customer": "Client",
+    "name": "Nom",
+    "email": "E-mail",
+    "phone": "Téléphone",
+    "address": "Adresse",
+    "city": "Ville",
+    "country": "Pays",
+    "zipCode": "Code postal"
+  },
+  "projects": {
+    "title": "Projets",
+    "project": "Projet",
+    "name": "Nom",
+    "description": "Description",
+    "status": "Statut",
+    "startDate": "Date de début",
+    "endDate": "Date de fin",
+    "budget": "Budget"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "company": "Entreprise",
+    "localization": "Localisation",
+    "financialInvoices": "Finances & Factures",
+    "dateTime": "Date et heure",
+    "email": "E-mail",
+    "legal": "Légal",
+    "language": "Langue",
+    "currentLanguage": "Langue actuelle",
+    "selectLanguage": "Sélectionnez la langue de l'application"
+  },
+  "notifications": {
+    "invoiceCreated": "Facture créée avec succès",
+    "invoiceSent": "Facture envoyée avec succès",
+    "settingsSaved": "Paramètres enregistrés avec succès",
+    "operationFailed": "L'opération a échoué"
+  },
+  "email": {
+    "subject": "Sujet",
+    "message": "Message",
+    "from": "De",
+    "to": "À",
+    "emailVerification": "Vérification de l'e-mail",
+    "projectAssigned": "Projet attribué"
+  },
+  "auth": {
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "rememberMe": "Se souvenir de moi",
+    "forgotPassword": "Mot de passe oublié?"
+  },
+  "validation": {
+    "required": "Ce champ est requis",
+    "email": "Veuillez entrer une adresse e-mail valide",
+    "minLength": "Doit contenir au moins {min} caractères",
+    "maxLength": "Ne peut pas dépasser {max} caractères"
+  }
+}

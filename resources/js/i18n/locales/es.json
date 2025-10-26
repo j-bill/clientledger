@@ -1,0 +1,116 @@
+{
+  "common": {
+    "yes": "Sí",
+    "no": "No",
+    "ok": "OK",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "close": "Cerrar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "add": "Añadir",
+    "search": "Buscar",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "warning": "Advertencia",
+    "info": "Información"
+  },
+  "invoices": {
+    "title": "Facturas",
+    "invoice": "Factura",
+    "invoiceNumber": "Número de factura",
+    "invoiceDate": "Fecha de factura",
+    "dueDate": "Fecha de vencimiento",
+    "customer": "Cliente",
+    "description": "Descripción",
+    "amount": "Cantidad",
+    "status": "Estado",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "tax": "Impuesto",
+    "taxRate": "Tasa de impuesto",
+    "paymentTerms": "Condiciones de pago",
+    "bankInfo": "Información bancaria",
+    "pageInfo": "Página",
+    "invoiceStatus": {
+      "draft": "Borrador",
+      "sent": "Enviada",
+      "paid": "Pagada",
+      "overdue": "Vencida",
+      "cancelled": "Cancelada"
+    }
+  },
+  "workLogs": {
+    "title": "Registros de trabajo",
+    "workLog": "Registro de trabajo",
+    "project": "Proyecto",
+    "date": "Fecha",
+    "duration": "Duración",
+    "hours": "Horas",
+    "minutes": "Minutos",
+    "description": "Descripción",
+    "hourlyRate": "Tarifa por hora"
+  },
+  "customers": {
+    "title": "Clientes",
+    "customer": "Cliente",
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "phone": "Teléfono",
+    "address": "Dirección",
+    "city": "Ciudad",
+    "country": "País",
+    "zipCode": "Código postal"
+  },
+  "projects": {
+    "title": "Proyectos",
+    "project": "Proyecto",
+    "name": "Nombre",
+    "description": "Descripción",
+    "status": "Estado",
+    "startDate": "Fecha de inicio",
+    "endDate": "Fecha de finalización",
+    "budget": "Presupuesto"
+  },
+  "settings": {
+    "title": "Configuración",
+    "company": "Empresa",
+    "localization": "Localización",
+    "financialInvoices": "Finanzas y Facturas",
+    "dateTime": "Fecha y Hora",
+    "email": "Correo electrónico",
+    "legal": "Legal",
+    "language": "Idioma",
+    "currentLanguage": "Idioma actual",
+    "selectLanguage": "Selecciona el idioma de la aplicación"
+  },
+  "notifications": {
+    "invoiceCreated": "Factura creada exitosamente",
+    "invoiceSent": "Factura enviada exitosamente",
+    "settingsSaved": "Configuración guardada exitosamente",
+    "operationFailed": "La operación falló"
+  },
+  "email": {
+    "subject": "Asunto",
+    "message": "Mensaje",
+    "from": "De",
+    "to": "Para",
+    "emailVerification": "Verificación de correo electrónico",
+    "projectAssigned": "Proyecto asignado"
+  },
+  "auth": {
+    "login": "Iniciar sesión",
+    "logout": "Cerrar sesión",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "rememberMe": "Recuérdame",
+    "forgotPassword": "¿Olvidaste tu contraseña?"
+  },
+  "validation": {
+    "required": "Este campo es obligatorio",
+    "email": "Por favor ingresa un correo electrónico válido",
+    "minLength": "Debe tener al menos {min} caracteres",
+    "maxLength": "No puede exceder {max} caracteres"
+  }
+}
