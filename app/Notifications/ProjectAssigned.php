@@ -57,20 +57,24 @@ class ProjectAssigned extends Notification
     {
         $projectUrl = url('/projects');
         
-        return (new MailMessage)
-                    ->subject('You have been assigned to a new project')
-                    ->greeting('Hello ' . $notifiable->name . '!')
-                    ->line('You have been assigned to the project: **' . $this->project->name . '**')
-                    ->line('Customer: ' . ($this->project->customer ? $this->project->customer->name : 'N/A'))
-                    ->line('Your hourly rate for this project: $' . number_format($this->hourlyRate, 2))
-                    ->when($this->project->deadline, function ($mail) {
-                        return $mail->line('Deadline: ' . $this->project->deadline->format('F j, Y'));
-                    })
-                    ->when($this->project->description, function ($mail) {
-                        return $mail->line('Description: ' . $this->project->description);
-                    })
-                    ->action('View Project', $projectUrl)
-                    ->line('Thank you for your continued work!');
+        $message = (new MailMessage)
+                    ->subject(__('notifications.project_assigned.subject'))
+                    ->greeting(__('notifications.project_assigned.greeting', ['name' => $notifiable->name]))
+                    ->line(__('notifications.project_assigned.assigned_to', ['project' => $this->project->name]))
+                    ->line(__('notifications.project_assigned.customer', ['customer' => $this->project->customer ? $this->project->customer->name : 'N/A']))
+                    ->line(__('notifications.project_assigned.hourly_rate', ['rate' => '$' . number_format($this->hourlyRate, 2)]));
+        
+        if ($this->project->deadline) {
+            $message->line(__('notifications.project_assigned.deadline', ['deadline' => $this->project->deadline->format('F j, Y')]));
+        }
+        
+        if ($this->project->description) {
+            $message->line(__('notifications.project_assigned.description', ['description' => $this->project->description]));
+        }
+        
+        return $message
+                    ->action(__('notifications.project_assigned.action'), $projectUrl)
+                    ->line(__('notifications.project_assigned.thank_you'));
     }
 
     /**

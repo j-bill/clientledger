@@ -10,11 +10,25 @@
     "edit": "Bearbeiten",
     "add": "Hinzufügen",
     "search": "Suchen",
-    "loading": "Wird geladen...",
+    "loading": "Lädt...",
     "error": "Fehler",
     "success": "Erfolg",
     "warning": "Warnung",
-    "info": "Information"
+    "info": "Information",
+    "reset": "Zurücksetzen",
+    "filters": "Filter",
+    "actions": "Aktionen",
+    "view": "Ansehen",
+    "download": "Herunterladen",
+    "new": "Neu",
+    "generate": "Generieren",
+    "selectAll": "Alles auswählen",
+    "deselectAll": "Alles abwählen",
+    "selectAllVisible": "Alle sichtbaren auswählen",
+    "home": "Startseite",
+    "profile": "Profil",
+    "logout": "Abmelden",
+    "deleteConfirmation": "Sind Sie sicher, dass Sie dieses Element löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden."
   },
   "invoices": {
     "title": "Rechnungen",
@@ -26,31 +40,46 @@
     "description": "Beschreibung",
     "amount": "Betrag",
     "status": "Status",
-    "total": "Summe",
+    "total": "Gesamt",
     "subtotal": "Zwischensumme",
-    "tax": "Steuern",
+    "tax": "Steuer",
     "taxRate": "Steuersatz",
     "paymentTerms": "Zahlungsbedingungen",
     "bankInfo": "Bankinformationen",
     "pageInfo": "Seite",
+    "newInvoice": "Neue Rechnung",
+    "generateFromWorkLogs": "Aus Arbeitslogs generieren",
+    "filterWorkLogs": "Arbeitslogs filtern",
+    "availableWorkLogs": "Verfügbare Arbeitslogs",
+    "viewPdf": "PDF ansehen",
+    "downloadPdf": "PDF herunterladen",
+    "billTo": "Rechnung an",
+    "worker": "Mitarbeiter",
+    "rateUnit": "Satz/Einheit",
+    "projectTotal": "Projektsumme",
+    "noWorkLogsFound": "Keine Arbeitslogs gefunden",
+    "issueDate": "Ausstellungsdatum",
     "invoiceStatus": {
       "draft": "Entwurf",
-      "sent": "Versendet",
+      "sent": "Gesendet",
       "paid": "Bezahlt",
       "overdue": "Überfällig",
       "cancelled": "Storniert"
     }
   },
   "workLogs": {
-    "title": "Arbeitsprotokolle",
-    "workLog": "Arbeitsprotokoll",
+    "title": "Arbeitslogs",
+    "workLog": "Arbeitslog",
     "project": "Projekt",
     "date": "Datum",
     "duration": "Dauer",
     "hours": "Stunden",
     "minutes": "Minuten",
     "description": "Beschreibung",
-    "hourlyRate": "Stundensatz"
+    "hourlyRate": "Stundensatz",
+    "startWorking": "Jetzt arbeiten beginnen",
+    "stopWorking": "Arbeit beenden",
+    "timeTracking": "Zeiterfassung"
   },
   "customers": {
     "title": "Kunden",
@@ -61,7 +90,8 @@
     "address": "Adresse",
     "city": "Stadt",
     "country": "Land",
-    "zipCode": "Postleitzahl"
+    "zipCode": "Postleitzahl",
+    "newCustomer": "Neuer Kunde"
   },
   "projects": {
     "title": "Projekte",
@@ -71,7 +101,9 @@
     "status": "Status",
     "startDate": "Startdatum",
     "endDate": "Enddatum",
-    "budget": "Budget"
+    "budget": "Budget",
+    "newProject": "Neues Projekt",
+    "deadline": "Frist"
   },
   "settings": {
     "title": "Einstellungen",
@@ -80,24 +112,43 @@
     "financialInvoices": "Finanzen & Rechnungen",
     "dateTime": "Datum & Uhrzeit",
     "email": "E-Mail",
-    "legal": "Rechtlich",
+    "legal": "Rechtliches",
     "language": "Sprache",
     "currentLanguage": "Aktuelle Sprache",
-    "selectLanguage": "Wählen Sie die Anwendungssprache"
+    "selectLanguage": "Anwendungssprache auswählen"
   },
   "notifications": {
     "invoiceCreated": "Rechnung erfolgreich erstellt",
-    "invoiceSent": "Rechnung erfolgreich versendet",
+    "invoiceSent": "Rechnung erfolgreich gesendet",
     "settingsSaved": "Einstellungen erfolgreich gespeichert",
-    "operationFailed": "Operation fehlgeschlagen"
+    "operationFailed": "Operation fehlgeschlagen",
+    "emailVerified": "E-Mail erfolgreich verifiziert!",
+    "failedToLoad": "Fehler beim Laden der Daten. Bitte versuchen Sie es später erneut.",
+    "invalidCode": "Ungültiger Code",
+    "enterValidCode": "Bitte geben Sie einen gültigen 6-stelligen Code ein",
+    "loginSuccessful": "Anmeldung erfolgreich!",
+    "recoveryCodeUsed": "Wiederherstellungscode verwendet. Bitte richten Sie 2FA aus Sicherheitsgründen erneut ein.",
+    "enterRecoveryCode": "Bitte geben Sie einen Wiederherstellungscode ein"
   },
   "email": {
     "subject": "Betreff",
     "message": "Nachricht",
     "from": "Von",
     "to": "An",
-    "emailVerification": "E-Mail-Bestätigung",
-    "projectAssigned": "Projekt zugewiesen"
+    "emailVerification": "E-Mail-Verifizierung",
+    "emailVerificationCode": "E-Mail-Verifizierungscode",
+    "projectAssigned": "Projekt zugewiesen",
+    "hello": "Hallo",
+    "verificationRequest": "Sie haben die Verifizierung Ihrer E-Mail-Adresse angefordert.",
+    "verificationCode": "Ihr Verifizierungscode lautet:",
+    "codeExpires": "Dieser Code läuft in 1 Stunde ab.",
+    "ignoreIfNotYou": "Wenn Sie diese Verifizierung nicht angefordert haben, ignorieren Sie diese E-Mail bitte.",
+    "thankYou": "Vielen Dank für die Nutzung unserer Anwendung!",
+    "assignedToProject": "Sie wurden dem Projekt zugewiesen:",
+    "yourHourlyRate": "Ihr Stundensatz für dieses Projekt:",
+    "viewProject": "Projekt ansehen",
+    "continuedWork": "Vielen Dank für Ihre kontinuierliche Arbeit!",
+    "newProjectAssignment": "Sie wurden einem neuen Projekt zugewiesen"
   },
   "auth": {
     "login": "Anmelden",
@@ -111,6 +162,28 @@
     "required": "Dieses Feld ist erforderlich",
     "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
     "minLength": "Muss mindestens {min} Zeichen lang sein",
-    "maxLength": "Darf maximal {max} Zeichen lang sein"
+    "maxLength": "Darf nicht mehr als {max} Zeichen enthalten",
+    "customerRequired": "Kunde ist erforderlich",
+    "projectRequired": "Projekt ist erforderlich"
+  },
+  "navigation": {
+    "home": "Startseite",
+    "projects": "Projekte",
+    "customers": "Kunden",
+    "invoices": "Rechnungen",
+    "workLogs": "Arbeitslogs",
+    "users": "Benutzer",
+    "profile": "Profil",
+    "settings": "Einstellungen",
+    "logout": "Abmelden",
+    "clientledger": "Clientledger"
+  },
+  "users": {
+    "title": "Benutzer",
+    "user": "Benutzer",
+    "name": "Name",
+    "email": "E-Mail",
+    "role": "Rolle",
+    "newUser": "Neuer Benutzer"
   }
 }

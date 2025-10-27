@@ -14,7 +14,21 @@
     "error": "Errore",
     "success": "Successo",
     "warning": "Avviso",
-    "info": "Informazioni"
+    "info": "Informazioni",
+    "reset": "Ripristina",
+    "filters": "Filtri",
+    "actions": "Azioni",
+    "view": "Visualizza",
+    "download": "Scarica",
+    "new": "Nuovo",
+    "generate": "Genera",
+    "selectAll": "Seleziona tutto",
+    "deselectAll": "Deseleziona tutto",
+    "selectAllVisible": "Seleziona tutto visibile",
+    "home": "Home",
+    "profile": "Profilo",
+    "logout": "Esci",
+    "deleteConfirmation": "Sei sicuro di voler eliminare questo elemento? Questa azione non può essere annullata."
   },
   "invoices": {
     "title": "Fatture",
@@ -33,6 +47,18 @@
     "paymentTerms": "Termini di pagamento",
     "bankInfo": "Informazioni bancarie",
     "pageInfo": "Pagina",
+    "newInvoice": "Nuova fattura",
+    "generateFromWorkLogs": "Genera da registri di lavoro",
+    "filterWorkLogs": "Filtra registri di lavoro",
+    "availableWorkLogs": "Registri di lavoro disponibili",
+    "viewPdf": "Visualizza PDF",
+    "downloadPdf": "Scarica PDF",
+    "billTo": "Fattura a",
+    "worker": "Lavoratore",
+    "rateUnit": "Tariffa/Unità",
+    "projectTotal": "Totale progetto",
+    "noWorkLogsFound": "Nessun registro di lavoro trovato",
+    "issueDate": "Data di emissione",
     "invoiceStatus": {
       "draft": "Bozza",
       "sent": "Inviata",
@@ -50,7 +76,10 @@
     "hours": "Ore",
     "minutes": "Minuti",
     "description": "Descrizione",
-    "hourlyRate": "Tariffa oraria"
+    "hourlyRate": "Tariffa oraria",
+    "startWorking": "Inizia a lavorare ora",
+    "stopWorking": "Smetti di lavorare",
+    "timeTracking": "Tracciamento tempo"
   },
   "customers": {
     "title": "Clienti",
@@ -61,7 +90,8 @@
     "address": "Indirizzo",
     "city": "Città",
     "country": "Paese",
-    "zipCode": "Codice postale"
+    "zipCode": "Codice postale",
+    "newCustomer": "Nuovo cliente"
   },
   "projects": {
     "title": "Progetti",
@@ -71,7 +101,9 @@
     "status": "Stato",
     "startDate": "Data di inizio",
     "endDate": "Data di fine",
-    "budget": "Budget"
+    "budget": "Budget",
+    "newProject": "Nuovo progetto",
+    "deadline": "Scadenza"
   },
   "settings": {
     "title": "Impostazioni",
@@ -89,7 +121,14 @@
     "invoiceCreated": "Fattura creata con successo",
     "invoiceSent": "Fattura inviata con successo",
     "settingsSaved": "Impostazioni salvate con successo",
-    "operationFailed": "Operazione non riuscita"
+    "operationFailed": "Operazione non riuscita",
+    "emailVerified": "E-mail verificata con successo!",
+    "failedToLoad": "Impossibile caricare i dati. Riprova più tardi.",
+    "invalidCode": "Codice non valido",
+    "enterValidCode": "Inserisci un codice a 6 cifre valido",
+    "loginSuccessful": "Accesso effettuato con successo!",
+    "recoveryCodeUsed": "Codice di recupero utilizzato. Configura nuovamente 2FA per sicurezza.",
+    "enterRecoveryCode": "Inserisci un codice di recupero"
   },
   "email": {
     "subject": "Oggetto",
@@ -97,7 +136,19 @@
     "from": "Da",
     "to": "A",
     "emailVerification": "Verifica e-mail",
-    "projectAssigned": "Progetto assegnato"
+    "emailVerificationCode": "Codice di verifica e-mail",
+    "projectAssigned": "Progetto assegnato",
+    "hello": "Ciao",
+    "verificationRequest": "Hai richiesto di verificare il tuo indirizzo e-mail.",
+    "verificationCode": "Il tuo codice di verifica è:",
+    "codeExpires": "Questo codice scadrà tra 1 ora.",
+    "ignoreIfNotYou": "Se non hai richiesto questa verifica, ignora questa e-mail.",
+    "thankYou": "Grazie per aver utilizzato la nostra applicazione!",
+    "assignedToProject": "Sei stato assegnato al progetto:",
+    "yourHourlyRate": "La tua tariffa oraria per questo progetto:",
+    "viewProject": "Visualizza progetto",
+    "continuedWork": "Grazie per il tuo lavoro continuo!",
+    "newProjectAssignment": "Sei stato assegnato a un nuovo progetto"
   },
   "auth": {
     "login": "Accedi",
@@ -111,6 +162,28 @@
     "required": "Questo campo è obbligatorio",
     "email": "Inserisci un indirizzo e-mail valido",
     "minLength": "Deve essere lungo almeno {min} caratteri",
-    "maxLength": "Non può superare {max} caratteri"
+    "maxLength": "Non può superare {max} caratteri",
+    "customerRequired": "Cliente obbligatorio",
+    "projectRequired": "Progetto obbligatorio"
+  },
+  "navigation": {
+    "home": "Home",
+    "projects": "Progetti",
+    "customers": "Clienti",
+    "invoices": "Fatture",
+    "workLogs": "Registri di lavoro",
+    "users": "Utenti",
+    "profile": "Profilo",
+    "settings": "Impostazioni",
+    "logout": "Esci",
+    "clientledger": "Clientledger"
+  },
+  "users": {
+    "title": "Utenti",
+    "user": "Utente",
+    "name": "Nome",
+    "email": "E-mail",
+    "role": "Ruolo",
+    "newUser": "Nuovo utente"
   }
 }

@@ -1,13 +1,13 @@
 <template>
   <v-container fluid>
-    <h1 class="text-h4 mb-4">Invoices</h1>
+    <h1 class="text-h4 mb-4">{{ $t('invoices.title') }}</h1>
     
     <!-- Search & Actions -->
     <v-row class="mb-4">
       <v-col cols="12" sm="6">
         <v-text-field
           v-model="search"
-          label="Search"
+          :label="$t('common.search')"
           prepend-inner-icon="mdi-magnify"
           single-line
           hide-details
@@ -19,17 +19,17 @@
           <v-icon>mdi-filter</v-icon>
         </v-btn>
         <v-btn color="secondary" data-test="btn-generate" prepend-icon="mdi-file-plus" @click="openGenerateDialog" class="mr-2">
-          Generate from Work Logs
+          {{ $t('invoices.generateFromWorkLogs') }}
         </v-btn>
         <v-btn color="primary" data-test="btn-new" prepend-icon="mdi-plus" @click="openCreateDialog">
-          New Invoice
+          {{ $t('invoices.newInvoice') }}
         </v-btn>
       </v-col>
     </v-row>
     
     <!-- Filters -->
     <v-card v-if="showFilters" class="mb-4">
-      <v-card-title>Filters</v-card-title>
+      <v-card-title>{{ $t('common.filters') }}</v-card-title>
       <v-card-text>
         <v-row>
           <v-col cols="12" md="4">
@@ -38,7 +38,7 @@
               :items="customers"
               item-title="name"
               item-value="id"
-              label="Customer"
+              :label="$t('customers.customer')"
               prepend-inner-icon="mdi-account"
               clearable
               @update:model-value="applyFilters"
@@ -48,14 +48,14 @@
             <v-select
               v-model="selectedStatus"
               :items="statuses"
-              label="Status"
+              :label="$t('invoices.status')"
               prepend-inner-icon="mdi-flag"
               clearable
               @update:model-value="applyFilters"
             ></v-select>
           </v-col>
           <v-col cols="12" class="text-right">
-            <v-btn @click="resetFilters">Reset</v-btn>
+            <v-btn @click="resetFilters">{{ $t('common.reset') }}</v-btn>
           </v-col>
         </v-row>
       </v-card-text>
@@ -88,16 +88,16 @@
           {{ formatCurrency(item.total_amount) }}
         </template>
         <template v-slot:item.actions="{ item }">
-          <v-btn icon variant="text" size="small" color="info" @click="viewPdf(item)" title="View PDF">
+          <v-btn icon variant="text" size="small" color="info" @click="viewPdf(item)" :title="$t('invoices.viewPdf')">
             <v-icon>mdi-file</v-icon>
           </v-btn>
-          <v-btn icon variant="text" size="small" color="success" @click="downloadPdf(item)" title="Download PDF">
+          <v-btn icon variant="text" size="small" color="success" @click="downloadPdf(item)" :title="$t('invoices.downloadPdf')">
             <v-icon>mdi-download</v-icon>
           </v-btn>
-          <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)" title="Edit">
+          <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)" :title="$t('common.edit')">
             <v-icon>mdi-pencil</v-icon>
           </v-btn>
-          <v-btn icon variant="text" size="small" color="error" @click="confirmDelete(item)" title="Delete">
+          <v-btn icon variant="text" size="small" color="error" @click="confirmDelete(item)" :title="$t('common.delete')">
             <v-icon>mdi-delete</v-icon>
           </v-btn>
         </template>
@@ -107,14 +107,14 @@
     <!-- Create Invoice Dialog -->
     <v-dialog v-model="createDialog" max-width="800px">
       <v-card>
-        <v-card-title>New Invoice</v-card-title>
+        <v-card-title>{{ $t('invoices.newInvoice') }}</v-card-title>
         <v-card-text>
           <invoice-form ref="createForm" @save="handleInvoiceSave"></invoice-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="error" data-test="btn-cancel-create" variant="text" @click="createDialog = false">Cancel</v-btn>
-          <v-btn color="primary" data-test="btn-save-create" @click="$refs.createForm.submit()">Save</v-btn>
+          <v-btn color="error" data-test="btn-cancel-create" variant="text" @click="createDialog = false">{{ $t('common.cancel') }}</v-btn>
+          <v-btn color="primary" data-test="btn-save-create" @click="$refs.createForm.submit()">{{ $t('common.save') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -385,23 +385,28 @@ export default {
       showFilters: false,
       selectedCustomerId: null,
       selectedStatus: null,
-      statuses: ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled'],
-      sortBy: [{ key: 'id', order: 'desc' }],
-      
-      headers: [
-        { title: 'ID', key: 'id' },
-        { title: 'Invoice Number', key: 'invoice_number' },
-        { title: 'Customer', key: 'customer.name' },
-        { title: 'Created', key: 'created_at' },
-        { title: 'Total', key: 'total_amount' },
-        { title: 'Status', key: 'status' },
-        { title: 'Actions', key: 'actions', sortable: false }
-      ]
+      sortBy: [{ key: 'id', order: 'desc' }]
     };
   },
   
   computed: {
-    ...mapState(store, ['currencySymbol', 'settings'])
+    ...mapState(store, ['currencySymbol', 'settings']),
+    
+    headers() {
+      return [
+        { title: 'ID', key: 'id' },
+        { title: this.$t('invoices.invoiceNumber'), key: 'invoice_number' },
+        { title: this.$t('customers.customer'), key: 'customer.name' },
+        { title: this.$t('common.loading').replace('...', ''), key: 'created_at' },
+        { title: this.$t('invoices.total'), key: 'total_amount' },
+        { title: this.$t('invoices.status'), key: 'status' },
+        { title: this.$t('common.actions'), key: 'actions', sortable: false }
+      ];
+    },
+    
+    statuses() {
+      return ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled'];
+    }
   },
   
   created() {

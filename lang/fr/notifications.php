@@ -1,0 +1,39 @@
+<?php
+
+return [
+    'email_verification_code' => [
+        'subject' => 'Code de vérification de l\'e-mail',
+        'greeting' => 'Bonjour :name!',
+        'requested' => 'Vous avez demandé à vérifier votre adresse e-mail.',
+        'code_is' => 'Votre code de vérification est:',
+        'expires' => 'Ce code expirera dans 1 heure.',
+        'ignore' => 'Si vous n\'avez pas demandé cette vérification, veuillez ignorer cet e-mail.',
+        'thank_you' => 'Merci d\'utiliser notre application!',
+    ],
+    'project_assigned' => [
+        'subject' => 'Vous avez été assigné à un nouveau projet',
+        'greeting' => 'Bonjour :name!',
+        'assigned_to' => 'Vous avez été assigné au projet: **:project**',
+        'customer' => 'Client: :customer',
+        'hourly_rate' => 'Votre taux horaire pour ce projet: :rate',
+        'deadline' => 'Date limite: :deadline',
+        'description' => 'Description: :description',
+        'action' => 'Voir le projet',
+        'thank_you' => 'Merci pour votre travail continu!',
+    ],
+    'invoice' => [
+        'title' => 'FACTURE',
+        'date' => 'Date',
+        'invoice_number' => 'Numéro de facture',
+        'bill_to' => 'Facturer à',
+        'worker' => 'Travailleur',
+        'description' => 'Description',
+        'rate_unit' => 'Taux/Unité',
+        'amount' => 'Montant',
+        'total' => 'Total',
+        'project_total' => 'Total du projet',
+        'subtotal' => 'Sous-total',
+        'tax' => 'Taxe',
+        'no_work_logs_found' => 'Aucun journal de travail trouvé',
+    ],
+];

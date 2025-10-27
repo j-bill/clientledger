@@ -14,7 +14,21 @@
     "error": "Error",
     "success": "Success",
     "warning": "Warning",
-    "info": "Information"
+    "info": "Information",
+    "reset": "Reset",
+    "filters": "Filters",
+    "actions": "Actions",
+    "view": "View",
+    "download": "Download",
+    "new": "New",
+    "generate": "Generate",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "selectAllVisible": "Select All Visible",
+    "home": "Home",
+    "profile": "Profile",
+    "logout": "Logout",
+    "deleteConfirmation": "Are you sure you want to delete this item? This action cannot be undone."
   },
   "invoices": {
     "title": "Invoices",
@@ -33,6 +47,18 @@
     "paymentTerms": "Payment Terms",
     "bankInfo": "Bank Information",
     "pageInfo": "Page",
+    "newInvoice": "New Invoice",
+    "generateFromWorkLogs": "Generate from Work Logs",
+    "filterWorkLogs": "Filter Work Logs",
+    "availableWorkLogs": "Available Work Logs",
+    "viewPdf": "View PDF",
+    "downloadPdf": "Download PDF",
+    "billTo": "Bill To",
+    "worker": "Worker",
+    "rateUnit": "Rate/Unit",
+    "projectTotal": "Project Total",
+    "noWorkLogsFound": "No work logs found",
+    "issueDate": "Issue Date",
     "invoiceStatus": {
       "draft": "Draft",
       "sent": "Sent",
@@ -50,7 +76,10 @@
     "hours": "Hours",
     "minutes": "Minutes",
     "description": "Description",
-    "hourlyRate": "Hourly Rate"
+    "hourlyRate": "Hourly Rate",
+    "startWorking": "Start Working Now",
+    "stopWorking": "Stop Working",
+    "timeTracking": "Time Tracking"
   },
   "customers": {
     "title": "Customers",
@@ -61,7 +90,8 @@
     "address": "Address",
     "city": "City",
     "country": "Country",
-    "zipCode": "Zip Code"
+    "zipCode": "Zip Code",
+    "newCustomer": "New Customer"
   },
   "projects": {
     "title": "Projects",
@@ -71,7 +101,9 @@
     "status": "Status",
     "startDate": "Start Date",
     "endDate": "End Date",
-    "budget": "Budget"
+    "budget": "Budget",
+    "newProject": "New Project",
+    "deadline": "Deadline"
   },
   "settings": {
     "title": "Settings",
@@ -89,7 +121,14 @@
     "invoiceCreated": "Invoice created successfully",
     "invoiceSent": "Invoice sent successfully",
     "settingsSaved": "Settings saved successfully",
-    "operationFailed": "Operation failed"
+    "operationFailed": "Operation failed",
+    "emailVerified": "Email verified successfully!",
+    "failedToLoad": "Failed to load data. Please try again later.",
+    "invalidCode": "Invalid code",
+    "enterValidCode": "Please enter a valid 6-digit code",
+    "loginSuccessful": "Login successful!",
+    "recoveryCodeUsed": "Recovery code used. Please set up 2FA again for security.",
+    "enterRecoveryCode": "Please enter a recovery code"
   },
   "email": {
     "subject": "Subject",
@@ -97,7 +136,19 @@
     "from": "From",
     "to": "To",
     "emailVerification": "Email Verification",
-    "projectAssigned": "Project Assigned"
+    "emailVerificationCode": "Email Verification Code",
+    "projectAssigned": "Project Assigned",
+    "hello": "Hello",
+    "verificationRequest": "You have requested to verify your email address.",
+    "verificationCode": "Your verification code is:",
+    "codeExpires": "This code will expire in 1 hour.",
+    "ignoreIfNotYou": "If you did not request this verification, please ignore this email.",
+    "thankYou": "Thank you for using our application!",
+    "assignedToProject": "You have been assigned to the project:",
+    "yourHourlyRate": "Your hourly rate for this project:",
+    "viewProject": "View Project",
+    "continuedWork": "Thank you for your continued work!",
+    "newProjectAssignment": "You have been assigned to a new project"
   },
   "auth": {
     "login": "Login",
@@ -111,6 +162,28 @@
     "required": "This field is required",
     "email": "Please enter a valid email address",
     "minLength": "Must be at least {min} characters",
-    "maxLength": "Cannot exceed {max} characters"
+    "maxLength": "Cannot exceed {max} characters",
+    "customerRequired": "Customer is required",
+    "projectRequired": "Project is required"
+  },
+  "navigation": {
+    "home": "Home",
+    "projects": "Projects",
+    "customers": "Customers",
+    "invoices": "Invoices",
+    "workLogs": "Work Logs",
+    "users": "Users",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout",
+    "clientledger": "Clientledger"
+  },
+  "users": {
+    "title": "Users",
+    "user": "User",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "newUser": "New User"
   }
 }

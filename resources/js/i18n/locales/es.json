@@ -14,7 +14,21 @@
     "error": "Error",
     "success": "Éxito",
     "warning": "Advertencia",
-    "info": "Información"
+    "info": "Información",
+    "reset": "Restablecer",
+    "filters": "Filtros",
+    "actions": "Acciones",
+    "view": "Ver",
+    "download": "Descargar",
+    "new": "Nuevo",
+    "generate": "Generar",
+    "selectAll": "Seleccionar todo",
+    "deselectAll": "Deseleccionar todo",
+    "selectAllVisible": "Seleccionar todo visible",
+    "home": "Inicio",
+    "profile": "Perfil",
+    "logout": "Cerrar sesión",
+    "deleteConfirmation": "¿Está seguro de que desea eliminar este elemento? Esta acción no se puede deshacer."
   },
   "invoices": {
     "title": "Facturas",
@@ -24,15 +38,27 @@
     "dueDate": "Fecha de vencimiento",
     "customer": "Cliente",
     "description": "Descripción",
-    "amount": "Cantidad",
+    "amount": "Importe",
     "status": "Estado",
     "total": "Total",
     "subtotal": "Subtotal",
     "tax": "Impuesto",
     "taxRate": "Tasa de impuesto",
-    "paymentTerms": "Condiciones de pago",
+    "paymentTerms": "Términos de pago",
     "bankInfo": "Información bancaria",
     "pageInfo": "Página",
+    "newInvoice": "Nueva factura",
+    "generateFromWorkLogs": "Generar desde registros de trabajo",
+    "filterWorkLogs": "Filtrar registros de trabajo",
+    "availableWorkLogs": "Registros de trabajo disponibles",
+    "viewPdf": "Ver PDF",
+    "downloadPdf": "Descargar PDF",
+    "billTo": "Facturar a",
+    "worker": "Trabajador",
+    "rateUnit": "Tarifa/Unidad",
+    "projectTotal": "Total del proyecto",
+    "noWorkLogsFound": "No se encontraron registros de trabajo",
+    "issueDate": "Fecha de emisión",
     "invoiceStatus": {
       "draft": "Borrador",
       "sent": "Enviada",
@@ -50,7 +76,10 @@
     "hours": "Horas",
     "minutes": "Minutos",
     "description": "Descripción",
-    "hourlyRate": "Tarifa por hora"
+    "hourlyRate": "Tarifa por hora",
+    "startWorking": "Comenzar a trabajar ahora",
+    "stopWorking": "Dejar de trabajar",
+    "timeTracking": "Seguimiento de tiempo"
   },
   "customers": {
     "title": "Clientes",
@@ -61,7 +90,8 @@
     "address": "Dirección",
     "city": "Ciudad",
     "country": "País",
-    "zipCode": "Código postal"
+    "zipCode": "Código postal",
+    "newCustomer": "Nuevo cliente"
   },
   "projects": {
     "title": "Proyectos",
@@ -70,26 +100,35 @@
     "description": "Descripción",
     "status": "Estado",
     "startDate": "Fecha de inicio",
-    "endDate": "Fecha de finalización",
-    "budget": "Presupuesto"
+    "endDate": "Fecha de fin",
+    "budget": "Presupuesto",
+    "newProject": "Nuevo proyecto",
+    "deadline": "Fecha límite"
   },
   "settings": {
     "title": "Configuración",
     "company": "Empresa",
     "localization": "Localización",
-    "financialInvoices": "Finanzas y Facturas",
-    "dateTime": "Fecha y Hora",
+    "financialInvoices": "Finanzas & Facturas",
+    "dateTime": "Fecha & Hora",
     "email": "Correo electrónico",
     "legal": "Legal",
     "language": "Idioma",
     "currentLanguage": "Idioma actual",
-    "selectLanguage": "Selecciona el idioma de la aplicación"
+    "selectLanguage": "Seleccionar idioma de la aplicación"
   },
   "notifications": {
     "invoiceCreated": "Factura creada exitosamente",
     "invoiceSent": "Factura enviada exitosamente",
     "settingsSaved": "Configuración guardada exitosamente",
-    "operationFailed": "La operación falló"
+    "operationFailed": "Operación fallida",
+    "emailVerified": "Correo electrónico verificado exitosamente!",
+    "failedToLoad": "Error al cargar datos. Por favor, inténtelo de nuevo más tarde.",
+    "invalidCode": "Código inválido",
+    "enterValidCode": "Por favor ingrese un código válido de 6 dígitos",
+    "loginSuccessful": "Inicio de sesión exitoso!",
+    "recoveryCodeUsed": "Código de recuperación usado. Configure 2FA nuevamente por seguridad.",
+    "enterRecoveryCode": "Por favor ingrese un código de recuperación"
   },
   "email": {
     "subject": "Asunto",
@@ -97,20 +136,54 @@
     "from": "De",
     "to": "Para",
     "emailVerification": "Verificación de correo electrónico",
-    "projectAssigned": "Proyecto asignado"
+    "emailVerificationCode": "Código de verificación de correo electrónico",
+    "projectAssigned": "Proyecto asignado",
+    "hello": "Hola",
+    "verificationRequest": "Ha solicitado verificar su dirección de correo electrónico.",
+    "verificationCode": "Su código de verificación es:",
+    "codeExpires": "Este código expirará en 1 hora.",
+    "ignoreIfNotYou": "Si no solicitó esta verificación, ignore este correo electrónico.",
+    "thankYou": "Gracias por usar nuestra aplicación!",
+    "assignedToProject": "Ha sido asignado al proyecto:",
+    "yourHourlyRate": "Su tarifa por hora para este proyecto:",
+    "viewProject": "Ver proyecto",
+    "continuedWork": "Gracias por su trabajo continuo!",
+    "newProjectAssignment": "Ha sido asignado a un nuevo proyecto"
   },
   "auth": {
     "login": "Iniciar sesión",
     "logout": "Cerrar sesión",
     "email": "Correo electrónico",
     "password": "Contraseña",
-    "rememberMe": "Recuérdame",
-    "forgotPassword": "¿Olvidaste tu contraseña?"
+    "rememberMe": "Recordarme",
+    "forgotPassword": "¿Olvidó su contraseña?"
   },
   "validation": {
     "required": "Este campo es obligatorio",
-    "email": "Por favor ingresa un correo electrónico válido",
+    "email": "Por favor ingrese una dirección de correo electrónico válida",
     "minLength": "Debe tener al menos {min} caracteres",
-    "maxLength": "No puede exceder {max} caracteres"
+    "maxLength": "No puede exceder {max} caracteres",
+    "customerRequired": "Cliente es obligatorio",
+    "projectRequired": "Proyecto es obligatorio"
+  },
+  "navigation": {
+    "home": "Inicio",
+    "projects": "Proyectos",
+    "customers": "Clientes",
+    "invoices": "Facturas",
+    "workLogs": "Registros de trabajo",
+    "users": "Usuarios",
+    "profile": "Perfil",
+    "settings": "Configuración",
+    "logout": "Cerrar sesión",
+    "clientledger": "Clientledger"
+  },
+  "users": {
+    "title": "Usuarios",
+    "user": "Usuario",
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "role": "Rol",
+    "newUser": "Nuevo usuario"
   }
 }
