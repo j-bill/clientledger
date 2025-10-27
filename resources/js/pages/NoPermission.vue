@@ -14,9 +14,9 @@
 			</div>
 			
 			<!-- Message -->
-			<h1 class="error-title">Access Denied</h1>
+			<h1 class="error-title">{{ $t('errorPages.accessDenied') }}</h1>
 			<p class="error-message">
-				Sorry, you don't have permission to access this page. This area is restricted to administrators only.
+				{{ $t('errorPages.accessDeniedMessage') }}
 			</p>
 			
 			<!-- Action Buttons -->
@@ -28,7 +28,7 @@
 					@click="goHome"
 					class="mr-3"
 				>
-					Go Home
+					{{ $t('errorPages.goHome') }}
 				</v-btn>
 				<v-btn
 					variant="outlined"
@@ -36,7 +36,7 @@
 					prepend-icon="mdi-arrow-left"
 					@click="goBack"
 				>
-					Go Back
+					{{ $t('errorPages.goBack') }}
 				</v-btn>
 			</div>
 		</div>

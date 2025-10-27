@@ -6,13 +6,13 @@
 			<div class="logo-container mb-4" v-if="companyLogo">
 				<img :src="companyLogo" alt="Company Logo" class="company-logo" />
 			</div>
-			<h2 class="pb-4">Login</h2>
+			<h2 class="pb-4">{{ $t('pages.login.login') }}</h2>
 			<div class="form-group">
 				<v-text-field v-model="form.email"
 							  data-test="login-email"
 							  type="email"
 							  variant="outlined"
-							  label="Email"
+							  :label="$t('pages.login.email')"
 							  required />
 			</div>
 			<div class="form-group">
@@ -20,7 +20,7 @@
 							  data-test="login-password"
 							  type="password"
 							  variant="outlined"
-							  label="Password"
+							  :label="$t('pages.login.password')"
 							  required />
 			</div>
 			<v-btn type="submit"
@@ -28,17 +28,17 @@
 				   block
 				   :loading="loading"
 				   color="primary">
-				Login
+				{{ $t('pages.login.login') }}
 			</v-btn>
 
 			<!-- Legal Links Footer -->
 			<div class="legal-links mt-6">
 				<router-link :to="{ name: 'Privacy' }" class="legal-link">
-					Privacy Notice
+					{{ $t('pages.login.privacyNotice') }}
 				</router-link>
 				<div class="flex-grow"></div>
 				<router-link :to="{ name: 'Imprint' }" class="legal-link">
-					Imprint
+					{{ $t('pages.login.imprint') }}
 				</router-link>
 			</div>
 		</form>

@@ -95,11 +95,16 @@ import CustomerForm from '../components/forms/CustomerForm.vue';
 import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
 import { formatCurrency } from '../utils/formatters';
+import { useI18n } from 'vue-i18n';
 
 export default {
   name: 'CustomersIndex',
   components: {
     CustomerForm
+  },
+  setup() {
+    const { t } = useI18n();
+    return { t };
   },
   data() {
     return {
@@ -111,23 +116,24 @@ export default {
       itemToDelete: null,
       currentCustomer: null,
       
-      sortBy: [{ key: 'id', order: 'desc' }],
-      headers: [
-        { title: 'ID', key: 'id' },
-        { title: 'Name', key: 'name' },
-        { title: 'Contact Person', key: 'contact_person' },
-        { title: 'Email', key: 'contact_email' },
-        { title: 'Phone', key: 'contact_phone' },
-        { title: 'City', key: 'city' },
-        { title: 'Country', key: 'country' },
-        { title: 'Hourly Rate', key: 'hourly_rate' },
-        { title: 'Actions', key: 'actions', sortable: false }
-      ]
+      sortBy: [{ key: 'id', order: 'desc' }]
     };
   },
   
   computed: {
-    ...mapState(store, ['customers', 'settings', 'currencySymbol'])
+    ...mapState(store, ['customers', 'settings', 'currencySymbol']),
+    headers() {
+      return [
+        { title: 'ID', key: 'id' },
+        { title: this.t('customers.name'), key: 'name' },
+        { title: this.t('common.email'), key: 'contact_email' },
+        { title: this.t('customers.phone'), key: 'contact_phone' },
+        { title: this.t('customers.city'), key: 'city' },
+        { title: this.t('customers.country'), key: 'country' },
+        { title: this.t('invoices.rateUnit'), key: 'hourly_rate' },
+        { title: this.t('common.actions'), key: 'actions', sortable: false }
+      ];
+    }
   },
   
   created() {

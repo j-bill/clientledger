@@ -31,7 +31,7 @@
 								@change="onFileSelected"
 							/>
 						</div>
-						<h2 class="text-h4 font-weight-bold mt-6 text-white">{{ profile.name || 'Your Name' }}</h2>
+						<h2 class="text-h4 font-weight-bold mt-6 text-white">{{ profile.name || $t('pages.profile.yourName') }}</h2>
 						<p class="text-subtitle-1 text-white mb-0">{{ profile.email }}</p>
 						<v-chip 
 							v-if="profile.email_verified_at" 
@@ -40,7 +40,7 @@
 							class="mt-2"
 						>
 							<v-icon start size="small">mdi-check-circle</v-icon>
-							Verified
+							{{ $t('pages.profile.verified') }}
 						</v-chip>
 					</v-card-text>
 				</v-card>
@@ -54,7 +54,7 @@
 					<v-card-text class="text-center pa-6">
 						<v-icon size="40" color="primary" class="mb-3">mdi-briefcase-clock</v-icon>
 						<div class="text-h4 font-weight-bold">{{ statistics.total_work_logs || 0 }}</div>
-						<div class="text-caption text-medium-emphasis">Work Sessions</div>
+						<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.workSessions') }}</div>
 					</v-card-text>
 				</v-card>
 			</v-col>
@@ -64,7 +64,7 @@
 					<v-card-text class="text-center pa-6">
 						<v-icon size="40" color="success" class="mb-3">mdi-clock-outline</v-icon>
 						<div class="text-h4 font-weight-bold">{{ formatHours(statistics.total_hours) }}</div>
-						<div class="text-caption text-medium-emphasis">Hours Tracked</div>
+						<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.hoursTracked') }}</div>
 					</v-card-text>
 				</v-card>
 			</v-col>
@@ -74,7 +74,7 @@
 					<v-card-text class="text-center pa-6">
 						<v-icon size="40" color="info" class="mb-3">mdi-cash-multiple</v-icon>
 						<div class="text-h4 font-weight-bold">{{ formatMoney(statistics.total_earnings) }}</div>
-						<div class="text-caption text-medium-emphasis">Total Earned</div>
+						<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.totalEarned') }}</div>
 					</v-card-text>
 				</v-card>
 			</v-col>
@@ -84,7 +84,7 @@
 					<v-card-text class="text-center pa-6">
 						<v-icon size="40" color="warning" class="mb-3">mdi-folder-multiple</v-icon>
 						<div class="text-h4 font-weight-bold">{{ statistics.active_projects || 0 }}</div>
-						<div class="text-caption text-medium-emphasis">Active Projects</div>
+						<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.activeProjects') }}</div>
 					</v-card-text>
 				</v-card>
 			</v-col>
@@ -97,15 +97,15 @@
 					<v-tabs v-model="tab" bg-color="primary" dark>
 						<v-tab value="personal">
 							<v-icon start>mdi-account-edit</v-icon>
-							Personal Info
+							{{ $t('pages.profile.personalInfo') }}
 						</v-tab>
 						<v-tab value="security">
 							<v-icon start>mdi-shield-lock</v-icon>
-							Security
+							{{ $t('pages.profile.security') }}
 						</v-tab>
 						<v-tab value="activity">
 							<v-icon start>mdi-history</v-icon>
-							Activity
+							{{ $t('pages.profile.activity') }}
 						</v-tab>
 						<v-tab value="info">
 							<v-icon start>mdi-information</v-icon>
@@ -122,11 +122,11 @@
 										<v-col cols="12" md="6">
 											<div class="text-h6 mb-4 d-flex align-center">
 												<v-icon class="mr-2" color="primary">mdi-account</v-icon>
-												Basic Information
+												{{ $t('pages.profile.basicInformation') }}
 											</div>
 											<v-text-field
 												v-model="profile.name"
-												label="Full Name"
+												:label="$t('pages.profile.fullName')"
 												variant="outlined"
 												prepend-inner-icon="mdi-account"
 												:rules="[rules.required]"
@@ -135,7 +135,7 @@
 
 											<v-text-field
 												v-model="profile.email"
-												label="Email Address"
+												:label="$t('pages.profile.emailAddress')"
 												variant="outlined"
 												prepend-inner-icon="mdi-email"
 												:rules="[rules.required, rules.email]"
@@ -150,8 +150,8 @@
 											>
 												<template v-slot:label>
 													<div>
-														<div class="text-body-2 font-weight-medium">Project Assignment Notifications</div>
-														<div class="text-caption text-medium-emphasis">Receive email notifications when assigned to new projects</div>
+														<div class="text-body-2 font-weight-medium">{{ $t('pages.profile.projectNotifications') }}</div>
+														<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.projectNotificationsHint') }}</div>
 													</div>
 												</template>
 											</v-switch>
@@ -160,7 +160,7 @@
 										<v-col cols="12" md="6">
 											<div class="text-h6 mb-4 d-flex align-center">
 												<v-icon class="mr-2" color="primary">mdi-information</v-icon>
-												Account Details
+												{{ $t('pages.profile.accountDetails') }}
 											</div>
 											<v-card variant="outlined" class="pa-4">
 												<v-list density="compact" bg-color="transparent">
@@ -168,7 +168,7 @@
 														<template v-slot:prepend>
 															<v-icon color="primary">mdi-calendar-check</v-icon>
 														</template>
-														<v-list-item-title class="text-caption text-medium-emphasis">Member Since</v-list-item-title>
+														<v-list-item-title class="text-caption text-medium-emphasis">{{ $t('pages.profile.memberSince') }}</v-list-item-title>
 														<v-list-item-subtitle class="text-body-2 font-weight-medium">
 															{{ formatDate(profile.created_at) }}
 														</v-list-item-subtitle>
@@ -180,7 +180,7 @@
 														<template v-slot:prepend>
 															<v-icon color="info">mdi-update</v-icon>
 														</template>
-														<v-list-item-title class="text-caption text-medium-emphasis">Last Updated</v-list-item-title>
+														<v-list-item-title class="text-caption text-medium-emphasis">{{ $t('pages.profile.lastUpdated') }}</v-list-item-title>
 														<v-list-item-subtitle class="text-body-2 font-weight-medium">
 															{{ formatDate(profile.updated_at) }}
 														</v-list-item-subtitle>
@@ -194,9 +194,9 @@
 																{{ profile.email_verified_at ? 'mdi-check-decagram' : 'mdi-alert-circle' }}
 															</v-icon>
 														</template>
-														<v-list-item-title class="text-caption text-medium-emphasis">Email Status</v-list-item-title>
+														<v-list-item-title class="text-caption text-medium-emphasis">{{ $t('pages.profile.emailStatus') }}</v-list-item-title>
 														<v-list-item-subtitle class="text-body-2 font-weight-medium">
-															{{ profile.email_verified_at ? 'Verified' : 'Not Verified' }}
+															{{ profile.email_verified_at ? $t('pages.profile.verified') : $t('pages.profile.notVerified') }}
 														</v-list-item-subtitle>
 													</v-list-item>
 												</v-list>
@@ -213,7 +213,7 @@
 											:disabled="loading"
 											class="mr-2"
 										>
-											Cancel
+											{{ $t('common.cancel') }}
 										</v-btn>
 										<v-btn
 											color="primary"
@@ -223,7 +223,7 @@
 											size="large"
 										>
 											<v-icon start>mdi-content-save</v-icon>
-											Save Changes
+											{{ $t('pages.profile.saveChanges') }}
 										</v-btn>
 									</div>
 								</v-form>
@@ -234,14 +234,14 @@
 								<!-- Password Section -->
 								<div class="text-h6 mb-4 d-flex align-center">
 									<v-icon class="mr-2" color="primary">mdi-lock-reset</v-icon>
-									Change Password
+									{{ $t('pages.profile.changePassword') }}
 								</div>
 								
 								<v-row>
 									<v-col cols="12" md="12">
 										<v-text-field
 											v-model="passwordData.current_password"
-											label="Current Password"
+											:label="$t('pages.profile.currentPassword')"
 											variant="outlined"
 											prepend-inner-icon="mdi-lock"
 											:append-inner-icon="showCurrentPassword ? 'mdi-eye-off' : 'mdi-eye'"
@@ -252,7 +252,7 @@
 
 										<v-text-field
 											v-model="passwordData.new_password"
-											label="New Password"
+											:label="$t('pages.profile.newPassword')"
 											variant="outlined"
 											prepend-inner-icon="mdi-lock-plus"
 											:append-inner-icon="showNewPassword ? 'mdi-eye-off' : 'mdi-eye'"
@@ -264,7 +264,7 @@
 
 										<v-text-field
 											v-model="passwordData.new_password_confirmation"
-											label="Confirm New Password"
+											:label="$t('pages.profile.confirmPassword')"
 											variant="outlined"
 											prepend-inner-icon="mdi-lock-check"
 											:append-inner-icon="showConfirmPassword ? 'mdi-eye-off' : 'mdi-eye'"
@@ -280,9 +280,7 @@
 											density="compact"
 											class="mb-4"
 										>
-											<strong>Password Requirements:</strong> Minimum 16 characters. 
-											This length provides strong protection against brute-force attacks and ensures 
-											your account remains secure even if password databases are compromised. 
+											<strong>{{ $t('pages.profile.passwordRequirements') }}:</strong> {{ $t('pages.profile.passwordRequirementsText') }} 
 											Longer passwords are exponentially harder to crack than complex shorter ones.
 										</v-alert>
 
@@ -295,7 +293,7 @@
 											class="mt-4"
 										>
 											<v-icon start>mdi-shield-check</v-icon>
-											Update Password
+											{{ $t('pages.profile.updatePassword') }}
 										</v-btn>
 									</v-col>
 								</v-row>
@@ -305,7 +303,7 @@
 								<!-- 2FA Section -->
 								<div class="text-h6 mb-4 d-flex align-center">
 									<v-icon class="mr-2" color="primary">mdi-shield-lock</v-icon>
-									Two-Factor Authentication (2FA)
+									{{ $t('pages.profile.twoFactorAuthentication') }}
 								</div>
 
 								<v-row>
@@ -322,12 +320,12 @@
 													</v-icon>
 													<div>
 														<div class="text-subtitle-1 font-weight-bold">
-															{{ twoFactorStatus.enabled ? 'Enabled' : 'Disabled' }}
+															{{ twoFactorStatus.enabled ? $t('pages.profile.twoFactorEnabled') : $t('pages.profile.twoFactorDisabled') }}
 														</div>
 														<div class="text-caption text-medium-emphasis">
 															{{ twoFactorStatus.enabled 
-																? 'Your account is protected with 2FA' 
-																: 'Add an extra layer of security to your account' 
+																? $t('pages.profile.twoFactorEnabledHint') 
+																: $t('pages.profile.twoFactorDisabledHint') 
 															}}
 														</div>
 													</div>
@@ -336,7 +334,7 @@
 													:color="twoFactorStatus.enabled ? 'success' : 'warning'" 
 													size="small"
 												>
-													{{ twoFactorStatus.enabled ? 'Active' : 'Inactive' }}
+													{{ twoFactorStatus.enabled ? $t('pages.profile.twoFactorActive') : $t('pages.profile.twoFactorInactive') }}
 												</v-chip>
 											</div>
 
@@ -345,7 +343,7 @@
 											<!-- When 2FA is enabled -->
 											<div v-if="twoFactorStatus.enabled">
 												<v-alert type="success" variant="tonal" density="compact" class="mb-4">
-													2FA is currently protecting your account. You'll need to enter a code from your authenticator app when logging in from new devices.
+													{{ $t('pages.profile.twoFactorAlertText') }}
 												</v-alert>
 
 												<!-- 2FA Management Actions -->
@@ -357,7 +355,7 @@
 														@click="reset2FADialog = true"
 														:loading="resetting2FA"
 													>
-														Reset 2FA
+														{{ $t('pages.profile.reset2FA') }}
 													</v-btn>
 												</div>
 
@@ -367,8 +365,8 @@
 												<div class="mb-6">
 													<div class="d-flex align-center justify-space-between mb-3">
 														<div>
-															<div class="text-subtitle-1 font-weight-bold">Trusted Devices</div>
-															<div class="text-caption text-medium-emphasis">{{ twoFactorStatus.trusted_devices_count }} device(s) currently trusted</div>
+															<div class="text-subtitle-1 font-weight-bold">{{ $t('pages.profile.trustedDevices') }}</div>
+															<div class="text-caption text-medium-emphasis">{{ twoFactorStatus.trusted_devices_count }} {{ $t('pages.profile.devicesTrusted') }}</div>
 														</div>
 														<v-btn 
 															variant="outlined" 
@@ -377,22 +375,18 @@
 															@click="fetchTrustedDevices"
 															:loading="loadingDevices"
 														>
-															Refresh
+															{{ $t('pages.profile.refreshDevices') }}
 														</v-btn>
 													</div>
 
 													<v-card variant="outlined" class="mb-4">
-														<v-card-text v-if="loadingDevices" class="text-center py-8">
-															<v-progress-circular indeterminate color="primary"></v-progress-circular>
-															<div class="text-caption text-medium-emphasis mt-2">Loading devices...</div>
-														</v-card-text>
-														
-														<v-card-text v-else-if="trustedDevices.length === 0" class="text-center py-8">
-															<v-icon size="48" color="grey-lighten-1" class="mb-2">mdi-devices-off</v-icon>
-															<div class="text-body-2 text-medium-emphasis">No trusted devices found</div>
-														</v-card-text>
-
-														<v-list v-else density="compact">
+													<v-card-text v-if="loadingDevices" class="text-center py-8">
+														<v-progress-circular indeterminate color="primary"></v-progress-circular>
+														<div class="text-caption text-medium-emphasis mt-2">{{ $t('pages.profile.loadingDevices') }}</div>
+													</v-card-text>														<v-card-text v-else-if="trustedDevices.length === 0" class="text-center py-8">
+														<v-icon size="48" color="grey-lighten-1" class="mb-2">mdi-devices-off</v-icon>
+														<div class="text-body-2 text-medium-emphasis">{{ $t('pages.profile.noDevicesFound') }}</div>
+													</v-card-text>														<v-list v-else density="compact">
 															<template v-for="(device, index) in trustedDevices" :key="device.fingerprint">
 																<v-list-item>
 																	<template v-slot:prepend>
@@ -409,18 +403,18 @@
 																			color="primary" 
 																			class="ml-2"
 																		>
-																			Current
+																			{{ $t('pages.profile.currentDevice') }}
 																		</v-chip>
 																	</v-list-item-title>
 
 																	<v-list-item-subtitle class="mt-1">
 																		<div class="text-caption">
 																			<v-icon size="12" class="mr-1">mdi-clock-plus-outline</v-icon>
-																			Added {{ device.added_at_human }}
+																			{{ $t('pages.profile.addedAt') }} {{ device.added_at_human }}
 																		</div>
 																		<div class="text-caption">
 																			<v-icon size="12" class="mr-1">mdi-clock-alert-outline</v-icon>
-																			Expires {{ device.expires_at_human }}
+																			{{ $t('pages.profile.expires') }} {{ device.expires_at_human }}
 																		</div>
 																	</v-list-item-subtitle>
 
@@ -438,7 +432,7 @@
 																			<template v-slot:activator="{ props }">
 																				<v-icon v-bind="props" size="small" color="grey">mdi-lock</v-icon>
 																			</template>
-																			<span>Cannot remove current device</span>
+																			<span>{{ $t('pages.profile.cannotRemoveCurrentDevice') }}</span>
 																		</v-tooltip>
 																	</template>
 																</v-list-item>
@@ -452,8 +446,8 @@
 												<div class="mb-6">
 													<div class="d-flex align-center justify-space-between mb-3">
 														<div>
-															<div class="text-subtitle-1 font-weight-bold">Recovery Codes</div>
-															<div class="text-caption text-medium-emphasis">Use these codes if you lose access to your authenticator</div>
+															<div class="text-subtitle-1 font-weight-bold">{{ $t('pages.profile.recoveryCodes') }}</div>
+															<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.recoveryCodesHint') }}</div>
 														</div>
 													</div>
 
@@ -462,7 +456,7 @@
 															<div v-if="!showingRecoveryCodes" class="text-center py-4">
 																<v-icon size="48" color="warning" class="mb-2">mdi-shield-key</v-icon>
 																<div class="text-body-2 text-medium-emphasis mb-4">
-																	Recovery codes are hidden for security
+																	{{ $t('pages.profile.recoveryCodesHidden') }}
 																</div>
 																<div class="d-flex justify-center gap-2">
 																	<v-btn 
@@ -471,7 +465,7 @@
 																		@click="fetchRecoveryCodes"
 																		:loading="loadingRecoveryCodes"
 																	>
-																		View Codes
+																		{{ $t('pages.profile.viewCodes') }}
 																	</v-btn>
 																	<v-btn 
 																		variant="outlined" 
@@ -480,14 +474,14 @@
 																		@click="regenerateCodesDialog = true"
 																		:loading="loadingRecoveryCodes"
 																	>
-																		Regenerate
+																		{{ $t('pages.profile.regenerate') }}
 																	</v-btn>
 																</div>
 															</div>
 
 															<div v-else>
 																<v-alert type="warning" variant="tonal" density="compact" class="mb-4">
-																	<strong>Save these codes!</strong> Each code can only be used once. Store them securely.
+																	<strong>{{ $t('pages.profile.saveTheseCodes') }}</strong> {{ $t('pages.profile.recoveryCodesWarning') }}
 																</v-alert>
 
 																<div class="recovery-codes-grid mb-4">
@@ -507,14 +501,14 @@
 																		prepend-icon="mdi-content-copy"
 																		@click="copyRecoveryCodes"
 																	>
-																		Copy All
+																		{{ $t('pages.profile.copyAll') }}
 																	</v-btn>
 																	<v-btn 
 																		variant="outlined"
 																		prepend-icon="mdi-download"
 																		@click="downloadRecoveryCodes"
 																	>
-																		Download
+																		{{ $t('common.download') }}
 																	</v-btn>
 																	<v-btn 
 																		variant="text"
@@ -533,7 +527,7 @@
 											<!-- When 2FA is disabled -->
 											<div v-else>
 												<v-alert type="warning" variant="tonal" density="compact" class="mb-4">
-													Your account is not protected by 2FA. Enable it now to add an extra layer of security.
+													{{ $t('pages.profile.twoFactorDisabledAlert') }}
 												</v-alert>
 
 												<v-btn 
@@ -541,7 +535,7 @@
 													prepend-icon="mdi-shield-plus"
 													@click="$router.push('/2fa/setup')"
 												>
-													Enable 2FA
+													{{ $t('pages.profile.enable2FA') }}
 												</v-btn>
 											</div>
 										</v-card>
@@ -553,7 +547,7 @@
 							<v-window-item value="activity">
 								<div class="text-h6 mb-4 d-flex align-center">
 									<v-icon class="mr-2" color="primary">mdi-chart-timeline-variant</v-icon>
-									Your Activity
+									{{ $t('pages.profile.yourActivity') }}
 								</div>
 								
 								<v-row v-if="statistics">
@@ -563,11 +557,11 @@
 											<v-card-text>
 												<div class="d-flex align-center justify-space-between mb-4">
 													<div>
-														<div class="text-h6 font-weight-bold">Activity Heatmap</div>
-														<div class="text-caption text-medium-emphasis">Your work session activity over the past year</div>
+														<div class="text-h6 font-weight-bold">{{ $t('pages.profile.activityHeatmap') }}</div>
+														<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.activityHeatmapHint') }}</div>
 													</div>
 													<div class="d-flex align-center gap-2">
-														<span class="text-caption text-medium-emphasis">Less</span>
+														<span class="text-caption text-medium-emphasis">{{ $t('pages.profile.less') }}</span>
 														<div class="heatmap-legend">
 															<div class="heatmap-cell legend-0"></div>
 															<div class="heatmap-cell legend-1"></div>
@@ -575,7 +569,7 @@
 															<div class="heatmap-cell legend-3"></div>
 															<div class="heatmap-cell legend-4"></div>
 														</div>
-														<span class="text-caption text-medium-emphasis">More</span>
+														<span class="text-caption text-medium-emphasis">{{ $t('pages.profile.more') }}</span>
 													</div>
 												</div>
 
@@ -621,7 +615,7 @@
 									variant="tonal"
 									class="mt-4"
 								>
-									Start tracking your time to see your activity statistics here!
+									{{ $t('pages.profile.startTrackingTime') }}
 								</v-alert>
 							</v-window-item>
 
@@ -629,7 +623,7 @@
 							<v-window-item value="info">
 								<div class="text-h6 mb-4 d-flex align-center">
 									<v-icon class="mr-2" color="primary">mdi-information-outline</v-icon>
-									Information & Legal
+									{{ $t('pages.profile.informationLegal') }}
 								</div>
 								
 								<v-row>
@@ -641,19 +635,19 @@
 														<v-icon size="32" color="white">mdi-shield-account</v-icon>
 													</v-avatar>
 													<div>
-														<div class="text-h6 font-weight-bold">Privacy Notice</div>
-														<div class="text-caption text-medium-emphasis">How we handle your data</div>
+														<div class="text-h6 font-weight-bold">{{ $t('pages.profile.privacyNotice') }}</div>
+														<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.privacyNoticeHint') }}</div>
 													</div>
 												</div>
 												<p class="text-body-2 mb-0">
-													Learn about our data protection practices, your privacy rights, and how we use and protect your personal information.
+													{{ $t('pages.profile.privacyNoticeDescription') }}
 												</p>
 											</v-card-text>
 											<v-divider></v-divider>
 											<v-card-actions class="px-6 py-3">
 												<v-spacer></v-spacer>
 												<v-btn variant="text" color="primary">
-													Read Privacy Notice
+													{{ $t('pages.profile.readPrivacyNotice') }}
 													<v-icon end>mdi-arrow-right</v-icon>
 												</v-btn>
 											</v-card-actions>
@@ -668,19 +662,19 @@
 														<v-icon size="32" color="white">mdi-gavel</v-icon>
 													</v-avatar>
 													<div>
-														<div class="text-h6 font-weight-bold">Imprint</div>
-														<div class="text-caption text-medium-emphasis">Legal information and contact</div>
+														<div class="text-h6 font-weight-bold">{{ $t('pages.profile.imprint') }}</div>
+														<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.imprintHint') }}</div>
 													</div>
 												</div>
 												<p class="text-body-2 mb-0">
-													View our legal information, company details, and contact information as required by law.
+													{{ $t('pages.profile.imprintDescription') }}
 												</p>
 											</v-card-text>
 											<v-divider></v-divider>
 											<v-card-actions class="px-6 py-3">
 												<v-spacer></v-spacer>
 												<v-btn variant="text" color="secondary">
-													Read Imprint
+													{{ $t('pages.profile.readImprint') }}
 													<v-icon end>mdi-arrow-right</v-icon>
 												</v-btn>
 											</v-card-actions>
@@ -692,7 +686,7 @@
 
 								<div class="text-h6 mb-4 d-flex align-center">
 									<v-icon class="mr-2" color="primary">mdi-help-circle-outline</v-icon>
-									Application Information
+									{{ $t('pages.profile.applicationInformation') }}
 								</div>
 
 								<v-row>
@@ -704,8 +698,8 @@
 														<template v-slot:prepend>
 															<v-icon color="primary">mdi-application</v-icon>
 														</template>
-														<v-list-item-title class="text-body-2 font-weight-medium">Application Name</v-list-item-title>
-														<v-list-item-subtitle class="text-body-1">Client Ledger</v-list-item-subtitle>
+														<v-list-item-title class="text-body-2 font-weight-medium">{{ $t('pages.profile.applicationName') }}</v-list-item-title>
+														<v-list-item-subtitle class="text-body-1">{{ $t('pages.profile.applicationNameValue') }}</v-list-item-subtitle>
 													</v-list-item>
 
 													<v-divider class="my-2"></v-divider>
@@ -714,9 +708,9 @@
 														<template v-slot:prepend>
 															<v-icon color="info">mdi-shield-check</v-icon>
 														</template>
-														<v-list-item-title class="text-body-2 font-weight-medium">Security</v-list-item-title>
+														<v-list-item-title class="text-body-2 font-weight-medium">{{ $t('pages.profile.securityTitle') }}</v-list-item-title>
 														<v-list-item-subtitle class="text-body-1">
-															This is a secure business application. All users are managed by administrators.
+															{{ $t('pages.profile.securityDescription') }}
 														</v-list-item-subtitle>
 													</v-list-item>
 
@@ -726,9 +720,9 @@
 														<template v-slot:prepend>
 															<v-icon color="success">mdi-account-lock</v-icon>
 														</template>
-														<v-list-item-title class="text-body-2 font-weight-medium">Access</v-list-item-title>
+														<v-list-item-title class="text-body-2 font-weight-medium">{{ $t('pages.profile.accessTitle') }}</v-list-item-title>
 														<v-list-item-subtitle class="text-body-1">
-															User accounts must be created by an administrator. Self-registration is not available.
+															{{ $t('pages.profile.accessDescription') }}
 														</v-list-item-subtitle>
 													</v-list-item>
 												</v-list>
@@ -748,28 +742,28 @@
 			<v-card>
 				<v-card-title class="d-flex align-center bg-warning pa-4">
 					<v-icon color="white" class="mr-2">mdi-refresh-circle</v-icon>
-					<span class="text-white">Reset Two-Factor Authentication</span>
+					<span class="text-white">{{ $t('pages.profile.resetTwoFactorAuthentication') }}</span>
 				</v-card-title>
 				<v-card-text class="pa-6">
 					<v-alert type="warning" variant="tonal" density="compact" class="mb-4">
-						<strong>Warning:</strong> This action will reset your 2FA setup
+						<strong>{{ $t('common.warning') }}:</strong> {{ $t('pages.profile.resetTwoFactorWarning') }}
 					</v-alert>
 					
-					<p class="text-body-1 mb-4">Are you sure you want to reset 2FA?</p>
+					<p class="text-body-1 mb-4">{{ $t('pages.profile.resetTwoFactorConfirmation') }}</p>
 					
-					<p class="text-body-2 mb-2">This will:</p>
+					<p class="text-body-2 mb-2">{{ $t('pages.profile.resetTwoFactorWill') }}:</p>
 					<ul class="text-body-2 ml-4 mb-4">
-						<li>Generate a new QR code and secret</li>
-						<li>Clear all trusted devices</li>
-						<li>Generate new recovery codes</li>
-						<li>Require you to re-scan the QR code in your authenticator app</li>
+						<li>{{ $t('pages.profile.resetTwoFactorItem1') }}</li>
+						<li>{{ $t('pages.profile.resetTwoFactorItem2') }}</li>
+						<li>{{ $t('pages.profile.resetTwoFactorItem3') }}</li>
+						<li>{{ $t('pages.profile.resetTwoFactorItem4') }}</li>
 					</ul>
 					
-					<p class="text-body-2 mb-4">You will be redirected to the 2FA setup page.</p>
+					<p class="text-body-2 mb-4">{{ $t('pages.profile.resetTwoFactorRedirect') }}</p>
 					
 					<v-text-field
 						v-model="reset2FAPassword"
-						label="Enter your password to confirm"
+						:label="$t('pages.profile.enterPasswordToConfirm')"
 						type="password"
 						variant="outlined"
 						prepend-inner-icon="mdi-lock"
@@ -783,7 +777,7 @@
 						variant="text" 
 						@click="reset2FADialog = false; reset2FAPassword = ''"
 					>
-						Cancel
+						{{ $t('common.cancel') }}
 					</v-btn>
 					<v-btn 
 						color="warning" 
@@ -791,7 +785,7 @@
 						:loading="resetting2FA"
 						:disabled="!reset2FAPassword"
 					>
-						Reset 2FA
+						{{ $t('pages.profile.reset2FA') }}
 					</v-btn>
 				</v-card-actions>
 			</v-card>
@@ -802,20 +796,19 @@
 			<v-card>
 				<v-card-title class="d-flex align-center bg-warning pa-4">
 					<v-icon color="white" class="mr-2">mdi-shield-refresh</v-icon>
-					<span class="text-white">Regenerate Recovery Codes</span>
+					<span class="text-white">{{ $t('pages.profile.regenerateRecoveryCodes') }}</span>
 				</v-card-title>
 				<v-card-text class="pa-6">
 					<v-alert type="warning" variant="tonal" density="compact" class="mb-4">
-						<strong>Warning:</strong> Your old recovery codes will no longer work
+						<strong>{{ $t('common.warning') }}:</strong> {{ $t('pages.profile.regenerateCodesWarning') }}
 					</v-alert>
 					
 					<p class="text-body-1 mb-4">
-						Are you sure you want to regenerate your recovery codes?
+						{{ $t('pages.profile.regenerateCodesConfirmation') }}
 					</p>
 					
 					<p class="text-body-2 mb-4">
-						This will invalidate all your existing recovery codes and generate a new set.
-						Make sure to save the new codes in a secure location.
+						{{ $t('pages.profile.regenerateCodesDescription') }}
 					</p>
 				</v-card-text>
 				<v-card-actions class="pa-4">
@@ -824,14 +817,14 @@
 						variant="text" 
 						@click="regenerateCodesDialog = false"
 					>
-						Cancel
+						{{ $t('common.cancel') }}
 					</v-btn>
 					<v-btn 
 						color="warning" 
 						@click="handleRegenerateRecoveryCodes"
 						:loading="loadingRecoveryCodes"
 					>
-						Regenerate Codes
+						{{ $t('pages.profile.regenerateCodes') }}
 					</v-btn>
 				</v-card-actions>
 			</v-card>

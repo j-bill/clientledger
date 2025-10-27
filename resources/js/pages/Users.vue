@@ -1,13 +1,13 @@
 <template>
   <v-container fluid>
-    <h1 class="text-h4 mb-4">Users</h1>
+    <h1 class="text-h4 mb-4">{{ $t('pages.users.title') }}</h1>
     
     <!-- Search & Actions -->
     <v-row class="mb-4">
       <v-col cols="12" sm="6">
         <v-text-field
           v-model="search"
-          label="Search"
+          :label="$t('common.search')"
           prepend-inner-icon="mdi-magnify"
           single-line
           hide-details
@@ -16,7 +16,7 @@
       </v-col>
       <v-col cols="12" sm="6" class="d-flex justify-end">
         <v-btn color="primary" @click="openCreateDialog" prepend-icon="mdi-plus">
-          New User
+          {{ $t('pages.users.newUser') }}
         </v-btn>
       </v-col>
     </v-row>
@@ -56,14 +56,14 @@
 
     <v-dialog v-model="deleteDialog" max-width="500px">
       <v-card>
-        <v-card-title>Delete User</v-card-title>
+        <v-card-title>{{ $t('pages.users.deleteUser') }}</v-card-title>
         <v-card-text>
-          Are you sure you want to delete this user? This action cannot be undone.
+          {{ $t('pages.users.deleteConfirmation') }}
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" variant="text" @click="deleteDialog = false">Cancel</v-btn>
-          <v-btn color="error" @click="deleteUserRecord">Delete</v-btn>
+          <v-btn color="primary" variant="text" @click="deleteDialog = false">{{ $t('common.cancel') }}</v-btn>
+          <v-btn color="error" @click="deleteUserRecord">{{ $t('common.delete') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -71,16 +71,16 @@
     <!-- Reset Password Dialog -->
     <v-dialog v-model="resetPasswordDialog" max-width="500px">
       <v-card>
-        <v-card-title>Reset Password</v-card-title>
+        <v-card-title>{{ $t('pages.users.resetPassword') }}</v-card-title>
         <v-card-text>
-          Send a password reset link to <strong>{{ resetPasswordUser?.email }}</strong>?
+          {{ $t('pages.users.sendResetLink') }} <strong>{{ resetPasswordUser?.email }}</strong>?
           <br><br>
           The user will receive an email with instructions to reset their password.
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" variant="text" @click="resetPasswordDialog = false">Cancel</v-btn>
-          <v-btn color="warning" @click="resetPassword">Send Reset Link</v-btn>
+          <v-btn color="primary" variant="text" @click="resetPasswordDialog = false">{{ $t('common.cancel') }}</v-btn>
+          <v-btn color="warning" @click="resetPassword">{{ $t('pages.users.sendResetLink') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -88,14 +88,14 @@
     <!-- Create User Dialog -->
     <v-dialog v-model="createDialog" max-width="800px">
       <v-card>
-        <v-card-title>New User</v-card-title>
+        <v-card-title>{{ $t('pages.users.newUser') }}</v-card-title>
         <v-card-text>
           <user-form ref="createForm" @save="saveUserRecord"></user-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="error" variant="text" @click="createDialog = false">Cancel</v-btn>
-          <v-btn color="primary" @click="$refs.createForm.submit()">Save</v-btn>
+          <v-btn color="error" variant="text" @click="createDialog = false">{{ $t('common.cancel') }}</v-btn>
+          <v-btn color="primary" @click="$refs.createForm.submit()">{{ $t('common.save') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -103,14 +103,14 @@
     <!-- Edit User Dialog -->
     <v-dialog v-model="editDialog" max-width="800px">
       <v-card>
-        <v-card-title>Edit User</v-card-title>
+        <v-card-title>{{ $t('common.edit') }} {{ $t('users.user') }}</v-card-title>
         <v-card-text>
           <user-form ref="editForm" :user="currentUser" @save="updateUserRecord"></user-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="error" variant="text" @click="editDialog = false">Cancel</v-btn>
-          <v-btn color="primary" @click="$refs.editForm.submit()">Update</v-btn>
+          <v-btn color="error" variant="text" @click="editDialog = false">{{ $t('common.cancel') }}</v-btn>
+          <v-btn color="primary" @click="$refs.editForm.submit()">{{ $t('common.save') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -122,12 +122,17 @@ import UserForm from '../components/forms/UserForm.vue';
 import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
 import { formatDate, formatCurrency } from '../utils/formatters';
+import { useI18n } from 'vue-i18n';
 import axios from 'axios';
 
 export default {
   name: 'UsersIndex',
   components: {
     UserForm
+  },
+  setup() {
+    const { t } = useI18n();
+    return { t };
   },
   data() {
     return {
@@ -141,22 +146,25 @@ export default {
       resetPasswordDialog: false,
       resetPasswordUser: null,
       
-      sortBy: [{ key: 'id', order: 'desc' }],
-      headers: [
-        { title: 'ID', key: 'id' },
-        { title: 'Name', key: 'name' },
-        { title: 'Email', key: 'email' },
-        { title: 'Role', key: 'role' },
-        { title: 'Hourly Rate', key: 'hourly_rate' },
-        { title: 'Created', key: 'created_at' },
-        { title: 'Updated', key: 'updated_at' },
-        { title: 'Actions', key: 'actions', sortable: false }
-      ]
+      sortBy: [{ key: 'id', order: 'desc' }]
     };
   },
   
   computed: {
-    ...mapState(store, ['users', 'currencySymbol', 'settings'])
+    ...mapState(store, ['users', 'currencySymbol', 'settings']),
+    
+    headers() {
+      return [
+        { title: this.t('pages.users.id'), key: 'id' },
+        { title: this.t('pages.users.name'), key: 'name' },
+        { title: this.t('common.email'), key: 'email' },
+        { title: this.t('pages.users.role'), key: 'role' },
+        { title: this.t('pages.users.hourlyRate'), key: 'hourly_rate' },
+        { title: this.t('pages.users.created'), key: 'created_at' },
+        { title: this.t('pages.users.updated'), key: 'updated_at' },
+        { title: this.t('common.actions'), key: 'actions', sortable: false }
+      ];
+    }
   },
   
   created() {

@@ -7,7 +7,7 @@
 				<v-icon left
 						color="primary"
 						size="large">mdi-shield-lock</v-icon>
-				Set Up Two-Factor Authentication
+				{{ $t('pages.twoFactor.setupTitle') }}
 			</v-card-title>
 
 			<v-card-text class="pa-6">
@@ -16,14 +16,14 @@
 					<v-stepper-header>
 						<v-stepper-item :complete="step > 1"
 										:value="1"
-										title="Generate QR Code"></v-stepper-item>
+										:title="$t('pages.twoFactor.step1Title')"></v-stepper-item>
 						<v-divider></v-divider>
 						<v-stepper-item :complete="step > 2"
 										:value="2"
-										title="Verify Code"></v-stepper-item>
+										:title="$t('pages.twoFactor.step2Title')"></v-stepper-item>
 						<v-divider></v-divider>
 						<v-stepper-item :value="3"
-										title="Save Recovery Codes"></v-stepper-item>
+										:title="$t('pages.twoFactor.step3Title')"></v-stepper-item>
 					</v-stepper-header>
 
 					<v-stepper-window>
@@ -31,15 +31,14 @@
 					<v-stepper-window-item :value="1">
 						<div class="text-center py-6">
 							<p class="mb-4">
-								Two-Factor Authentication adds an extra layer of security to your account.
-								You'll need an authenticator app like Google Authenticator or Authy.
+								{{ $t('pages.twoFactor.setupDescription') }}
 							</p>
 							<div class="d-flex gap-2 justify-center flex-wrap">
 								<v-btn color="primary"
 									   size="large"
 									   :loading="loading"
 									   @click="generateQRCode">
-									Generate QR Code
+									{{ $t('pages.twoFactor.generateQRCode') }}
 								</v-btn>
 								
 							</div>
@@ -48,14 +47,14 @@
 									   variant="outlined"
 									   size="large"
 									   @click="skipSetup">
-									Skip Setup (Demo)
+									{{ $t('pages.twoFactor.skipSetupDemo') }}
 								</v-btn>
 						</div>
 					</v-stepper-window-item>						<!-- Step 2: Scan QR Code and Verify -->
 						<v-stepper-window-item :value="2">
 							<div class="text-center">
 								<p class="mb-4">
-									Scan this QR code with your authenticator app:
+									{{ $t('pages.twoFactor.scanQRCode') }}
 								</p>
 								<div v-if="qrCode"
 									 class="qr-code-container mb-4"
@@ -63,14 +62,14 @@
 								
 								<div class="manual-entry-container mb-4">
 									<p class="text-caption text-medium-emphasis text-center mb-2">
-										<strong>Manual Entry:</strong><br>
-										If you can't scan the QR code, enter this key manually:
+										<strong>{{ $t('pages.twoFactor.manualEntry') }}:</strong><br>
+										{{ $t('pages.twoFactor.manualEntryHint') }}
 									</p>
 									<code class="manual-key">{{ secret }}</code>
 								</div>
 
 								<v-text-field v-model="verificationCode"
-											  label="Enter 6-digit code"
+											  :label="$t('pages.twoFactor.enterSixDigitCode')"
 											  variant="outlined"
 											  :rules="[rules.required, rules.sixDigits]"
 											  maxlength="6"
@@ -80,13 +79,13 @@
 								<div class="d-flex">
 									<v-btn variant="outlined"
 										   @click="step = 1">
-										Back
+										{{ $t('common.back') || 'Back' }}
 									</v-btn>
 									<v-spacer></v-spacer>
 									<v-btn color="primary"
 										   :loading="loading"
 										   @click="verifyCode">
-										Verify & Continue
+										{{ $t('pages.twoFactor.verifyAndContinue') }}
 									</v-btn>
 								</div>
 							</div>
@@ -98,8 +97,7 @@
 								<v-alert type="warning"
 										 variant="tonal"
 										 class="mb-4">
-									<strong>Important:</strong> Save these recovery codes in a safe place. 
-									You can use them to access your account if you lose your phone.
+									<strong>{{ $t('common.important') || 'Important' }}:</strong> {{ $t('pages.twoFactor.recoveryCodesWarning') }}
 								</v-alert>
 
 								<v-card variant="outlined"
@@ -119,17 +117,17 @@
 									<v-btn variant="outlined"
 										   prepend-icon="mdi-content-copy"
 										   @click="copyRecoveryCodes">
-										Copy All
+										{{ $t('pages.profile.copyAll') || 'Copy All' }}
 									</v-btn>
 									<v-btn variant="outlined"
 										   prepend-icon="mdi-download"
 										   @click="downloadRecoveryCodes">
-										Download
+										{{ $t('common.download') }}
 									</v-btn>
 								</div>
 
 								<v-checkbox v-model="confirmedSaved"
-											label="I have saved my recovery codes in a safe place"
+											:label="$t('pages.twoFactor.confirmSavedRecoveryCodes')"
 											:rules="[rules.mustConfirm]"></v-checkbox>
 
 								<v-btn color="success"
@@ -137,7 +135,7 @@
 									   size="large"
 									   :disabled="!confirmedSaved"
 									   @click="completeSetup">
-									Complete Setup
+									{{ $t('pages.twoFactor.completeSetup') }}
 								</v-btn>
 							</div>
 						</v-stepper-window-item>

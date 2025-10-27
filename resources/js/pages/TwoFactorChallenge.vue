@@ -6,15 +6,15 @@
 				<v-icon color="primary"
 						size="60"
 						class="mb-3">mdi-shield-lock-outline</v-icon>
-				<h2 class="mb-2">Two-Factor Authentication</h2>
+				<h2 class="mb-2">{{ $t('pages.twoFactor.title') }}</h2>
 				<p class="text-subtitle-1">
-					Enter the 6-digit code from your authenticator app
+					{{ $t('pages.twoFactor.subtitle') }}
 				</p>
 			</div>
 
 			<div class="form-group">
 				<v-text-field v-model="code"
-							  label="Authentication Code"
+							  :label="$t('pages.twoFactor.authenticationCode')"
 							  variant="outlined"
 							  type="text"
 							  inputmode="numeric"
@@ -27,7 +27,7 @@
 
 			<div class="form-group">
 				<v-checkbox v-model="trustDevice"
-							label="Trust this device for 2 weeks"
+							:label="$t('pages.twoFactor.trustDeviceLabel')"
 							density="compact"
 							hide-details></v-checkbox>
 			</div>
@@ -37,7 +37,7 @@
 				   block
 				   size="large"
 				   :loading="loading">
-				Verify
+				{{ $t('pages.twoFactor.verify') }}
 			</v-btn>
 
 			<v-divider class="my-4"></v-divider>
@@ -46,7 +46,7 @@
 				<v-btn variant="text"
 					   size="small"
 					   @click="showRecoveryInput = !showRecoveryInput">
-					{{ showRecoveryInput ? 'Use authenticator code' : 'Use recovery code instead' }}
+					{{ showRecoveryInput ? $t('pages.twoFactor.useAuthenticatorCode') : $t('pages.twoFactor.useRecoveryCodeInstead') }}
 				</v-btn>
 			</div>
 
@@ -55,10 +55,10 @@
 					 class="mt-4">
 					<div class="form-group">
 						<v-text-field v-model="recoveryCode"
-									  label="Recovery Code"
+									  :label="$t('pages.twoFactor.recoveryCode')"
 									  variant="outlined"
 									  placeholder="XXXXXXXXXX-XXXXXXXXXX"
-									  hint="Enter one of your recovery codes"
+									  :hint="$t('pages.twoFactor.recoveryCodeHint')"
 									  @keyup.enter="verifyRecoveryCode">
 						</v-text-field>
 					</div>
@@ -66,7 +66,7 @@
 						   block
 						   :loading="loading"
 						   @click="verifyRecoveryCode">
-						Use Recovery Code
+						{{ $t('pages.twoFactor.useRecoveryCode') }}
 					</v-btn>
 				</div>
 			</v-expand-transition>
@@ -76,7 +76,7 @@
 					   size="small"
 					   color="error"
 					   @click="cancelLogin">
-					Cancel and logout
+					{{ $t('pages.twoFactor.cancelAndLogout') }}
 				</v-btn>
 			</div>
 		</form>

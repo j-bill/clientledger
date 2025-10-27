@@ -9,9 +9,9 @@
 			</div>
 			
 			<!-- Message -->
-			<h1 class="error-title">Page Not Found</h1>
+			<h1 class="error-title">{{ $t('errorPages.pageNotFound') }}</h1>
 			<p class="error-message">
-				Oops! The page you're looking for seems to have wandered off into the digital void.
+				{{ $t('errorPages.pageNotFoundMessage') }}
 			</p>
 			
 			<!-- Action Buttons -->
@@ -23,7 +23,7 @@
 					@click="goHome"
 					class="mr-3"
 				>
-					Go Home
+					{{ $t('errorPages.goHome') }}
 				</v-btn>
 				<v-btn
 					variant="outlined"
@@ -31,7 +31,7 @@
 					prepend-icon="mdi-arrow-left"
 					@click="goBack"
 				>
-					Go Back
+					{{ $t('errorPages.goBack') }}
 				</v-btn>
 			</div>
 		</div>

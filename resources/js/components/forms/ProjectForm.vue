@@ -4,9 +4,9 @@
 		<v-row>
 			<v-col cols="12">
 				<v-text-field v-model="formData.name"
-							  label="Project Name"
+							  :label="$t('forms.project.name')"
 							  prepend-icon="mdi-briefcase"
-							  :rules="[v => !!v || 'Project name is required']"></v-text-field>
+							  :rules="[v => !!v || $t('forms.project.nameRequired')]"></v-text-field>
 			</v-col>
 
 			<v-col cols="12"
@@ -15,19 +15,19 @@
 						  :items="customers"
 						  item-title="name"
 						  item-value="id"
-						  label="Customer"
+						  :label="$t('forms.project.customer')"
 						  prepend-icon="mdi-account"
-						  :rules="[v => !!v || 'Customer is required']"
+						  :rules="[v => !!v || $t('forms.project.customerRequired')]"
 						  @update:model-value="updateHourlyRate"></v-select>
 			</v-col>
 
 			<v-col cols="12"
 				   md="6">
 				<v-text-field v-model="formData.hourly_rate"
-							  label="Project Hourly Rate"
+							  :label="$t('forms.project.hourlyRate')"
 							  type="number"
 							  prepend-icon="mdi-cash"
-							  hint="Inherited from customer by default, but can be customized"
+							  :hint="$t('forms.project.hourlyRateHint')"
 							  persistent-hint></v-text-field>
 			</v-col>
 
@@ -39,10 +39,10 @@
 						min-width="auto">
 					<template v-slot:activator="{ props }">
 						<v-text-field :model-value="formattedDate"
-									  label="Deadline"
+									  :label="$t('forms.project.deadline')"
 									  prepend-icon="mdi-calendar"
 									  readonly
-									  hint="Leave empty if no deadline"
+									  :hint="$t('forms.project.deadlineHint')"
 									  v-bind="props"
 									  clearable
 									  @click:clear="clearDate"></v-text-field>
@@ -54,7 +54,7 @@
 
 			<v-col cols="12">
 				<v-textarea v-model="formData.description"
-							label="Description"
+							:label="$t('forms.project.description')"
 							prepend-icon="mdi-text"></v-textarea>
 			</v-col>
 

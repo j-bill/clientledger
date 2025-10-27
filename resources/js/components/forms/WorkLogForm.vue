@@ -8,7 +8,7 @@
 						  :items="customers"
 						  item-title="name"
 						  item-value="id"
-						  label="Customer"
+						  :label="$t('forms.workLog.customer')"
 						  prepend-icon="mdi-account"
 						  clearable
 						  @update:model-value="filterProjects"></v-select>
@@ -20,9 +20,9 @@
 						  :items="filteredProjects"
 						  item-title="name"
 						  item-value="id"
-						  label="Project"
+						  :label="$t('forms.workLog.project')"
 						  prepend-icon="mdi-folder"
-						  :rules="[v => !!v || 'Project is required']"
+						  :rules="[v => !!v || $t('forms.workLog.projectRequired')]"
 						  @update:model-value="updateProjectDetails"></v-select>
 			</v-col>
 
@@ -32,9 +32,9 @@
 						  :items="projectUsers"
 						  item-title="name"
 						  item-value="id"
-						  label="Freelancer"
+						  :label="$t('forms.workLog.freelancer')"
 						  prepend-icon="mdi-account"
-						  :rules="[v => !!v || 'Freelancer is required']"
+						  :rules="[v => !!v || $t('forms.workLog.freelancerRequired')]"
 						  @update:model-value="updateUserRate"></v-select>
 			</v-col>
 
@@ -47,10 +47,10 @@
 						min-width="auto">
 					<template v-slot:activator="{ props }">
 						<v-text-field :model-value="formattedDate"
-									  label="Date"
+									  :label="$t('forms.workLog.date')"
 									  prepend-icon="mdi-calendar"
 									  readonly
-									  :rules="[v => !!v || 'Date is required']"
+									  :rules="[v => !!v || $t('forms.workLog.dateRequired')]"
 									  v-bind="props"></v-text-field>
 					</template>
 					<v-date-picker v-model="internalDate"
@@ -67,10 +67,10 @@
 						min-width="auto">
 					<template v-slot:activator="{ props }">
 						<v-text-field v-model="formData.start_time"
-									  label="Start Time"
+									  :label="$t('forms.workLog.startTime')"
 									  prepend-icon="mdi-clock-start"
 									  readonly
-									  :rules="[v => !!v || 'Start time is required']"
+									  :rules="[v => !!v || $t('forms.workLog.startTimeRequired')]"
 									  v-bind="props"></v-text-field>
 					</template>
 					<v-time-picker v-model="formData.start_time"
@@ -88,10 +88,10 @@
 						min-width="auto">
 					<template v-slot:activator="{ props }">
 						<v-text-field v-model="formData.end_time"
-									  label="End Time"
+									  :label="$t('forms.workLog.endTime')"
 									  prepend-icon="mdi-clock-end"
 									  readonly
-									  :rules="[v => !!v || 'End time is required']"
+									  :rules="[v => !!v || $t('forms.workLog.endTimeRequired')]"
 									  v-bind="props"></v-text-field>
 					</template>
 					<v-time-picker v-model="formData.end_time"
@@ -103,18 +103,18 @@
 			<v-col cols="12"
 				   md="6" v-if="isAdmin">
 				<v-text-field v-model="formData.hourly_rate"
-							  label="Freelancer Hourly Rate"
+							  :label="$t('forms.workLog.hourlyRate')"
 							  type="number"
 							  prepend-icon="mdi-cash"
 							  :disabled="isNewWorkLog && formData.user_id"
-							  hint="Rate is inherited from freelancer for new work logs"></v-text-field>
+							  :hint="$t('forms.workLog.hourlyRateHint')"></v-text-field>
 			</v-col>
 
 			<v-col cols="12">
 				<v-textarea v-model="formData.description"
-							label="Description"
+							:label="$t('forms.workLog.description')"
 							prepend-icon="mdi-text"
-							:rules="[v => !!v || 'Description is required']"
+							:rules="[v => !!v || $t('forms.workLog.descriptionRequired')]"
 							counter
 							:maxlength="500"
 							rows="4"
@@ -125,7 +125,7 @@
 				<v-checkbox v-model="formData.billable"
 							:true-value="1"
 							:false-value="0"
-							label="Billable"
+							:label="$t('forms.workLog.billable')"
 							color="primary"></v-checkbox>
 			</v-col>
 		</v-row>

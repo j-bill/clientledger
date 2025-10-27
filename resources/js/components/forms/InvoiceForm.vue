@@ -8,7 +8,7 @@
           :items="customers"
           item-title="name"
           item-value="id"
-          label="Customer"
+          :label="$t('forms.invoice.customer')"
           :rules="[rules.required]"
           required
           :disabled="!!invoice"
@@ -20,9 +20,9 @@
       <v-col cols="12" md="6">
         <v-text-field
           v-model="formData.invoice_number"
-          label="Invoice Number"
+          :label="$t('forms.invoice.invoiceNumber')"
           :rules="[]"
-          hint="Leave empty to auto-generate"
+          :hint="$t('forms.invoice.invoiceNumberHint')"
           persistent-hint
         ></v-text-field>
       </v-col>
@@ -38,7 +38,7 @@
           <template v-slot:activator="{ props }">
             <v-text-field
               :model-value="formattedIssueDate"
-              label="Issue Date"
+              :label="$t('forms.invoice.issueDate')"
               prepend-icon="mdi-calendar"
               readonly
               :rules="[rules.required]"
@@ -63,7 +63,7 @@
             <template v-slot:activator="{ props }">
               <v-text-field
                 :model-value="formattedDueDate"
-                label="Due Date"
+                :label="$t('forms.invoice.dueDate')"
                 prepend-icon="mdi-calendar"
                 readonly
                 :rules="[rules.required]"
@@ -82,7 +82,7 @@
         <v-select
           v-model="formData.status"
           :items="statusOptions"
-          label="Status"
+          :label="$t('forms.invoice.status')"
           :rules="[rules.required]"
           required
         ></v-select>
@@ -92,7 +92,7 @@
       <v-col cols="12" md="6">
         <v-text-field
           v-model="formData.total_amount"
-          label="Total Amount"
+          :label="$t('forms.invoice.totalAmount')"
           type="number"
           step="0.01"
           :prefix="currencySymbol"
@@ -105,8 +105,8 @@
       <v-col cols="12">
         <v-textarea
           v-model="formData.notes"
-          label="Notes"
-          hint="Additional notes or special instructions for this invoice"
+          :label="$t('forms.invoice.notes')"
+          :hint="$t('forms.invoice.notesHint')"
           persistent-hint
           rows="3"
           counter
@@ -122,9 +122,14 @@
 import { mapState, mapActions } from 'pinia';
 import { store } from '../../store'; // Assuming store path
 import { formatDate } from '../../utils/formatters';
+import { useI18n } from 'vue-i18n';
 
 export default {
   name: 'InvoiceForm',
+  setup() {
+    const { t } = useI18n()
+    return { t }
+  },
   props: {
     invoice: { // Pass the invoice object for editing, null for creating
       type: Object,
@@ -148,7 +153,7 @@ export default {
       dueDateMenu: false,
       statusOptions: ['draft', 'sent', 'paid', 'overdue', 'cancelled'],
       rules: {
-        required: value => !!value || 'Required.',
+        required: value => !!value || this.t('forms.required'),
       },
       loading: false,
     };
@@ -156,7 +161,7 @@ export default {
   computed: {
     ...mapState(store, ['customers', 'currencySymbol', 'settings']), // Need customers for the dropdown
     formTitle() {
-      return this.invoice ? 'Edit Invoice' : 'Create Invoice';
+      return this.invoice ? this.t('forms.invoice.editTitle') : this.t('forms.invoice.createTitle');
     },
     formattedIssueDate() {
       if (!this.formData.issue_date) return '';

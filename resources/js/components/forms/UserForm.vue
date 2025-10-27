@@ -4,22 +4,22 @@
       <v-col cols="12" md="6">
         <v-text-field
           v-model="formData.name"
-          label="Name"
+          :label="$t('forms.user.name')"
           prepend-icon="mdi-account"
-          :rules="[v => !!v || 'Name is required']"
+          :rules="[v => !!v || $t('forms.user.nameRequired')]"
         ></v-text-field>
       </v-col>
       
       <v-col cols="12" md="6">
         <v-text-field
           v-model="formData.email"
-          label="Email"
+          :label="$t('common.email')"
           type="email"
           prepend-icon="mdi-email"
           autocomplete="off"
           :rules="[
-            v => !!v || 'Email is required',
-            v => /.+@.+\..+/.test(v) || 'Email must be valid'
+            v => !!v || $t('forms.user.emailRequired'),
+            v => /.+@.+\..+/.test(v) || $t('forms.user.emailValid')
           ]"
         ></v-text-field>
       </v-col>
@@ -28,21 +28,21 @@
         <v-select
           v-model="formData.role"
           :items="roles"
-          label="Role"
+          :label="$t('forms.user.role')"
           prepend-icon="mdi-shield-account"
-          :rules="[v => !!v || 'Role is required']"
+          :rules="[v => !!v || $t('forms.user.roleRequired')]"
         ></v-select>
       </v-col>
       
       <v-col cols="12" md="6" v-if="formData.role === 'freelancer'">
         <v-text-field
           v-model="formData.hourly_rate"
-          label="Hourly Rate"
+          :label="$t('forms.user.hourlyRate')"
           type="number"
           prepend-icon="mdi-cash"
           :rules="[
-            v => !!v || 'Hourly rate is required',
-            v => v >= 0 || 'Hourly rate must be positive'
+            v => !!v || $t('forms.user.hourlyRateRequired'),
+            v => v >= 0 || $t('forms.user.hourlyRatePositive')
           ]"
         ></v-text-field>
       </v-col>
@@ -50,7 +50,7 @@
       <v-col cols="12" v-if="user">
         <v-checkbox
           v-model="changePassword"
-          label="Change Password"
+          :label="$t('forms.user.changePassword')"
           hide-details
         ></v-checkbox>
       </v-col>
@@ -58,13 +58,13 @@
       <v-col cols="12" md="6" v-if="!user || changePassword">
         <v-text-field
           v-model="formData.password"
-          label="Password"
+          :label="$t('forms.user.password')"
           type="password"
           prepend-icon="mdi-lock"
           autocomplete="new-password"
           :rules="[
-            v => (!user || changePassword) ? (!!v || 'Password is required') : true,
-            v => !v || v.length >= 8 || 'Password must be at least 8 characters'
+            v => (!user || changePassword) ? (!!v || $t('forms.user.passwordRequired')) : true,
+            v => !v || v.length >= 8 || $t('forms.user.passwordMinLength')
           ]"
         ></v-text-field>
       </v-col>
@@ -72,12 +72,12 @@
       <v-col cols="12" md="6" v-if="!user || changePassword">
         <v-text-field
           v-model="formData.password_confirmation"
-          label="Confirm Password"
+          :label="$t('forms.user.confirmPassword')"
           type="password"
           prepend-icon="mdi-lock-check"
           autocomplete="new-password"
           :rules="[
-            v => (!user || changePassword) ? (!!v || 'Password confirmation is required') : true,
+            v => (!user || changePassword) ? (!!v || $t('forms.user.confirmPasswordRequired')) : true,
             v => v === formData.password || 'Passwords must match'
           ]"
         ></v-text-field>

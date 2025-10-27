@@ -14,8 +14,8 @@
 								<v-icon size="80" color="white">mdi-cog</v-icon>
 							</v-avatar>
 						</div>
-						<h2 class="text-h4 font-weight-bold mt-6 text-white">System Settings</h2>
-						<p class="text-subtitle-1 text-white mb-0">Configure your application preferences</p>
+						<h2 class="text-h4 font-weight-bold mt-6 text-white">{{ $t('pages.settings.systemSettings') }}</h2>
+						<p class="text-subtitle-1 text-white mb-0">{{ $t('pages.settings.configurePreferences') }}</p>
 					</v-card-text>
 				</v-card>
 			</v-col>
@@ -27,7 +27,7 @@
 				<v-card elevation="2">
 					<v-card-text>
 						<v-alert type="info" variant="tonal">
-							Settings are managed by your administrator. If you need to change any settings, please contact them.
+							{{ $t('pages.settings.settingsManagedByAdmin') }}
 						</v-alert>
 					</v-card-text>
 				</v-card>
@@ -41,27 +41,27 @@
 					<v-tabs v-model="tab" bg-color="primary" dark>
 						<v-tab value="company">
 							<v-icon start>mdi-domain</v-icon>
-							Company
+							{{ $t('pages.settings.company') }}
 						</v-tab>
 						<v-tab value="localization">
 							<v-icon start>mdi-earth</v-icon>
-							Localization
+							{{ $t('pages.settings.localization') }}
 						</v-tab>
 						<v-tab value="financial">
 							<v-icon start>mdi-currency-usd</v-icon>
-							Financial & Invoices
+							{{ $t('pages.settings.financialInvoices') }}
 						</v-tab>
 						<v-tab value="datetime">
 							<v-icon start>mdi-calendar-clock</v-icon>
-							Date & Time
+							{{ $t('pages.settings.dateTime') }}
 						</v-tab>
 						<v-tab value="email">
 							<v-icon start>mdi-email</v-icon>
-							Email
+							{{ $t('pages.settings.email') }}
 						</v-tab>
 						<v-tab value="legal">
 							<v-icon start>mdi-gavel</v-icon>
-							Legal
+							{{ $t('pages.settings.legal') }}
 						</v-tab>
 					</v-tabs>
 
@@ -72,14 +72,14 @@
 								<v-form ref="companyForm">
 									<div class="text-h6 mb-4 d-flex align-center">
 										<v-icon class="mr-2" color="primary">mdi-office-building</v-icon>
-										Company Information
+										{{ $t('pages.settings.companyInformation') }}
 									</div>
 
 									<v-row>
 										<v-col cols="12" md="6">
 											<v-text-field
 												v-model="settings.company_name"
-												label="Company Name"
+												:label="$t('pages.settings.companyName')"
 												variant="outlined"
 												prepend-inner-icon="mdi-domain"
 												density="comfortable"
@@ -89,7 +89,7 @@
 										<v-col cols="12" md="6">
 											<v-text-field
 												v-model="settings.company_email"
-												label="Company Email"
+												:label="$t('pages.settings.companyEmail')"
 												variant="outlined"
 												prepend-inner-icon="mdi-email"
 												density="comfortable"
@@ -100,7 +100,7 @@
 										<v-col cols="12" md="6">
 											<v-text-field
 												v-model="settings.company_phone"
-												label="Company Phone"
+												:label="$t('pages.settings.companyPhone')"
 												variant="outlined"
 												prepend-inner-icon="mdi-phone"
 												density="comfortable"
@@ -110,7 +110,7 @@
 										<v-col cols="12" md="6">
 											<v-text-field
 												v-model="settings.company_website"
-												label="Website URL"
+												:label="$t('pages.settings.websiteUrl')"
 												variant="outlined"
 												prepend-inner-icon="mdi-web"
 												density="comfortable"
@@ -121,7 +121,7 @@
 										<v-col cols="12" md="6">
 											<v-text-field
 												v-model="settings.company_vat_id"
-												label="VAT/Tax ID"
+												:label="$t('pages.settings.vatId')"
 												variant="outlined"
 												prepend-inner-icon="mdi-identifier"
 												density="comfortable"
@@ -133,14 +133,14 @@
 
 									<div class="text-h6 mb-4 d-flex align-center">
 										<v-icon class="mr-2" color="primary">mdi-map-marker</v-icon>
-										Company Address
+										{{ $t('pages.settings.companyAddress') }}
 									</div>
 
 									<v-row>
 										<v-col cols="12" md="8">
 											<v-text-field
 												v-model="settings.company_address_street"
-												label="Street"
+												:label="$t('pages.settings.street')"
 												variant="outlined"
 												prepend-inner-icon="mdi-road"
 												density="comfortable"
@@ -150,7 +150,7 @@
 										<v-col cols="12" md="4">
 											<v-text-field
 												v-model="settings.company_address_number"
-												label="Number"
+												:label="$t('pages.settings.number')"
 												variant="outlined"
 												density="comfortable"
 											></v-text-field>
@@ -159,7 +159,7 @@
 										<v-col cols="12" md="4">
 											<v-text-field
 												v-model="settings.company_address_zipcode"
-												label="Zip Code"
+												:label="$t('pages.settings.zipCode')"
 												variant="outlined"
 												density="comfortable"
 											></v-text-field>
@@ -168,7 +168,7 @@
 										<v-col cols="12" md="8">
 											<v-text-field
 												v-model="settings.company_address_city"
-												label="City"
+												:label="$t('pages.settings.city')"
 												variant="outlined"
 												prepend-inner-icon="mdi-city"
 												density="comfortable"
@@ -180,19 +180,19 @@
 
 									<div class="text-h6 mb-4 d-flex align-center">
 										<v-icon class="mr-2" color="primary">mdi-bank</v-icon>
-										Bank Information
+										{{ $t('pages.settings.bankInformation') }}
 									</div>
 
 									<v-row>
 										<v-col cols="12">
 											<v-textarea
 												v-model="settings.company_bank_info"
-												label="Bank Information"
+												:label="$t('pages.settings.bankInfo')"
 												variant="outlined"
 												prepend-inner-icon="mdi-bank"
 												density="comfortable"
 												rows="4"
-												hint="Bank name, account number, IBAN, SWIFT/BIC, etc."
+												:hint="$t('pages.settings.bankInfoHint')"
 												persistent-hint
 											></v-textarea>
 										</v-col>
@@ -202,7 +202,7 @@
 
 									<div class="text-h6 mb-4 d-flex align-center">
 										<v-icon class="mr-2" color="primary">mdi-image</v-icon>
-										Company Logo
+										{{ $t('pages.settings.companyLogo') }}
 									</div>
 
 									<v-row>
@@ -213,7 +213,7 @@
 												</div>
 												<div v-else class="upload-placeholder">
 													<v-icon size="60" color="grey">mdi-image-plus</v-icon>
-													<p class="text-body-2 text-medium-emphasis mt-2">Click to upload logo</p>
+													<p class="text-body-2 text-medium-emphasis mt-2">{{ $t('pages.settings.clickToUpload') }}</p>
 												</div>
 												<input 
 													ref="logoInput" 
@@ -224,7 +224,7 @@
 												/>
 											</div>
 											<p class="text-caption text-medium-emphasis mt-2">
-												Recommended: PNG or JPG, max 2MB
+												{{ $t('pages.settings.logoRecommendation') }}
 												<v-btn 
 													v-if="settings.company_logo" 
 													size="small" 
@@ -232,7 +232,7 @@
 													variant="text" 
 													@click.stop="removeLogo"
 												>
-													Remove Logo
+													{{ $t('pages.settings.removeLogo') }}
 												</v-btn>
 											</p>
 										</v-col>
@@ -245,7 +245,7 @@
 								<v-form ref="localizationForm">
 									<div class="text-h6 mb-4 d-flex align-center">
 										<v-icon class="mr-2" color="primary">mdi-language</v-icon>
-										Language & Localization
+										{{ $t('pages.settings.languageLocalization') }}
 									</div>
 
 									<v-row>
@@ -253,11 +253,11 @@
 											<v-select
 												v-model="settings.language"
 												:items="languageOptions"
-												label="Application Language"
+												:label="$t('pages.settings.applicationLanguage')"
 												variant="outlined"
 												prepend-inner-icon="mdi-earth"
 												density="comfortable"
-												hint="Select the language used for the entire application, invoices, and email notifications"
+												:hint="$t('pages.settings.languageHint')"
 												persistent-hint
 											></v-select>
 										</v-col>
@@ -265,7 +265,7 @@
 										<v-col cols="12" md="6">
 											<v-card variant="tonal" color="info">
 												<v-card-text>
-													<div class="text-subtitle-2 mb-2">Current Language:</div>
+													<div class="text-subtitle-2 mb-2">{{ $t('pages.settings.currentLanguage') }}:</div>
 													<div class="text-h6">{{ getLanguageName(settings.language) }}</div>
 												</v-card-text>
 											</v-card>
@@ -275,11 +275,11 @@
 									<v-divider class="my-6"></v-divider>
 
 									<v-alert type="info" variant="tonal">
-										<strong>Note:</strong> Changing the language will affect:
+										<strong>{{ $t('pages.settings.note') }}:</strong> {{ $t('pages.settings.languageChangeAffects') }}
 										<ul>
-											<li>All generated invoices</li>
-											<li>Email notifications sent to customers and admins</li>
-											<li>System-wide date, time, and number formats</li>
+											<li>{{ $t('pages.settings.languageChangeInvoices') }}</li>
+											<li>{{ $t('pages.settings.languageChangeEmails') }}</li>
+											<li>{{ $t('pages.settings.languageChangeFormats') }}</li>
 										</ul>
 									</v-alert>
 								</v-form>
@@ -290,7 +290,7 @@
 								<v-form ref="financialForm">
 									<div class="text-h6 mb-4 d-flex align-center">
 										<v-icon class="mr-2" color="primary">mdi-currency-usd</v-icon>
-										Currency & Tax
+										{{ $t('pages.settings.currencyTax') }}
 									</div>
 
 									<v-row>
@@ -298,10 +298,12 @@
 											<v-select
 												v-model="settings.currency_symbol"
 												:items="currencyOptions"
-												label="Currency"
+												:label="$t('pages.settings.currency')"
 												variant="outlined"
 												prepend-inner-icon="mdi-currency-usd"
 												density="comfortable"
+												item-title="title"
+												item-value="value"
 												@update:model-value="updateCurrencyCode"
 											></v-select>
 										</v-col>
@@ -309,13 +311,13 @@
 										<v-col cols="12" md="6">
 											<v-text-field
 												v-model="settings.tax_rate"
-												label="Tax Rate (%)"
+												:label="$t('pages.settings.taxRate')"
 												variant="outlined"
 												prepend-inner-icon="mdi-percent"
 												density="comfortable"
 												type="number"
 												step="0.01"
-												hint="Default tax rate for invoices"
+												:hint="$t('pages.settings.taxRateHint')"
 												persistent-hint
 											></v-text-field>
 										</v-col>
@@ -325,18 +327,18 @@
 
 									<div class="text-h6 mb-4 d-flex align-center">
 										<v-icon class="mr-2" color="primary">mdi-file-document</v-icon>
-										Invoice Configuration
+										{{ $t('pages.settings.invoiceConfiguration') }}
 									</div>
 
 									<v-row>
 										<v-col cols="12" md="6">
 											<v-text-field
 												v-model="settings.invoice_prefix"
-												label="Invoice Prefix"
+												:label="$t('pages.settings.invoicePrefix')"
 												variant="outlined"
 												prepend-inner-icon="mdi-format-text"
 												density="comfortable"
-												hint="e.g., INV-, BILL-"
+												:hint="$t('pages.settings.invoicePrefixHint')"
 												persistent-hint
 											></v-text-field>
 										</v-col>
@@ -345,19 +347,21 @@
 											<v-select
 												v-model="settings.invoice_number_format"
 												:items="invoiceNumberFormats"
-												label="Invoice Number Format"
+												:label="$t('pages.settings.invoiceNumberFormat')"
 												variant="outlined"
 												prepend-inner-icon="mdi-format-list-numbered"
 												density="comfortable"
+												item-title="title"
+												item-value="value"
 											></v-select>
 										</v-col>
 
 									<v-col cols="12" md="6">
 										<v-switch
 											v-model="settings.invoice_number_random"
-											label="Random Invoice Numbers"
+											:label="$t('pages.settings.randomInvoiceNumbers')"
 											color="primary"
-											hint="Generate invoice numbers randomly instead of sequentially"
+											:hint="$t('pages.settings.randomInvoiceNumbersHint')"
 											persistent-hint
 										></v-switch>
 									</v-col>
@@ -365,7 +369,7 @@
 									<v-col cols="12" md="6">
 										<v-text-field
 											v-model="settings.invoice_number_random_length"
-											label="Random Number Length"
+											:label="$t('pages.settings.randomNumberLength')"
 											variant="outlined"
 											prepend-inner-icon="mdi-numeric"
 											density="comfortable"
@@ -373,7 +377,7 @@
 											min="4"
 											max="20"
 											:disabled="!settings.invoice_number_random"
-											hint="Number of digits for random invoice numbers (4-20)"
+											:hint="$t('pages.settings.randomNumberLengthHint')"
 											persistent-hint
 										></v-text-field>
 									</v-col>
@@ -381,13 +385,13 @@
 									<v-col cols="12" md="6">
 											<v-text-field
 												v-model="settings.invoice_number_start"
-												label="Starting Invoice Number"
+												:label="$t('pages.settings.startingInvoiceNumber')"
 												variant="outlined"
 												prepend-inner-icon="mdi-numeric"
 												density="comfortable"
 												type="number"
 												:disabled="settings.invoice_number_random"
-												hint="First invoice number to use (disabled when using random)"
+												:hint="$t('pages.settings.startingInvoiceNumberHint')"
 												persistent-hint
 											></v-text-field>
 										</v-col>
@@ -396,19 +400,21 @@
 											<v-select
 												v-model="settings.invoice_default_status"
 												:items="invoiceStatuses"
-												label="Default Invoice Status"
+												:label="$t('pages.settings.defaultInvoiceStatus')"
 												variant="outlined"
 												prepend-inner-icon="mdi-tag"
 												density="comfortable"
+												item-title="title"
+												item-value="value"
 											></v-select>
 										</v-col>
 
 										<v-col cols="12" md="6">
 											<v-switch
 												v-model="settings.invoice_auto_send"
-												label="Auto-send Invoices"
+												:label="$t('pages.settings.autoSendInvoices')"
 												color="primary"
-												hint="Automatically send invoices when created"
+												:hint="$t('pages.settings.autoSendInvoicesHint')"
 												persistent-hint
 											></v-switch>
 										</v-col>
@@ -418,19 +424,19 @@
 
 									<div class="text-h6 mb-4 d-flex align-center">
 										<v-icon class="mr-2" color="primary">mdi-text-box</v-icon>
-										Invoice Content
+										{{ $t('pages.settings.invoiceContent') }}
 									</div>
 
 									<v-row>
 										<v-col cols="12">
 											<v-textarea
 												v-model="settings.invoice_default_message"
-												label="Default Invoice Message"
+												:label="$t('pages.settings.defaultInvoiceMessage')"
 												variant="outlined"
 												prepend-inner-icon="mdi-message-text"
 												density="comfortable"
 												rows="3"
-												hint="Greeting message that appears at the top of invoices"
+												:hint="$t('pages.settings.defaultInvoiceMessageHint')"
 												persistent-hint
 											></v-textarea>
 										</v-col>
@@ -438,12 +444,12 @@
 										<v-col cols="12">
 											<v-textarea
 												v-model="settings.invoice_payment_terms"
-												label="Payment Terms"
+												:label="$t('pages.settings.paymentTerms')"
 												variant="outlined"
 												prepend-inner-icon="mdi-file-document-outline"
 												density="comfortable"
 												rows="4"
-												hint="Payment terms, late fees, and rules"
+												:hint="$t('pages.settings.paymentTermsHint')"
 												persistent-hint
 											></v-textarea>
 										</v-col>
@@ -453,7 +459,7 @@
 
 									<div class="text-h6 mb-4 d-flex align-center">
 										<v-icon class="mr-2" color="primary">mdi-page-layout-footer</v-icon>
-										Invoice Footer Layout
+										{{ $t('pages.settings.invoiceFooterLayout') }}
 									</div>
 
 									<v-row>
@@ -461,9 +467,11 @@
 											<v-select
 												v-model="settings.invoice_footer_col1"
 												:items="footerColumnOptions"
-												label="Left Column"
+												:label="$t('pages.settings.leftColumn')"
 												variant="outlined"
 												density="comfortable"
+												item-title="title"
+												item-value="value"
 											></v-select>
 										</v-col>
 
@@ -471,9 +479,11 @@
 											<v-select
 												v-model="settings.invoice_footer_col2"
 												:items="footerColumnOptions"
-												label="Center Column"
+												:label="$t('pages.settings.centerColumn')"
 												variant="outlined"
 												density="comfortable"
+												item-title="title"
+												item-value="value"
 											></v-select>
 										</v-col>
 
@@ -481,9 +491,11 @@
 											<v-select
 												v-model="settings.invoice_footer_col3"
 												:items="footerColumnOptions"
-												label="Right Column"
+												:label="$t('pages.settings.rightColumn')"
 												variant="outlined"
 												density="comfortable"
+												item-title="title"
+												item-value="value"
 											></v-select>
 										</v-col>
 									</v-row>
@@ -495,7 +507,7 @@
 								<v-form ref="datetimeForm">
 									<div class="text-h6 mb-4 d-flex align-center">
 										<v-icon class="mr-2" color="primary">mdi-calendar</v-icon>
-										Date & Time Formats
+										{{ $t('pages.settings.dateTimeFormats') }}
 									</div>
 
 									<v-row>
@@ -503,17 +515,19 @@
 											<v-select
 												v-model="settings.date_format"
 												:items="dateFormats"
-												label="Date Format"
+												:label="$t('pages.settings.dateFormat')"
 												variant="outlined"
 												prepend-inner-icon="mdi-calendar"
 												density="comfortable"
+												item-title="title"
+												item-value="value"
 											></v-select>
 										</v-col>
 
 										<v-col cols="12" md="6">
 											<v-card variant="tonal" color="info">
 												<v-card-text>
-													<div class="text-subtitle-2 mb-2">Preview:</div>
+													<div class="text-subtitle-2 mb-2">{{ $t('pages.settings.preview') }}:</div>
 													<div class="text-h6">{{ formatPreviewDate(new Date()) }}</div>
 												</v-card-text>
 											</v-card>
@@ -523,17 +537,19 @@
 											<v-select
 												v-model="settings.time_format"
 												:items="timeFormats"
-												label="Time Format"
+												:label="$t('pages.settings.timeFormat')"
 												variant="outlined"
 												prepend-inner-icon="mdi-clock"
 												density="comfortable"
+												item-title="title"
+												item-value="value"
 											></v-select>
 										</v-col>
 
 										<v-col cols="12" md="6">
 											<v-card variant="tonal" color="info">
 												<v-card-text>
-													<div class="text-subtitle-2 mb-2">Preview:</div>
+													<div class="text-subtitle-2 mb-2">{{ $t('pages.settings.preview') }}:</div>
 													<div class="text-h6">{{ formatPreviewTime(new Date()) }}</div>
 												</v-card-text>
 											</v-card>
@@ -544,7 +560,7 @@
 
 									<div class="text-h6 mb-4 d-flex align-center">
 										<v-icon class="mr-2" color="primary">mdi-numeric</v-icon>
-										Number Formats
+										{{ $t('pages.settings.numberFormats') }}
 									</div>
 
 									<v-row>
@@ -552,11 +568,13 @@
 											<v-select
 												v-model="settings.number_format"
 												:items="numberFormats"
-												label="Number Format"
+												:label="$t('pages.settings.numberFormat')"
 												variant="outlined"
 												prepend-inner-icon="mdi-numeric"
 												density="comfortable"
-												hint="Format for displaying numbers, decimals and currency"
+												item-title="title"
+												item-value="value"
+												:hint="$t('pages.settings.numberFormatHint')"
 												persistent-hint
 											></v-select>
 										</v-col>
@@ -564,7 +582,7 @@
 										<v-col cols="12" md="6">
 											<v-card variant="tonal" color="info">
 												<v-card-text>
-													<div class="text-subtitle-2 mb-2">Preview:</div>
+													<div class="text-subtitle-2 mb-2">{{ $t('pages.settings.preview') }}:</div>
 													<div class="text-h6">{{ formatPreviewNumber(1234567.89) }}</div>
 												</v-card-text>
 											</v-card>
@@ -577,24 +595,23 @@
 							<v-window-item value="email">
 								<v-form ref="emailForm">
 									<v-alert type="warning" variant="tonal" class="mb-4">
-										<strong>Important:</strong> These settings override your .env configuration. 
-										Test carefully before enabling email notifications.
+										<strong>{{ $t('pages.settings.important') }}:</strong> {{ $t('pages.settings.emailSettingsWarning') }}
 									</v-alert>
 
 									<div class="text-h6 mb-4 d-flex align-center">
 										<v-icon class="mr-2" color="primary">mdi-email-settings</v-icon>
-										SMTP Configuration
+										{{ $t('pages.settings.smtpConfiguration') }}
 									</div>
 
 									<v-row>
 										<v-col cols="12" md="6">
 											<v-text-field
 												v-model="settings.mail_host"
-												label="SMTP Host"
+												:label="$t('pages.settings.smtpHost')"
 												variant="outlined"
 												prepend-inner-icon="mdi-server"
 												density="comfortable"
-												hint="e.g., smtp.gmail.com"
+												:hint="$t('pages.settings.smtpHostHint')"
 												persistent-hint
 											></v-text-field>
 										</v-col>
@@ -602,12 +619,12 @@
 										<v-col cols="12" md="6">
 											<v-text-field
 												v-model="settings.mail_port"
-												label="SMTP Port"
+												:label="$t('pages.settings.smtpPort')"
 												variant="outlined"
 												prepend-inner-icon="mdi-network"
 												density="comfortable"
 												type="number"
-												hint="e.g., 587, 465, 2525"
+												:hint="$t('pages.settings.smtpPortHint')"
 												persistent-hint
 											></v-text-field>
 										</v-col>
@@ -615,7 +632,7 @@
 										<v-col cols="12" md="6">
 											<v-text-field
 												v-model="settings.mail_username"
-												label="SMTP Username"
+												:label="$t('pages.settings.smtpUsername')"
 												variant="outlined"
 												prepend-inner-icon="mdi-account"
 												density="comfortable"
@@ -625,7 +642,7 @@
 										<v-col cols="12" md="6">
 											<v-text-field
 												v-model="settings.mail_password"
-												label="SMTP Password"
+												:label="$t('pages.settings.smtpPassword')"
 												variant="outlined"
 												prepend-inner-icon="mdi-lock"
 												:type="showMailPassword ? 'text' : 'password'"
@@ -639,19 +656,21 @@
 											<v-select
 												v-model="settings.mail_encryption"
 												:items="mailEncryptions"
-												label="Encryption"
+												:label="$t('pages.settings.encryption')"
 												variant="outlined"
 												prepend-inner-icon="mdi-shield-lock"
 												density="comfortable"
+												item-title="title"
+												item-value="value"
 											></v-select>
 										</v-col>
 
 										<v-col cols="12" md="6">
 											<v-text-field
 												v-model="settings.mail_from_address"
-												label="From Email Address"
+												:label="$t('pages.settings.fromEmailAddress')"
 												variant="outlined"
-												prepend-inner-icon="mdi-email-send"
+												prepend-inner-icon="mdi-email"
 												density="comfortable"
 												type="email"
 											></v-text-field>
@@ -660,7 +679,7 @@
 										<v-col cols="12" md="6">
 											<v-text-field
 												v-model="settings.mail_from_name"
-												label="From Name"
+												:label="$t('pages.settings.fromName')"
 												variant="outlined"
 												prepend-inner-icon="mdi-account-circle"
 												density="comfortable"
@@ -674,25 +693,24 @@
 							<v-window-item value="legal">
 								<v-form ref="legalForm">
 									<v-alert type="info" variant="tonal" class="mb-4">
-										<strong>Legal Information:</strong> Add your privacy notice and imprint here. 
-										These pages will be publicly accessible on the login page and in user profiles.
+										<strong>{{ $t('pages.settings.legalInformation') }}:</strong> {{ $t('pages.settings.legalInformationHint') }}
 									</v-alert>
 
 									<div class="text-h6 mb-4 d-flex align-center">
 										<v-icon class="mr-2" color="primary">mdi-shield-account</v-icon>
-										Privacy Notice
+										{{ $t('pages.settings.privacyNotice') }}
 									</div>
 
 									<v-row>
 										<v-col cols="12">
 											<v-textarea
 												v-model="settings.privacy_notice"
-												label="Privacy Notice (HTML)"
+												:label="$t('pages.settings.privacyNoticeHtml')"
 												variant="outlined"
 												prepend-inner-icon="mdi-file-document-edit"
 												density="comfortable"
 												rows="10"
-												hint="You can use HTML for formatting (e.g., <h2>, <p>, <ul>, <li>, <strong>, etc.)"
+												:hint="$t('pages.settings.htmlFormattingHint')"
 												persistent-hint
 											></v-textarea>
 										</v-col>
@@ -702,19 +720,19 @@
 
 									<div class="text-h6 mb-4 d-flex align-center">
 										<v-icon class="mr-2" color="primary">mdi-gavel</v-icon>
-										Imprint
+										{{ $t('pages.settings.imprint') }}
 									</div>
 
 									<v-row>
 										<v-col cols="12">
 											<v-textarea
 												v-model="settings.imprint"
-												label="Imprint (HTML)"
+												:label="$t('pages.settings.imprintHtml')"
 												variant="outlined"
 												prepend-inner-icon="mdi-file-document-edit"
 												density="comfortable"
 												rows="10"
-												hint="You can use HTML for formatting (e.g., <h2>, <p>, <ul>, <li>, <strong>, etc.)"
+												:hint="$t('pages.settings.htmlFormattingHint')"
 												persistent-hint
 											></v-textarea>
 										</v-col>
@@ -733,7 +751,7 @@
 							@click="resetSettings"
 							:disabled="loading"
 						>
-							Reset
+							{{ $t('common.reset') }}
 						</v-btn>
 						<v-btn
 							color="primary"
@@ -742,7 +760,7 @@
 							size="large"
 						>
 							<v-icon start>mdi-content-save</v-icon>
-							Save All Settings
+							{{ $t('pages.settings.saveAllSettings') }}
 						</v-btn>
 					</v-card-actions>
 				</v-card>
@@ -756,13 +774,15 @@ import { mapActions, mapGetters } from 'pinia'
 import { store } from '../store'
 import { formatNumber, formatDate, formatTime } from '../utils/formatters'
 import { useLanguage } from '../composables/useLanguage'
+import { useI18n } from 'vue-i18n'
 import axios from 'axios'
 
 export default {
 	name: 'Settings',
 	setup() {
 		const { setLanguage } = useLanguage()
-		return { setLanguage }
+		const { t } = useI18n()
+		return { setLanguage, t }
 	},
 	data() {
 		return {
@@ -823,74 +843,13 @@ export default {
 			},
 			originalSettings: {},
 			
-			// Dropdown options
+			// Dropdown options - language only in data (static)
 			languageOptions: [
 				{ title: 'English', value: 'en' },
 				{ title: 'Deutsch (German)', value: 'de' },
 				{ title: 'Français (French)', value: 'fr' },
 				{ title: 'Italiano (Italian)', value: 'it' },
 				{ title: 'Español (Spanish)', value: 'es' }
-			],
-			currencyOptions: [
-				{ title: '$ - US Dollar', value: '$', code: 'USD' },
-				{ title: '€ - Euro', value: '€', code: 'EUR' },
-				{ title: '£ - British Pound', value: '£', code: 'GBP' },
-				{ title: '¥ - Japanese Yen', value: '¥', code: 'JPY' },
-				{ title: 'CHF - Swiss Franc', value: 'CHF', code: 'CHF' },
-				{ title: 'C$ - Canadian Dollar', value: 'C$', code: 'CAD' },
-				{ title: 'A$ - Australian Dollar', value: 'A$', code: 'AUD' },
-			],
-			invoiceNumberFormats: [
-				{ title: 'YYYY-MM-number (e.g., 2025-10-001)', value: 'YYYY-MM-number' },
-				{ title: 'YYYY-number (e.g., 2025-001)', value: 'YYYY-number' },
-				{ title: 'Number only (e.g., 001)', value: 'number' }
-			],
-			invoiceStatuses: [
-				{ title: 'Draft', value: 'draft' },
-				{ title: 'Sent', value: 'sent' },
-				{ title: 'Paid', value: 'paid' },
-				{ title: 'Overdue', value: 'overdue' },
-				{ title: 'Cancelled', value: 'cancelled' }
-			],
-			footerColumnOptions: [
-				{ title: 'Company Information', value: 'company_info' },
-				{ title: 'Bank Information', value: 'bank_info' },
-				{ title: 'Page Information (x/y)', value: 'page_info' },
-				{ title: 'Empty', value: 'empty' }
-			],
-			dateFormats: [
-				{ title: 'DD/MM/YYYY (31/12/2025)', value: 'DD/MM/YYYY' },
-				{ title: 'MM/DD/YYYY (12/31/2025)', value: 'MM/DD/YYYY' },
-				{ title: 'YYYY-MM-DD (2025-12-31)', value: 'YYYY-MM-DD' },
-				{ title: 'D/M/YYYY (31/12/2025 - no leading zeros)', value: 'D/M/YYYY' },
-				{ title: 'DD.MM.YYYY (31.12.2025)', value: 'DD.MM.YYYY' },
-				{ title: 'DD-MM-YYYY (31-12-2025)', value: 'DD-MM-YYYY' },
-				{ title: 'YYYY/MM/DD (2025/12/31)', value: 'YYYY/MM/DD' },
-				{ title: 'DD MMM YYYY (31 Dec 2025)', value: 'DD MMM YYYY' },
-				{ title: 'D MMMM YYYY (31 December 2025)', value: 'D MMMM YYYY' },
-				{ title: 'EEEE, DD MMMM YYYY (Monday, 31 December 2025)', value: 'EEEE, DD MMMM YYYY' },
-				{ title: 'EEE, DD MMM YYYY (Mon, 31 Dec 2025)', value: 'EEE, DD MMM YYYY' },
-				{ title: 'MMM D, YYYY (Dec 31, 2025)', value: 'MMM D, YYYY' },
-				{ title: 'MMMM D, YYYY (December 31, 2025)', value: 'MMMM D, YYYY' },
-			],
-			timeFormats: [
-				{ title: '24-hour (23:59)', value: '24h' },
-				{ title: '24-hour with seconds (23:59:59)', value: '24h:ss' },
-				{ title: '12-hour (11:59 PM)', value: '12h' },
-				{ title: '12-hour with seconds (11:59:59 PM)', value: '12h:ss' },
-				{ title: '12-hour no leading zero (3:59 PM)', value: '12h-nozero' },
-				{ title: '12-hour no leading zero with seconds (3:59:59 PM)', value: '12h-nozero:ss' },
-			],
-			numberFormats: [
-				{ title: '1,234.56 (US, UK, Australia, etc.)', value: 'en-US' },
-				{ title: '1.234,56 (Germany, Most of Europe)', value: 'de-DE' },
-				{ title: '1 234,56 (France)', value: 'fr-FR' },
-				{ title: '12,34,567.89 (India)', value: 'en-IN' }
-			],
-			mailEncryptions: [
-				{ title: 'TLS', value: 'tls' },
-				{ title: 'SSL', value: 'ssl' },
-				{ title: 'None', value: 'null' }
 			]
 		}
 	},
@@ -898,6 +857,83 @@ export default {
 		...mapGetters(store, ['getUser']),
 		isAdmin() {
 			return this.getUser?.role === 'admin'
+		},
+		currencyOptions() {
+			return [
+				{ title: this.t('pages.settings.dropdownOptions.currencies.usd'), value: '$', code: 'USD' },
+				{ title: this.t('pages.settings.dropdownOptions.currencies.eur'), value: '€', code: 'EUR' },
+				{ title: this.t('pages.settings.dropdownOptions.currencies.gbp'), value: '£', code: 'GBP' },
+				{ title: this.t('pages.settings.dropdownOptions.currencies.jpy'), value: '¥', code: 'JPY' },
+				{ title: this.t('pages.settings.dropdownOptions.currencies.chf'), value: 'CHF', code: 'CHF' },
+				{ title: this.t('pages.settings.dropdownOptions.currencies.cad'), value: 'C$', code: 'CAD' },
+				{ title: this.t('pages.settings.dropdownOptions.currencies.aud'), value: 'A$', code: 'AUD' }
+			];
+		},
+		invoiceNumberFormats() {
+			return [
+				{ title: this.t('pages.settings.dropdownOptions.invoiceNumberFormats.yyyymmnumber'), value: 'YYYY-MM-number' },
+				{ title: this.t('pages.settings.dropdownOptions.invoiceNumberFormats.yyyynumber'), value: 'YYYY-number' },
+				{ title: this.t('pages.settings.dropdownOptions.invoiceNumberFormats.number'), value: 'number' }
+			];
+		},
+		invoiceStatuses() {
+			return [
+				{ title: this.t('pages.settings.dropdownOptions.invoiceStatuses.draft'), value: 'draft' },
+				{ title: this.t('pages.settings.dropdownOptions.invoiceStatuses.sent'), value: 'sent' },
+				{ title: this.t('pages.settings.dropdownOptions.invoiceStatuses.paid'), value: 'paid' },
+				{ title: this.t('pages.settings.dropdownOptions.invoiceStatuses.overdue'), value: 'overdue' },
+				{ title: this.t('pages.settings.dropdownOptions.invoiceStatuses.cancelled'), value: 'cancelled' }
+			];
+		},
+		footerColumnOptions() {
+			return [
+				{ title: this.t('pages.settings.dropdownOptions.footerColumns.companyInfo'), value: 'company_info' },
+				{ title: this.t('pages.settings.dropdownOptions.footerColumns.bankInfo'), value: 'bankInfo' },
+				{ title: this.t('pages.settings.dropdownOptions.footerColumns.pageInfo'), value: 'page_info' },
+				{ title: this.t('pages.settings.dropdownOptions.footerColumns.empty'), value: 'empty' }
+			];
+		},
+		dateFormats() {
+			return [
+				{ title: this.t('pages.settings.dropdownOptions.dateFormats.ddmmyyyy'), value: 'DD/MM/YYYY' },
+				{ title: this.t('pages.settings.dropdownOptions.dateFormats.mmddyyyy'), value: 'MM/DD/YYYY' },
+				{ title: this.t('pages.settings.dropdownOptions.dateFormats.yyyymmdd'), value: 'YYYY-MM-DD' },
+				{ title: this.t('pages.settings.dropdownOptions.dateFormats.dMyyyy'), value: 'D/M/YYYY' },
+				{ title: this.t('pages.settings.dropdownOptions.dateFormats.ddmmyyyydot'), value: 'DD.MM.YYYY' },
+				{ title: this.t('pages.settings.dropdownOptions.dateFormats.ddmmyyyydash'), value: 'DD-MM-YYYY' },
+				{ title: this.t('pages.settings.dropdownOptions.dateFormats.yyyymmddslash'), value: 'YYYY/MM/DD' },
+				{ title: this.t('pages.settings.dropdownOptions.dateFormats.ddmmmyyyy'), value: 'DD MMM YYYY' },
+				{ title: this.t('pages.settings.dropdownOptions.dateFormats.dmmmmyyyy'), value: 'D MMMM YYYY' },
+				{ title: this.t('pages.settings.dropdownOptions.dateFormats.eeeeddmmmmyyyy'), value: 'EEEE, DD MMMM YYYY' },
+				{ title: this.t('pages.settings.dropdownOptions.dateFormats.eeeddmmmyyyy'), value: 'EEE, DD MMM YYYY' },
+				{ title: this.t('pages.settings.dropdownOptions.dateFormats.mmmddyyyy'), value: 'MMM D, YYYY' },
+				{ title: this.t('pages.settings.dropdownOptions.dateFormats.mmmmddyyyy'), value: 'MMMM D, YYYY' }
+			];
+		},
+		timeFormats() {
+			return [
+				{ title: this.t('pages.settings.dropdownOptions.timeFormats.24h'), value: '24h' },
+				{ title: this.t('pages.settings.dropdownOptions.timeFormats.24hss'), value: '24h:ss' },
+				{ title: this.t('pages.settings.dropdownOptions.timeFormats.12h'), value: '12h' },
+				{ title: this.t('pages.settings.dropdownOptions.timeFormats.12hss'), value: '12h:ss' },
+				{ title: this.t('pages.settings.dropdownOptions.timeFormats.12hnozero'), value: '12h-nozero' },
+				{ title: this.t('pages.settings.dropdownOptions.timeFormats.12hnozeroSs'), value: '12h-nozero:ss' }
+			];
+		},
+		numberFormats() {
+			return [
+				{ title: this.t('pages.settings.dropdownOptions.numberFormats.enUS'), value: 'en-US' },
+				{ title: this.t('pages.settings.dropdownOptions.numberFormats.deDE'), value: 'de-DE' },
+				{ title: this.t('pages.settings.dropdownOptions.numberFormats.frFR'), value: 'fr-FR' },
+				{ title: this.t('pages.settings.dropdownOptions.numberFormats.enIN'), value: 'en-IN' }
+			];
+		},
+		mailEncryptions() {
+			return [
+				{ title: this.t('pages.settings.dropdownOptions.mailEncryptions.tls'), value: 'tls' },
+				{ title: this.t('pages.settings.dropdownOptions.mailEncryptions.ssl'), value: 'ssl' },
+				{ title: this.t('pages.settings.dropdownOptions.mailEncryptions.none'), value: 'null' }
+			];
 		}
 	},
 	mounted() {

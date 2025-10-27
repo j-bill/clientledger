@@ -1,13 +1,13 @@
 <template>
   <v-container fluid>
-    <h1 class="text-h4 mb-4">Projects</h1>
+    <h1 class="text-h4 mb-4">{{ $t('pages.projects.title') }}</h1>
     
     <!-- Search & Actions -->
     <v-row class="mb-4">
       <v-col cols="12" sm="6">
         <v-text-field
           v-model="search"
-          label="Search"
+          :label="$t('common.search')"
           prepend-inner-icon="mdi-magnify"
           single-line
           hide-details
@@ -19,14 +19,14 @@
           <v-icon>mdi-filter</v-icon>
         </v-btn>
         <v-btn v-if="isAdmin" color="primary" data-test="btn-new-project" @click="openCreateDialog" prepend-icon="mdi-plus">
-          New Project
+          {{ $t('pages.projects.newProject') }}
         </v-btn>
       </v-col>
     </v-row>
     
     <!-- Filters -->
     <v-card v-if="showFilters" class="mb-4">
-      <v-card-title>Filters</v-card-title>
+      <v-card-title>{{ $t('common.filters') }}</v-card-title>
       <v-card-text>
         <v-row>
           <v-col cols="12" sm="6" md="4">
@@ -35,7 +35,7 @@
               :items="customers"
               item-title="name"
               item-value="id"
-              label="Customers"
+              :label="$t('pages.projects.customers')"
               multiple
               chips
               closable-chips
@@ -52,7 +52,7 @@
               :items="freelancers"
               item-title="name"
               item-value="id"
-              label="Freelancers"
+              :label="$t('pages.projects.freelancers')"
               multiple
               chips
               closable-chips
@@ -65,7 +65,7 @@
           </v-col>
           <v-col cols="12" class="text-right">
             <v-btn class="ms-2" @click="resetFilters">
-              Reset
+              {{ $t('common.reset') }}
             </v-btn>
           </v-col>
         </v-row>
@@ -84,7 +84,7 @@
         :sort-by="sortBy"
       >
         <template v-slot:item.deadline="{ item }">
-          {{ item.deadline ? formatDate(item.deadline) : 'N/A' }}
+          {{ item.deadline ? formatDate(item.deadline) : $t('pages.projects.na') }}
         </template>
         <template v-slot:item.hourly_rate="{ item }">
           <span v-if="isAdmin">{{ formatCurrency(item.hourly_rate || 0) }}</span>
@@ -119,14 +119,14 @@
     <!-- Delete Confirmation Dialog -->
     <v-dialog v-model="deleteDialog" max-width="500px">
       <v-card>
-        <v-card-title>Delete Project</v-card-title>
+        <v-card-title>{{ $t('pages.projects.deleteProject') }}</v-card-title>
         <v-card-text>
-          Are you sure you want to delete this project? This action cannot be undone.
+          {{ $t('pages.projects.deleteConfirmation') }}
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" variant="text" @click="deleteDialog = false">Cancel</v-btn>
-          <v-btn color="error" @click="deleteProjectRecord">Delete</v-btn>
+          <v-btn color="primary" variant="text" @click="deleteDialog = false">{{ $t('common.cancel') }}</v-btn>
+          <v-btn color="error" @click="deleteProjectRecord">{{ $t('common.delete') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -134,14 +134,14 @@
     <!-- Create Project Dialog -->
     <v-dialog v-model="createDialog" max-width="800px">
       <v-card>
-        <v-card-title>New Project</v-card-title>
+        <v-card-title>{{ $t('pages.projects.newProject') }}</v-card-title>
         <v-card-text>
           <project-form ref="createForm" :customers="customers" :freelancers="freelancers" @save="saveProject"></project-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="error" variant="text" @click="createDialog = false">Cancel</v-btn>
-          <v-btn color="primary" @click="$refs.createForm.submit()">Save</v-btn>
+          <v-btn color="error" variant="text" @click="createDialog = false">{{ $t('common.cancel') }}</v-btn>
+          <v-btn color="primary" @click="$refs.createForm.submit()">{{ $t('common.save') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -149,14 +149,14 @@
     <!-- Edit Project Dialog -->
     <v-dialog v-model="editDialog" max-width="800px">
       <v-card>
-        <v-card-title>Edit Project</v-card-title>
+        <v-card-title>{{ $t('pages.projects.editProject') }}</v-card-title>
         <v-card-text>
           <project-form ref="editForm" :project="currentProject" :customers="customers" :freelancers="freelancers" @save="handleUpdateProject"></project-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="error" variant="text" @click="editDialog = false">Cancel</v-btn>
-          <v-btn color="primary" @click="$refs.editForm.submit()">Update</v-btn>
+          <v-btn color="error" variant="text" @click="editDialog = false">{{ $t('common.cancel') }}</v-btn>
+          <v-btn color="primary" @click="$refs.editForm.submit()">{{ $t('pages.projects.update') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -168,11 +168,16 @@ import ProjectForm from '../components/forms/ProjectForm.vue';
 import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
 import { formatDate, formatCurrency } from '../utils/formatters';
+import { useI18n } from 'vue-i18n';
 
 export default {
   name: 'ProjectsIndex',
   components: {
     ProjectForm
+  },
+  setup() {
+    const { t } = useI18n();
+    return { t };
   },
   data() {
     return {
@@ -191,21 +196,24 @@ export default {
       customerSearch: '',
       freelancerSearch: '',
       
-      sortBy: [{ key: 'id', order: 'desc' }],
-      headers: [
-        { title: 'ID', key: 'id' },
-        { title: 'Name', key: 'name' },
-        { title: 'Customer', key: 'customer.name' },
-        { title: 'Project Rate', key: 'hourly_rate' },
-        { title: 'Assigned Freelancers', key: 'users', sortable: false },
-        { title: 'Deadline', key: 'deadline' },
-        { title: 'Actions', key: 'actions', sortable: false }
-      ]
+      sortBy: [{ key: 'id', order: 'desc' }]
     };
   },
   
   computed: {
     ...mapState(store, ['projects', 'customers', 'users', 'user', 'currencySymbol', 'settings']),
+    
+    headers() {
+      return [
+        { title: 'ID', key: 'id' },
+        { title: this.t('forms.project.name'), key: 'name' },
+        { title: this.t('pages.projects.customer'), key: 'customer.name' },
+        { title: this.t('pages.projects.projectRate'), key: 'hourly_rate' },
+        { title: this.t('pages.projects.assignedFreelancers'), key: 'users', sortable: false },
+        { title: this.t('pages.projects.deadline'), key: 'deadline' },
+        { title: this.t('common.actions'), key: 'actions', sortable: false }
+      ];
+    },
     
     isAdmin() {
       return this.user?.role === 'admin';

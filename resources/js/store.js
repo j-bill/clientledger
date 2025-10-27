@@ -445,6 +445,16 @@ export const store = defineStore("store", {
           settingsObj[setting.key] = setting.value;
         });
         this.settings = settingsObj;
+        
+        // Apply language from settings if available
+        const language = settingsObj.language || 'en';
+        if (window.$i18n && window.$i18n.global) {
+          if (window.$i18n.global.locale.value !== language) {
+            window.$i18n.global.locale.value = language;
+            document.documentElement.lang = language;
+          }
+        }
+        
         return this.settings;
       } catch (error) {
         console.error('Failed to fetch settings:', error);

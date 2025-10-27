@@ -15,14 +15,14 @@
             <v-row class="hero-content">
               <v-col cols="12" md="6" class="d-flex flex-column justify-center">
                 <div class="hero-text">
-                  <h1 class="text-h4 font-weight-bold mb-2">Your Money Today</h1>
-                  <p class="text-subtitle-1 mb-6">Track your {{ isAdmin ? 'revenue' : 'earnings' }} growth in real-time</p>
+                  <h1 class="text-h4 font-weight-bold mb-2">{{ $t('pages.home.yourMoneyToday') }}</h1>
+                  <p class="text-subtitle-1 mb-6">{{ $t('pages.home.trackGrowth', { type: isAdmin ? 'revenue' : 'earnings' }) }}</p>
                   <div class="hero-stat">
-                    <div class="hero-label">{{ isAdmin ? 'This Month Revenue' : 'This Month Earnings' }}</div>
+                    <div class="hero-label">{{ isAdmin ? $t('pages.home.thisMonthRevenue') : $t('pages.home.thisMonthEarnings') }}</div>
                     <div class="hero-value animate-scale">{{ formatCurrency(isAdmin ? kpis.revenue.monthly.actual : kpis.earnings.monthly.actual) }}</div>
                     <div class="hero-meta" v-if="(isAdmin ? kpis.revenue.is_extrapolated : kpis.earnings.is_extrapolated)">
                       <v-icon size="small" color="warning" class="mr-1">mdi-lightning-bolt</v-icon>
-                      <span>Extrapolated estimate: {{ formatCurrency(isAdmin ? kpis.revenue.monthly.extrapolated : kpis.earnings.monthly.extrapolated) }}</span>
+                      <span>{{ $t('pages.home.extrapolatedEstimate') }}: {{ formatCurrency(isAdmin ? kpis.revenue.monthly.extrapolated : kpis.earnings.monthly.extrapolated) }}</span>
                     </div>
                   </div>
                 </div>
@@ -50,21 +50,21 @@
               <div class="kpi-icon-bg primary">
                 <v-icon>mdi-calendar</v-icon>
               </div>
-              <div class="kpi-label">This Year</div>
+              <div class="kpi-label">{{ $t('pages.home.thisYear') }}</div>
               <div class="kpi-primary-value animate-counter">{{
                 formatCurrency(isAdmin ? kpis.revenue.yearly.actual : kpis.earnings.yearly.actual)
               }}</div>
               <div class="kpi-meta mt-3">
                 <div class="meta-row" v-if="(isAdmin ? kpis.revenue.yearly.extrapolated : kpis.earnings.yearly.extrapolated)">
-                  <span class="meta-label">Estimated:</span>
+                  <span class="meta-label">{{ $t('pages.home.estimated') }}:</span>
                   <span class="meta-value">{{ formatCurrency(isAdmin ? kpis.revenue.yearly.extrapolated : kpis.earnings.yearly.extrapolated) }}</span>
                 </div>
                 <div class="meta-row">
-                  <span class="meta-label">Hours:</span>
+                  <span class="meta-label">{{ $t('pages.home.hours') }}:</span>
                   <span class="meta-value">{{ formatHours(kpis.hours.yearly.total) }}</span>
                 </div>
                 <div class="meta-row">
-                  <span class="meta-label">Billable:</span>
+                  <span class="meta-label">{{ $t('pages.home.billable') }}:</span>
                   <span class="meta-value">{{ formatHours(kpis.hours.yearly.billable) }}</span>
                 </div>
               </div>
@@ -79,21 +79,21 @@
               <div class="kpi-icon-bg accent">
                 <v-icon>mdi-lightning-bolt</v-icon>
               </div>
-              <div class="kpi-label">This Month</div>
+              <div class="kpi-label">{{ $t('pages.home.thisMonth') }}</div>
               <div class="kpi-primary-value animate-counter">{{
                 formatCurrency(isAdmin ? kpis.revenue.monthly.actual : kpis.earnings.monthly.actual)
               }}</div>
               <div class="kpi-meta mt-3">
                 <div class="meta-row" v-if="(isAdmin ? kpis.revenue.is_extrapolated : kpis.earnings.is_extrapolated)">
-                  <span class="meta-label">Estimated:</span>
+                  <span class="meta-label">{{ $t('pages.home.estimated') }}:</span>
                   <span class="meta-value">{{ formatCurrency(isAdmin ? kpis.revenue.monthly.extrapolated : kpis.earnings.monthly.extrapolated) }}</span>
                 </div>
                 <div class="meta-row">
-                  <span class="meta-label">Total Hours:</span>
+                  <span class="meta-label">{{ $t('pages.home.totalHours') }}:</span>
                   <span class="meta-value">{{ formatHours(kpis.hours.monthly.total) }}</span>
                 </div>
                 <div class="meta-row">
-                  <span class="meta-label">Billable:</span>
+                  <span class="meta-label">{{ $t('pages.home.billable') }}:</span>
                   <span class="meta-value">{{ formatHours(kpis.hours.monthly.billable) }}</span>
                 </div>
               </div>
@@ -108,21 +108,21 @@
               <div class="kpi-icon-bg success">
                 <v-icon>mdi-history</v-icon>
               </div>
-              <div class="kpi-label">Last Month</div>
+              <div class="kpi-label">{{ $t('pages.home.yesterday') }}</div>
               <div class="kpi-primary-value">{{
                 formatCurrency(isAdmin ? kpis.revenue.last_month.paid : kpis.earnings.last_month.paid)
               }}</div>
               <div class="kpi-meta mt-3">
                 <div class="meta-row" v-if="(isAdmin ? kpis.revenue.last_month.due : kpis.earnings.last_month.due) > 0">
-                  <span class="meta-label">Due:</span>
+                  <span class="meta-label">{{ $t('common.due') }}:</span>
                   <span class="meta-value text-warning">{{ formatCurrency(isAdmin ? kpis.revenue.last_month.due : kpis.earnings.last_month.due) }}</span>
                 </div>
                 <div class="meta-row">
-                  <span class="meta-label">Hours:</span>
+                  <span class="meta-label">{{ $t('pages.home.hours') }}:</span>
                   <span class="meta-value">{{ formatHours(kpis.hours.last_month.total) }}</span>
                 </div>
                 <div class="meta-row">
-                  <span class="meta-label">Billable:</span>
+                  <span class="meta-label">{{ $t('pages.home.billable') }}:</span>
                   <span class="meta-value">{{ formatHours(kpis.hours.last_month.billable) }}</span>
                 </div>
               </div>
@@ -137,21 +137,21 @@
               <div class="kpi-icon-bg info">
                 <v-icon>mdi-trending-up</v-icon>
               </div>
-              <div class="kpi-label">Last Year</div>
+              <div class="kpi-label">{{ $t('pages.home.lastSeven') }}</div>
               <div class="kpi-primary-value">{{
                 formatCurrency(isAdmin ? kpis.revenue.last_year.paid : kpis.earnings.last_year.paid)
               }}</div>
               <div class="kpi-meta mt-3">
                 <div class="meta-row" v-if="(isAdmin ? kpis.revenue.last_year.due : kpis.earnings.last_year.due) > 0">
-                  <span class="meta-label">Due:</span>
+                  <span class="meta-label">{{ $t('common.due') }}:</span>
                   <span class="meta-value text-warning">{{ formatCurrency(isAdmin ? kpis.revenue.last_year.due : kpis.earnings.last_year.due) }}</span>
                 </div>
                 <div class="meta-row">
-                  <span class="meta-label">Hours:</span>
+                  <span class="meta-label">{{ $t('pages.home.hours') }}:</span>
                   <span class="meta-value">{{ formatHours(kpis.hours.last_year.total) }}</span>
                 </div>
                 <div class="meta-row">
-                  <span class="meta-label">Billable:</span>
+                  <span class="meta-label">{{ $t('pages.home.billable') }}:</span>
                   <span class="meta-value">{{ formatHours(kpis.hours.last_year.billable) }}</span>
                 </div>
               </div>
@@ -167,7 +167,7 @@
         <v-card class="chart-card" :elevation="0">
           <v-card-title class="chart-title">
             <v-icon size="24" class="mr-2">mdi-chart-line-variant</v-icon>
-            {{ isAdmin ? 'Revenue' : 'Earnings' }} Trend ({{ new Date().getFullYear() }})
+            {{ isAdmin ? $t('pages.home.revenue') : $t('pages.home.earnings') }} {{ $t('pages.home.trend') }} ({{ new Date().getFullYear() }})
           </v-card-title>
           <v-card-text>
             <GChart
@@ -184,7 +184,7 @@
         <v-card class="chart-card" :elevation="0">
           <v-card-title class="chart-title">
             <v-icon size="24" class="mr-2">mdi-crown</v-icon>
-            {{ isAdmin ? 'Top Customers' : 'Top Projects' }}
+            {{ isAdmin ? $t('pages.home.topCustomers') : $t('pages.home.topProjects') }}
           </v-card-title>
           <v-card-text>
             <GChart
@@ -204,7 +204,7 @@
         <v-card class="chart-card" :elevation="0">
           <v-card-title class="chart-title">
             <v-icon size="24" class="mr-2">mdi-clock-check</v-icon>
-            Hours Worked (This Month)
+            {{ $t('pages.home.hoursWorkedThisMonth') }}
           </v-card-title>
           <v-card-text>
             <GChart
@@ -221,7 +221,7 @@
         <v-card class="chart-card" :elevation="0">
           <v-card-title class="chart-title">
             <v-icon size="24" class="mr-2">mdi-calendar-alert</v-icon>
-            Upcoming Deadlines
+            {{ $t('pages.home.upcomingDeadlines') }}
           </v-card-title>
           <v-card-text class="pb-0">
             <v-list class="deadline-list pb-0">
@@ -247,14 +247,14 @@
                       size="small"
                       class="font-weight-bold"
                     >
-                      {{ deadline.days_until }}d
+                      {{ deadline.days_until }}{{ $t('pages.home.daysSuffix') }}
                     </v-chip>
                   </template>
                 </v-list-item>
               </template>
               <v-list-item v-else class="text-center py-8">
                 <v-icon size="48" color="rgba(255,255,255,0.2)" class="mb-2">mdi-check-all</v-icon>
-                <div class="text-subtitle-2 text-center">No upcoming deadlines</div>
+                <div class="text-subtitle-2 text-center">{{ $t('pages.home.noUpcomingDeadlines') }}</div>
               </v-list-item>
             </v-list>
           </v-card-text>
@@ -544,7 +544,7 @@ export default {
       return this.dynamicRevenueChartOptions;
     },
     revenueChartData() {
-      const headers = ["Date", "Revenue"];
+      const headers = [this.$t('pages.home.chartLabels.date'), this.$t('pages.home.chartLabels.revenue')];
       const data = this.yearlyRevenueTrend.map((item) => [
         new Date(item.date),
         parseFloat(item.amount),
@@ -552,7 +552,7 @@ export default {
       return [headers, ...data];
     },
     earningsChartData() {
-      const headers = ["Date", "Earnings"];
+      const headers = [this.$t('pages.home.chartLabels.date'), this.$t('pages.home.chartLabels.earnings')];
       const data = this.yearlyEarningsTrend?.map((item) => [
         new Date(item.date),
         parseFloat(item.amount),
@@ -560,7 +560,7 @@ export default {
       return [headers, ...data];
     },
     customerChartData() {
-      const headers = ["Customer", "Revenue"];
+      const headers = [this.$t('pages.home.chartLabels.customer'), this.$t('pages.home.chartLabels.revenue')];
       const data = Object.entries(this.revenueByCustomer || {})
         .sort((a, b) => parseFloat(b[1]) - parseFloat(a[1])) // Sort by revenue descending
         .slice(0, 5) // Take only top 5
@@ -568,14 +568,14 @@ export default {
       return [headers, ...data];
     },
     projectEarningsChartData() {
-      const headers = ["Project", "Earnings"];
+      const headers = [this.$t('pages.home.chartLabels.project'), this.$t('pages.home.chartLabels.earnings')];
       const data = Object.entries(this.earningsByProject || {}).map(
         ([project, amount]) => [project, parseFloat(amount)]
       );
       return [headers, ...data];
     },
     hoursChartData() {
-      const headers = ["Date", "Billable", "Non-Billable"];
+      const headers = [this.$t('pages.home.chartLabels.date'), this.$t('pages.home.chartLabels.billable'), this.$t('pages.home.chartLabels.nonBillable')];
       const data = this.monthlyHours.map((item) => {
         const total = parseFloat(item.hours);
         const billable = parseFloat(item.billable || 0);
@@ -588,7 +588,7 @@ export default {
       const trend = this.heroTrendDataRaw || [];
       
       if (!trend || trend.length === 0) {
-        return [["Month", "Actual", "Projection", { role: 'annotation' }]];
+        return [[this.$t('pages.home.chartLabels.month'), this.$t('pages.home.chartLabels.actual'), this.$t('pages.home.chartLabels.projection'), { role: 'annotation' }]];
       }
 
       // Get the last 12 months of actual data
@@ -600,7 +600,7 @@ export default {
       // Calculate trend line for projection
       if (actualData.length < 2) {
         return [
-          ["Month", "Actual", "Projection", { role: 'annotation' }],
+          [this.$t('pages.home.chartLabels.month'), this.$t('pages.home.chartLabels.actual'), this.$t('pages.home.chartLabels.projection'), { role: 'annotation' }],
           ...actualData.map((item, idx) => [
             new Date(item[0]).toLocaleDateString('en-US', { year: '2-digit', month: 'short' }),
             item[1],
@@ -655,7 +655,7 @@ export default {
       }
 
       return [
-        ["Month", "Actual", "Projection", { role: 'annotation' }],
+        [this.$t('pages.home.chartLabels.month'), this.$t('pages.home.chartLabels.actual'), this.$t('pages.home.chartLabels.projection'), { role: 'annotation' }],
         ...formattedActual,
         ...projectionData,
       ];

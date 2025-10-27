@@ -4,89 +4,89 @@
       <v-col cols="12" md="6">
         <v-text-field
           v-model="formData.name"
-          label="Name"
+          :label="$t('forms.customer.name')"
           prepend-icon="mdi-account"
-          :rules="[v => !!v || 'Name is required']"
+          :rules="[v => !!v || $t('forms.customer.nameRequired')]"
         ></v-text-field>
       </v-col>
       <v-col cols="12" md="6">
         <v-text-field
           v-model="formData.contact_person"
-          label="Contact Person"
+          :label="$t('forms.customer.contactPerson')"
           prepend-icon="mdi-account"
         ></v-text-field>
       </v-col>
       <v-col cols="12" md="6">
         <v-text-field
           v-model="formData.contact_email"
-          label="Contact Email"
+          :label="$t('forms.customer.contactEmail')"
           type="email"
           prepend-icon="mdi-email"
           :rules="[
-            v => !v || /.+@.+\..+/.test(v) || 'Email must be valid'
+            v => !v || /.+@.+\..+/.test(v) || $t('forms.customer.emailValid')
           ]"
         ></v-text-field>
       </v-col>
       <v-col cols="12" md="6">
         <v-text-field
           v-model="formData.contact_phone"
-          label="Contact Phone"
+          :label="$t('forms.customer.contactPhone')"
           prepend-icon="mdi-phone"
         ></v-text-field>
       </v-col>
       <v-col cols="12" md="6">
         <v-text-field
           v-model="formData.address_line_1"
-          label="Address Line 1"
+          :label="$t('forms.customer.addressLine1')"
           prepend-icon="mdi-map-marker"
         ></v-text-field>
       </v-col>
       <v-col cols="12" md="6">
         <v-text-field
           v-model="formData.address_line_2"
-          label="Address Line 2"
+          :label="$t('forms.customer.addressLine2')"
           prepend-icon="mdi-map-marker"
         ></v-text-field>
       </v-col>
       <v-col cols="12" md="6">
         <v-text-field
           v-model="formData.city"
-          label="City"
+          :label="$t('forms.customer.city')"
           prepend-icon="mdi-city"
         ></v-text-field>
       </v-col>
       <v-col cols="12" md="6">
         <v-text-field
           v-model="formData.state"
-          label="State"
+          :label="$t('forms.customer.state')"
           prepend-icon="mdi-city"
         ></v-text-field>
       </v-col>
       <v-col cols="12" md="6">
         <v-text-field
           v-model="formData.postcode"
-          label="Postcode"
+          :label="$t('forms.customer.postcode')"
           prepend-icon="mdi-mailbox"
         ></v-text-field>
       </v-col>
       <v-col cols="12" md="6">
         <v-text-field
           v-model="formData.country"
-          label="Country"
+          :label="$t('forms.customer.country')"
           prepend-icon="mdi-earth"
         ></v-text-field>
       </v-col>
       <v-col cols="12" md="6">
         <v-text-field
           v-model="formData.vat_number"
-          label="VAT Number"
+          :label="$t('forms.customer.vatNumber')"
           prepend-icon="mdi-numeric"
         ></v-text-field>
       </v-col>
       <v-col cols="12" md="6">
         <v-text-field
           v-model="formData.hourly_rate"
-          label="Hourly Rate"
+          :label="$t('forms.customer.hourlyRate')"
           prepend-icon="mdi-cash"
           type="number"
         ></v-text-field>

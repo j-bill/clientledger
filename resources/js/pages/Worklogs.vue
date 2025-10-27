@@ -1,13 +1,13 @@
 <template>
 	<v-container fluid>
-		<h1 class="text-h4 mb-4">Work Logs</h1>
+		<h1 class="text-h4 mb-4">{{ $t('pages.workLogs.title') }}</h1>
 
 		<!-- Search & Actions -->
 		<v-row class="mb-4">
 			<v-col cols="12" sm="6">
 				<v-text-field
 					v-model="filters.search"
-					label="Search"
+					:label="$t('common.search')"
 					prepend-inner-icon="mdi-magnify"
 					single-line
 					hide-details
@@ -23,7 +23,7 @@
 					   data-test="btn-new-worklog"
 					   @click="openCreateDialog"
 					   prepend-icon="mdi-plus">
-					New Work Log
+					{{ $t('pages.workLogs.newWorkLog') }}
 				</v-btn>
 			</v-col>
 		</v-row>
@@ -31,7 +31,7 @@
 		<!-- Filters -->
 		<v-card v-if="showFilters"
 				class="mb-4">
-			<v-card-title>Filters</v-card-title>
+			<v-card-title>{{ $t('common.filters') }}</v-card-title>
 			<v-card-text>
 				<v-row>
 					<v-col cols="12"
@@ -45,7 +45,7 @@
 								min-width="auto">
 							<template v-slot:activator="{ props }">
 								<v-text-field v-model="filters.start_date"
-											  label="Start Date"
+											  :label="$t('pages.workLogs.startDate')"
 											  prepend-icon="mdi-calendar"
 											  readonly
 											  v-bind="props"></v-text-field>
@@ -66,7 +66,7 @@
 								min-width="auto">
 							<template v-slot:activator="{ props }">
 								<v-text-field v-model="filters.end_date"
-											  label="End Date"
+											  :label="$t('pages.workLogs.endDate')"
 											  prepend-icon="mdi-calendar"
 											  readonly
 											  v-bind="props"></v-text-field>
@@ -83,7 +83,7 @@
 								  :items="projects"
 								  item-title="name"
 								  item-value="id"
-								  label="Project"
+								  :label="$t('pages.workLogs.project')"
 								  clearable
 								  prepend-icon="mdi-folder"></v-select>
 					</v-col>
@@ -95,7 +95,7 @@
 								  :items="users"
 								  item-title="name"
 								  item-value="id"
-								  label="User/Freelancer"
+								  :label="$t('pages.workLogs.userFreelancer')"
 								  clearable
 								  prepend-icon="mdi-account"></v-select>
 					</v-col>
@@ -105,7 +105,7 @@
 						   md="3">
 						<v-select v-model="filters.billable"
 								  :items="billableOptions"
-								  label="Billable"
+								  :label="$t('pages.workLogs.billable')"
 								  clearable
 								  prepend-icon="mdi-cash"></v-select>
 					</v-col>
@@ -116,11 +116,11 @@
 						   class="text-right">
 						<v-btn color="primary"
 							   @click="loadWorkLogs">
-							Apply Filters
+							{{ $t('common.applyFilters') }}
 						</v-btn>
 						<v-btn class="ms-2"
 							   @click="resetFilters">
-							Reset
+							{{ $t('common.reset') }}
 						</v-btn>
 					</v-col>
 				</v-row>
@@ -142,7 +142,7 @@
 			</template>
 
 			<template v-slot:item.user="{ item }">
-				{{ item.user?.name || 'N/A' }}
+				{{ item.user?.name || $t('common.notAvailable') }}
 			</template>
 			
 			<template v-slot:item.start_time="{ item }">
@@ -150,7 +150,7 @@
 			</template>
 			
 			<template v-slot:item.end_time="{ item }">
-				{{ item.end_time ? formatTime(item.end_time) : 'N/A' }}
+				{{ item.end_time ? formatTime(item.end_time) : $t('common.notAvailable') }}
 			</template>
 
 			<template v-slot:item.hours="{ item }">
@@ -196,17 +196,17 @@
 		<v-dialog v-model="deleteDialog"
 				  max-width="500px">
 			<v-card>
-				<v-card-title>Delete Work Log</v-card-title>
+				<v-card-title>{{ $t('pages.workLogs.deleteWorkLog') }}</v-card-title>
 				<v-card-text>
-					Are you sure you want to delete this work log?
+					{{ $t('pages.workLogs.deleteConfirmation') }}
 				</v-card-text>
 				<v-card-actions>
 					<v-spacer></v-spacer>
 					<v-btn color="primary"
 						   variant="text"
-						   @click="deleteDialog = false">Cancel</v-btn>
+						   @click="deleteDialog = false">{{ $t('common.cancel') }}</v-btn>
 					<v-btn color="error"
-						   @click="deleteWorkLogRecord">Delete</v-btn>
+						   @click="deleteWorkLogRecord">{{ $t('common.delete') }}</v-btn>
 				</v-card-actions>
 			</v-card>
 		</v-dialog>
@@ -215,7 +215,7 @@
 		<v-dialog v-model="createDialog"
 				  max-width="1000px">
 			<v-card>
-				<v-card-title>New Work Log</v-card-title>
+				<v-card-title>{{ $t('pages.workLogs.newWorkLog') }}</v-card-title>
 				<v-card-text>
 					<work-log-form ref="createForm"
 								   :projects="projects"
@@ -225,9 +225,9 @@
 					<v-spacer></v-spacer>
 					<v-btn color="error"
 						   variant="text"
-						   @click="createDialog = false">Cancel</v-btn>
+						   @click="createDialog = false">{{ $t('common.cancel') }}</v-btn>
 					<v-btn color="primary"
-						   @click="$refs.createForm.submit()">Save</v-btn>
+						   @click="$refs.createForm.submit()">{{ $t('common.save') }}</v-btn>
 				</v-card-actions>
 			</v-card>
 		</v-dialog>
@@ -237,14 +237,14 @@
 				  max-width="1000px">
 			<v-card>
 				<v-card-title>
-					<span v-if="currentWorkLog?.wasAutoSaved">Review Time Tracking</span>
-					<span v-else-if="currentWorkLog?.id && !currentWorkLog?.end_time">Complete Time Tracking</span>
-					<span v-else>Edit Work Log</span>
+					<span v-if="currentWorkLog?.wasAutoSaved">{{ $t('pages.workLogs.reviewTimeTracking') }}</span>
+					<span v-else-if="currentWorkLog?.id && !currentWorkLog?.end_time">{{ $t('pages.workLogs.completeTimeTracking') }}</span>
+					<span v-else>{{ $t('pages.workLogs.editWorkLog') }}</span>
 				</v-card-title>
 				<v-card-text>
 					<div v-if="currentWorkLog?.wasAutoSaved" class="mb-4 pa-4 bg-success-lighten-5 rounded">
 						<v-icon color="success" class="mr-2">mdi-check-circle</v-icon>
-						Your time tracking has been automatically saved. You can review and update the details below if needed.
+						{{ $t('pages.workLogs.autoSavedMessage') }}
 					</div>
 					<work-log-form ref="editForm"
 								   :work-log="currentWorkLog"
@@ -255,12 +255,12 @@
 					<v-spacer></v-spacer>
 					<v-btn color="error"
 						   variant="text"
-						   @click="editDialog = false">Close</v-btn>
+						   @click="editDialog = false">{{ $t('common.close') }}</v-btn>
 					<v-btn color="primary"
 						   @click="$refs.editForm.submit()">
-						<span v-if="currentWorkLog?.wasAutoSaved">Update Details</span>
-						<span v-else-if="currentWorkLog?.id && !currentWorkLog?.end_time">Complete Tracking</span>
-						<span v-else>Update</span>
+						<span v-if="currentWorkLog?.wasAutoSaved">{{ $t('pages.workLogs.updateDetails') }}</span>
+						<span v-else-if="currentWorkLog?.id && !currentWorkLog?.end_time">{{ $t('pages.workLogs.completeTracking') }}</span>
+						<span v-else>{{ $t('common.update') }}</span>
 					</v-btn>
 				</v-card-actions>
 			</v-card>
@@ -275,11 +275,16 @@ import eventBus from '../eventBus';
 import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
 import { formatDate, formatTime, formatCurrency, formatNumber } from '../utils/formatters';
+import { useI18n } from 'vue-i18n';
 
 export default {
 	name: 'WorkLogsIndex',
 	components: {
 		WorkLogForm
+	},
+	setup() {
+		const { t } = useI18n();
+		return { t };
 	},
 	data() {
 		return {
@@ -308,20 +313,7 @@ export default {
 			},
 
 		sortBy: [{ key: 'id', order: 'desc' }],
-		headers: [
-			{ title: 'ID', key: 'id', sortable: true },
-			{ title: 'Date', key: 'date', sortable: true },
-			{ title: 'Project', key: 'project.name', sortable: true },
-			{ title: 'Freelancer', key: 'user.name', sortable: true },
-			{ title: 'Start Time', key: 'start_time', sortable: true },
-			{ title: 'End Time', key: 'end_time', sortable: true },
-			{ title: 'Hours', key: 'hours_worked', sortable: true },
-			{ title: 'Rate', key: 'user_hourly_rate', sortable: true },
-			{ title: 'Amount', key: 'amount', sortable: true },
-			{ title: 'Billable', key: 'billable', sortable: true },
-			{ title: 'Description', key: 'description', sortable: true },
-			{ title: 'Actions', key: 'actions', sortable: false }
-		],			billableOptions: [
+		billableOptions: [
 				{ title: 'Yes', value: true },
 				{ title: 'No', value: false }
 			],
@@ -336,7 +328,24 @@ export default {
 	},
 	
 	computed: {
-		...mapState(store, ['projects', 'users', 'currencySymbol', 'settings'])
+		...mapState(store, ['projects', 'users', 'currencySymbol', 'settings']),
+		
+		headers() {
+			return [
+				{ title: this.t('pages.workLogs.id'), key: 'id', sortable: true },
+				{ title: this.t('pages.workLogs.date'), key: 'date', sortable: true },
+				{ title: this.t('pages.workLogs.project'), key: 'project.name', sortable: true },
+				{ title: this.t('pages.workLogs.freelancer'), key: 'user.name', sortable: true },
+				{ title: this.t('pages.workLogs.startTime'), key: 'start_time', sortable: true },
+				{ title: this.t('pages.workLogs.endTime'), key: 'end_time', sortable: true },
+				{ title: this.t('pages.workLogs.hours'), key: 'hours_worked', sortable: true },
+				{ title: this.t('pages.workLogs.rate'), key: 'user_hourly_rate', sortable: true },
+				{ title: this.t('pages.workLogs.amount'), key: 'amount', sortable: true },
+				{ title: this.t('pages.workLogs.billable'), key: 'billable', sortable: true },
+				{ title: this.t('pages.workLogs.description'), key: 'description', sortable: true },
+				{ title: this.t('common.actions'), key: 'actions', sortable: false }
+			];
+		}
 	},
 	
 	// Add navigation guard to handle when already on worklogs page

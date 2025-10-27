@@ -3,14 +3,13 @@
     <v-card>
       <v-card-title class="text-h5 pa-4">
         <v-icon class="mr-2" color="warning">mdi-email-check</v-icon>
-        Verify Your Email
+        {{ $t('pages.emailVerification.title') }}
       </v-card-title>
       
       <v-card-text class="pa-4">
         <div v-if="!codeSent">
           <p class="mb-4">
-            For additional security, please verify your email address.
-            Click the button below to receive a verification code.
+            {{ $t('pages.emailVerification.description') }}
           </p>
           
           <v-alert v-if="error" type="error" class="mb-3" closable @click:close="error = null">
@@ -20,13 +19,13 @@
         
         <div v-else>
           <p class="mb-4">
-            A verification code has been sent to <strong>{{ userEmail }}</strong>.
-            Please enter the 6-digit code below.
+            {{ $t('pages.emailVerification.codeSentTo') }} <strong>{{ userEmail }}</strong>.
+            {{ $t('pages.emailVerification.enterCodeBelow') }}
           </p>
           
           <v-text-field
             v-model="verificationCode"
-            label="Verification Code"
+            :label="$t('pages.emailVerification.verificationCode')"
             placeholder="000000"
             variant="outlined"
             maxlength="6"
@@ -40,8 +39,8 @@
           </v-alert>
           
           <p class="text-caption text-grey">
-            The code will expire in 1 hour. Didn't receive it?
-            <a @click="resendCode" class="text-primary cursor-pointer">Resend code</a>
+            {{ $t('pages.emailVerification.codeExpiration') }}
+            <a @click="resendCode" class="text-primary cursor-pointer">{{ $t('pages.emailVerification.resendCode') }}</a>
           </p>
         </div>
       </v-card-text>
@@ -54,7 +53,7 @@
           variant="text"
           @click="skipVerification"
         >
-          Skip for now
+          {{ $t('pages.emailVerification.skipForNow') }}
         </v-btn>
         <v-btn
           v-if="!codeSent"
@@ -62,7 +61,7 @@
           :loading="loading"
           @click="sendCode"
         >
-          Send Verification Code
+          {{ $t('pages.emailVerification.sendCode') }}
         </v-btn>
         
         <v-btn
@@ -72,7 +71,7 @@
           @click="skipVerification"
           :disabled="loading"
         >
-          Skip for now
+          {{ $t('pages.emailVerification.skipForNow') }}
         </v-btn>
         <v-btn
           v-if="codeSent"
@@ -81,7 +80,7 @@
           :disabled="verificationCode.length !== 6"
           @click="verifyCode"
         >
-          Verify
+          {{ $t('pages.emailVerification.verify') }}
         </v-btn>
       </v-card-actions>
     </v-card>
