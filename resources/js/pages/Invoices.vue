@@ -563,11 +563,7 @@ export default {
         const formData = new FormData();
         formData.append('pdf', this.pdfFile);
 
-        await axios.post(`/api/invoices/${this.currentInvoice.id}/upload-pdf`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+        await axios.post(`/api/invoices/${this.currentInvoice.id}/upload-pdf`, formData);
 
         this.showSnackbar('Invoice PDF uploaded successfully', 'success');
         this.uploadDialog = false;
