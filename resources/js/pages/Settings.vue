@@ -252,7 +252,7 @@
 										<v-col cols="12" md="6">
 											<v-select
 												v-model="settings.language"
-												:items="languageOptions"
+												:items="languageOptionsComputed"
 												:label="$t('pages.settings.applicationLanguage')"
 												variant="outlined"
 												prepend-inner-icon="mdi-earth"
@@ -844,19 +844,22 @@ export default {
 			originalSettings: {},
 			
 			// Dropdown options - language only in data (static)
-			languageOptions: [
-				{ title: 'English', value: 'en' },
-				{ title: 'Deutsch (German)', value: 'de' },
-				{ title: 'Français (French)', value: 'fr' },
-				{ title: 'Italiano (Italian)', value: 'it' },
-				{ title: 'Español (Spanish)', value: 'es' }
-			]
+			languageOptions: []
 		}
 	},
 	computed: {
 		...mapGetters(store, ['getUser']),
 		isAdmin() {
 			return this.getUser?.role === 'admin'
+		},
+		languageOptionsComputed() {
+			return [
+				{ title: this.t('pages.settings.dropdownOptions.languages.english'), value: 'en' },
+				{ title: this.t('pages.settings.dropdownOptions.languages.german'), value: 'de' },
+				{ title: this.t('pages.settings.dropdownOptions.languages.french'), value: 'fr' },
+				{ title: this.t('pages.settings.dropdownOptions.languages.italian'), value: 'it' },
+				{ title: this.t('pages.settings.dropdownOptions.languages.spanish'), value: 'es' }
+			]
 		},
 		currencyOptions() {
 			return [
@@ -987,7 +990,7 @@ export default {
 				
 				await axios.post('/api/settings/batch', this.settings)
 				
-				this.showSnackbar('Settings saved successfully', 'success')
+				this.showSnackbar(this.t('notifications.settingsSaved'), 'success')
 				
 				// Update original settings
 				this.originalSettings = { ...this.settings }
@@ -1002,7 +1005,7 @@ export default {
 				await this.fetchSettings()
 			} catch (error) {
 				console.error('Error saving settings:', error)
-				this.showSnackbar(error.response?.data?.message || 'Failed to save settings', 'error')
+				this.showSnackbar(error.response?.data?.message || this.t('notifications.settingsFailedToSave'), 'error')
 			} finally {
 				this.loading = false
 			}
@@ -1022,13 +1025,13 @@ export default {
 
 			// Check file size (max 2MB)
 			if (file.size > 2 * 1024 * 1024) {
-				this.showSnackbar('Logo size must be less than 2MB', 'error')
+				this.showSnackbar(this.t('notifications.logoSizeTooLarge'), 'error')
 				return
 			}
 
 			// Check file type
 			if (!file.type.startsWith('image/')) {
-				this.showSnackbar('Please select an image file', 'error')
+				this.showSnackbar(this.t('notifications.logoMustBeImage'), 'error')
 				return
 			}
 
@@ -1067,7 +1070,7 @@ export default {
 		},
 		
 		getLanguageName(code) {
-			const language = this.languageOptions.find(l => l.value === code)
+			const language = this.languageOptionsComputed.find(l => l.value === code)
 			return language ? language.title : code
 		}
 	}

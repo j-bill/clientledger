@@ -281,7 +281,7 @@
 											class="mb-4"
 										>
 											<strong>{{ $t('pages.profile.passwordRequirements') }}:</strong> {{ $t('pages.profile.passwordRequirementsText') }} 
-											Longer passwords are exponentially harder to crack than complex shorter ones.
+											{{ $t('pages.profile.passwordAdvice') }}
 										</v-alert>
 
 										<v-btn
@@ -515,7 +515,7 @@
 																		prepend-icon="mdi-eye-off"
 																		@click="hideRecoveryCodes"
 																	>
-																		Hide
+																		<v-icon end>mdi-eye-off</v-icon>
 																	</v-btn>
 																</div>
 															</div>
@@ -561,7 +561,6 @@
 														<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.activityHeatmapHint') }}</div>
 													</div>
 													<div class="d-flex align-center gap-2">
-														<span class="text-caption text-medium-emphasis">{{ $t('pages.profile.less') }}</span>
 														<div class="heatmap-legend">
 															<div class="heatmap-cell legend-0"></div>
 															<div class="heatmap-cell legend-1"></div>
@@ -569,7 +568,6 @@
 															<div class="heatmap-cell legend-3"></div>
 															<div class="heatmap-cell legend-4"></div>
 														</div>
-														<span class="text-caption text-medium-emphasis">{{ $t('pages.profile.more') }}</span>
 													</div>
 												</div>
 
@@ -584,11 +582,11 @@
 
 														<!-- Day labels -->
 														<div class="heatmap-days">
-															<div class="day-label">Mon</div>
+															<div class="day-label">{{ weekdaysArray[1] }}</div>
 															<div class="day-label"></div>
-															<div class="day-label">Wed</div>
+															<div class="day-label">{{ weekdaysArray[3] }}</div>
 															<div class="day-label"></div>
-															<div class="day-label">Fri</div>
+															<div class="day-label">{{ weekdaysArray[5] }}</div>
 															<div class="day-label"></div>
 															<div class="day-label"></div>
 														</div>
@@ -904,7 +902,29 @@ export default {
 		}
 	},
 	computed: {
-		...mapState(store, ['settings'])
+		...mapState(store, ['settings']),
+		weekdaysArray() {
+			try {
+				if (!window.$i18n?.global?.locale?.value) return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+				const locale = window.$i18n.global.locale.value
+				const data = window.$i18n.global.getLocaleMessage(locale)?.pages?.profile?.weekdays
+				return data || ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+			} catch (e) {
+				console.error('Error getting weekdaysArray:', e)
+				return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+			}
+		},
+		monthsArray() {
+			try {
+				if (!window.$i18n?.global?.locale?.value) return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+				const locale = window.$i18n.global.locale.value
+				const data = window.$i18n.global.getLocaleMessage(locale)?.pages?.profile?.months
+				return data || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+			} catch (e) {
+				console.error('Error getting monthsArray:', e)
+				return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+			}
+		}
 	},
 	methods: {
 		...mapActions(store, ['showSnackbar', 'updateAuthUser']),
@@ -1087,44 +1107,41 @@ export default {
 			this.calculateVisibleMonths()
 		},
 		
-		calculateVisibleMonths() {
-			const months = []
-			let currentMonth = null
-			let weekCount = 0
+	calculateVisibleMonths() {
+		const months = []
+		let currentMonth = null
+		let weekCount = 0
+		
+		this.heatmapData.forEach((day, index) => {
+			const date = new Date(day.date)
+			const month = date.getMonth()
 			
-			this.heatmapData.forEach((day, index) => {
-				const date = new Date(day.date)
-				const month = date.getMonth()
-				
-				// Count weeks (every 7 days)
-				if (index % 7 === 0) {
-					weekCount++
-				}
-				
-				if (currentMonth !== month) {
-					if (currentMonth !== null) {
-						months[months.length - 1].weeks = weekCount
-						weekCount = 0
-					}
-					
-					const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-					months.push({
-						name: monthNames[month],
-						weeks: 0
-					})
-					currentMonth = month
-				}
-			})
-			
-			// Set the last month's week count
-			if (months.length > 0) {
-				months[months.length - 1].weeks = weekCount + 1
+			// Count weeks (every 7 days)
+			if (index % 7 === 0) {
+				weekCount++
 			}
 			
-			this.visibleMonths = months
-		},
+			if (currentMonth !== month) {
+				if (currentMonth !== null) {
+					months[months.length - 1].weeks = weekCount
+					weekCount = 0
+				}
+				
+				months.push({
+					name: this.monthsArray[month],
+					weeks: 0
+				})
+				currentMonth = month
+			}
+		})
 		
-		getHeatmapClass(count) {
+		// Set the last month's week count
+		if (months.length > 0) {
+			months[months.length - 1].weeks = weekCount + 1
+		}
+		
+		this.visibleMonths = months
+	},		getHeatmapClass(count) {
 			if (count === 0) return 'level-0'
 			if (count === 1) return 'level-1'
 			if (count === 2) return 'level-2'

@@ -63,15 +63,15 @@
 					  :items="freelancers"
 					  item-title="name"
 					  item-value="id"
-					  label="Assigned Users"
+					  :label="$t('forms.project.assignedUsers')"
 					  prepend-icon="mdi-account-group"
 					  multiple
 					  chips
-					  :rules="[v => v.length > 0 || 'At least one user is required']"
+					  :rules="[v => v.length > 0 || $t('forms.project.assignedUsersRequired')]"
 					  @update:model-value="updateUserRates">
 				<template v-slot:item="{ props, item }">
 					<v-list-item v-bind="props">
-						<v-list-item-subtitle>Rate: ${{ item.raw.hourly_rate }}/hr</v-list-item-subtitle>
+						<v-list-item-subtitle>${{ item.raw.hourly_rate }}/{{ $t('forms.project.hourlyRateUnit') }}</v-list-item-subtitle>
 					</v-list-item>
 				</template>
 			</v-select>

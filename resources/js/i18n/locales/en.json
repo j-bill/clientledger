@@ -129,6 +129,9 @@
     "invoiceCreated": "Invoice created successfully",
     "invoiceSent": "Invoice sent successfully",
     "settingsSaved": "Settings saved successfully",
+    "settingsFailedToSave": "Failed to save settings",
+    "logoSizeTooLarge": "Logo size must be less than 2MB",
+    "logoMustBeImage": "Please select an image file",
     "operationFailed": "Operation failed",
     "emailVerified": "Email verified successfully!",
     "failedToLoad": "Failed to load data. Please try again later.",
@@ -216,6 +219,9 @@
       "description": "Description",
       "deadline": "Deadline",
       "assignedUsers": "Assigned Users",
+      "assignedUsersRequired": "At least one user is required",
+      "userRate": "Rate: ${{rate}}/hr",
+      "hourlyRateUnit": "hr",
       "nameRequired": "Project name is required",
       "customer": "Customer",
       "customerRequired": "Customer is required",
@@ -423,6 +429,7 @@
       "confirmPassword": "Confirm New Password",
       "passwordRequirements": "Password Requirements",
       "passwordRequirementsText": "Minimum 16 characters. This length provides strong protection against brute-force attacks and ensures your account remains secure even if password databases are compromised.",
+      "passwordAdvice": "Longer passwords are exponentially harder to crack than complex shorter ones.",
       "updatePassword": "Update Password",
       "twoFactorAuthentication": "Two-Factor Authentication (2FA)",
       "twoFactorEnabled": "Enabled",
@@ -455,8 +462,29 @@
       "yourActivity": "Your Activity",
       "activityHeatmap": "Activity Heatmap",
       "activityHeatmapHint": "Your work session activity over the past year",
-      "less": "Less",
-      "more": "More",
+      "months": [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+      ],
+      "weekdays": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
       "startTrackingTime": "Start tracking your time to see your activity statistics here!",
       "informationLegal": "Information & Legal",
       "privacyNotice": "Privacy Notice",
@@ -636,6 +664,13 @@
           "tls": "TLS",
           "ssl": "SSL",
           "none": "None"
+        },
+        "languages": {
+          "english": "English",
+          "german": "Deutsch (German)",
+          "french": "Français (French)",
+          "italian": "Italiano (Italian)",
+          "spanish": "Español (Spanish)"
         }
       }
     },
