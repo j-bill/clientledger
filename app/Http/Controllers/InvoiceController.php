@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\Invoice;
-use App\Models\WorkLog;
 use App\Models\Project;
 use App\Models\Setting;
+use App\Models\WorkLog;
 use App\Services\InvoiceNumberGenerator;
+use App\Services\InvoicePdfGenerator;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class InvoiceController extends Controller
 {
@@ -19,7 +21,7 @@ class InvoiceController extends Controller
     public function index()
     {
         $taxRate = floatval(Setting::where('key', 'tax_rate')->value('value') ?? 0);
-        
+
         $invoices = Invoice::with(['customer', 'workLogs'])
             ->orderByDesc('created_at')
             ->get()
@@ -27,6 +29,7 @@ class InvoiceController extends Controller
                 $invoice->tax_rate = $taxRate;
                 $invoice->tax_amount = $invoice->total_amount * ($taxRate / 100);
                 $invoice->total_with_tax = $invoice->total_amount + $invoice->tax_amount;
+
                 return $invoice;
             });
 
@@ -62,20 +65,25 @@ class InvoiceController extends Controller
         }
         $workLogs = $validated['work_logs'] ?? [];
         unset($validated['work_logs']);
-        
+
         $invoice = Invoice::create($validated);
-        
-        if (!empty($workLogs)) {
+
+        if (! empty($workLogs)) {
             $invoice->workLogs()->attach($workLogs);
         }
-        
+
+        // Generate and save PDF to filesystem
+        $pdfGenerator = new InvoicePdfGenerator;
+        $pdfPath = $pdfGenerator->saveToStorage($invoice);
+        $invoice->update(['pdf_path' => $pdfPath]);
+
         // Add tax rate and calculated tax to response
         $taxRate = floatval(Setting::where('key', 'tax_rate')->value('value') ?? 0);
         $invoice->load(['customer', 'workLogs']);
         $invoice->tax_rate = $taxRate;
         $invoice->tax_amount = $invoice->total_amount * ($taxRate / 100);
         $invoice->total_with_tax = $invoice->total_amount + $invoice->tax_amount;
-        
+
         return response()->json($invoice, 201);
     }
 
@@ -89,7 +97,7 @@ class InvoiceController extends Controller
         $invoice->tax_rate = $taxRate;
         $invoice->tax_amount = $invoice->total_amount * ($taxRate / 100);
         $invoice->total_with_tax = $invoice->total_amount + $invoice->tax_amount;
-        
+
         return response()->json($invoice);
     }
 
@@ -115,13 +123,13 @@ class InvoiceController extends Controller
 
         $invoice->update($validated);
         $invoice->load(['customer', 'workLogs']);
-        
+
         // Add tax rate and calculated tax to response
         $taxRate = floatval(Setting::where('key', 'tax_rate')->value('value') ?? 0);
         $invoice->tax_rate = $taxRate;
         $invoice->tax_amount = $invoice->total_amount * ($taxRate / 100);
         $invoice->total_with_tax = $invoice->total_amount + $invoice->tax_amount;
-        
+
         return response()->json($invoice);
     }
 
@@ -130,9 +138,44 @@ class InvoiceController extends Controller
      */
     public function destroy(Invoice $invoice)
     {
+        // Delete PDF file if it exists
+        if ($invoice->pdf_path && Storage::exists($invoice->pdf_path)) {
+            Storage::delete($invoice->pdf_path);
+        }
+
         $invoice->workLogs()->detach();
         $invoice->delete();
+
         return response()->json(null, 204);
+    }
+
+    /**
+     * Upload an existing invoice PDF.
+     * This is for migrating from old systems.
+     */
+    public function uploadPdf(Request $request, Invoice $invoice)
+    {
+        $validated = $request->validate([
+            'pdf' => 'required|file|mimes:pdf|max:10240', // Max 10MB
+        ]);
+
+        // Delete old PDF if it exists
+        if ($invoice->pdf_path && Storage::exists($invoice->pdf_path)) {
+            Storage::delete($invoice->pdf_path);
+        }
+
+        // Store the uploaded PDF
+        $file = $request->file('pdf');
+        $filename = "invoice-{$invoice->invoice_number}.pdf";
+        $path = $file->storeAs('invoices', $filename);
+
+        // Update invoice with the PDF path
+        $invoice->update(['pdf_path' => $path]);
+
+        return response()->json([
+            'message' => 'Invoice PDF uploaded successfully',
+            'pdf_path' => $path,
+        ]);
     }
 
     /**
@@ -153,7 +196,7 @@ class InvoiceController extends Controller
         $workLogs = WorkLog::whereIn('id', $validated['work_log_ids'])
             ->where('billable', true)
             ->get();
-            
+
         if ($workLogs->isEmpty()) {
             return response()->json(['message' => 'No billable work logs found'], 400);
         }
@@ -183,6 +226,11 @@ class InvoiceController extends Controller
         // Attach work logs to the invoice
         $invoice->workLogs()->attach($validated['work_log_ids']);
 
+        // Generate and save PDF to filesystem
+        $pdfGenerator = new InvoicePdfGenerator;
+        $pdfPath = $pdfGenerator->saveToStorage($invoice);
+        $invoice->update(['pdf_path' => $pdfPath]);
+
         // Add tax rate and calculated tax to response
         $taxRate = floatval(Setting::where('key', 'tax_rate')->value('value') ?? 0);
         $invoice->load(['customer', 'workLogs']);
@@ -206,22 +254,22 @@ class InvoiceController extends Controller
         ]);
 
         $query = WorkLog::whereHas('project', function ($q) use ($validated) {
-                $q->where('customer_id', $validated['customer_id']);
-            })
+            $q->where('customer_id', $validated['customer_id']);
+        })
             ->where('billable', true)
             ->whereDoesntHave('invoices');
 
         // Apply project filter if specified
-        if (!empty($validated['project_id'])) {
+        if (! empty($validated['project_id'])) {
             $query->where('project_id', $validated['project_id']);
         }
 
         // Apply date range filters if specified
-        if (!empty($validated['start_date'])) {
+        if (! empty($validated['start_date'])) {
             $query->where('date', '>=', $validated['start_date']);
         }
 
-        if (!empty($validated['end_date'])) {
+        if (! empty($validated['end_date'])) {
             $query->where('date', '<=', $validated['end_date']);
         }
 
@@ -233,6 +281,7 @@ class InvoiceController extends Controller
         $logs = $logs->map(function ($log) {
             $log->billing_rate = $log->getBillingRate();
             $log->billing_amount = $log->calculateBillingAmount();
+
             return $log;
         });
 
@@ -261,7 +310,14 @@ class InvoiceController extends Controller
      */
     public function downloadPdf(Invoice $invoice)
     {
-        $pdfGenerator = new \App\Services\InvoicePdfGenerator();
+        // If PDF already exists, serve it from storage
+        if ($invoice->pdf_path && Storage::exists($invoice->pdf_path)) {
+            return Storage::download($invoice->pdf_path, "invoice-{$invoice->invoice_number}.pdf");
+        }
+
+        // Otherwise generate it on-the-fly (shouldn't happen for new invoices)
+        $pdfGenerator = new InvoicePdfGenerator;
+
         return $pdfGenerator->download($invoice);
     }
 
@@ -270,7 +326,16 @@ class InvoiceController extends Controller
      */
     public function viewPdf(Invoice $invoice)
     {
-        $pdfGenerator = new \App\Services\InvoicePdfGenerator();
+        // If PDF already exists, serve it from storage
+        if ($invoice->pdf_path && Storage::exists($invoice->pdf_path)) {
+            return response()->file(Storage::path($invoice->pdf_path), [
+                'Content-Type' => 'application/pdf',
+            ]);
+        }
+
+        // Otherwise generate it on-the-fly (shouldn't happen for new invoices)
+        $pdfGenerator = new InvoicePdfGenerator;
+
         return $pdfGenerator->stream($invoice);
     }
 }

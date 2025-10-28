@@ -1,12 +1,16 @@
 <?php
 
 // Invoice.php
+
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Invoice extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'customer_id',
         'invoice_number', // User must provide this now
@@ -15,6 +19,7 @@ class Invoice extends Model
         'total_amount',
         'status',
         'notes',
+        'pdf_path',
     ];
 
     protected $casts = [
