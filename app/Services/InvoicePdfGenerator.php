@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Invoice;
 use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 
 class InvoicePdfGenerator
@@ -16,11 +17,11 @@ class InvoicePdfGenerator
     {
         // Load all settings
         $settings = $this->getSettings();
-        
+
         // Get and set the application language
         $language = $settings['language'] ?? 'en';
         app()->setLocale($language);
-        
+
         // Get tax rate from settings
         $taxRate = floatval($settings['tax_rate'] ?? 0);
 
@@ -42,13 +43,13 @@ class InvoicePdfGenerator
         $footerColumns = [
             $settings['invoice_footer_col1'] ?? 'company_info',
             $settings['invoice_footer_col2'] ?? 'bank_info',
-            $settings['invoice_footer_col3'] ?? 'page_info'
+            $settings['invoice_footer_col3'] ?? 'page_info',
         ];
 
         if (in_array('page_info', $footerColumns)) {
             // Get all column indices where page_info is used
             $pageInfoColumns = array_keys($footerColumns, 'page_info');
-            
+
             $dompdf = $pdf->getDomPDF();
             $dompdf->setCallbacks([
                 [
@@ -58,7 +59,7 @@ class InvoicePdfGenerator
                         $pageNumberText = "Page $pageNumber of $pageCount";
 
                         // Set font, font size, and color to match footer
-                        $font = $fontMetrics->get_font("Arial", "normal");
+                        $font = $fontMetrics->get_font('Arial', 'normal');
                         $fontSize = 8;
                         // Colors in DomPDF are normalized 0-1, not 0-255
                         // #666 = RGB(102, 102, 102) = (0.4, 0.4, 0.4) normalized
@@ -73,7 +74,7 @@ class InvoicePdfGenerator
                         $columnWidth = 515 / 3;
                         $columnStartX = [40, 40 + $columnWidth, 40 + (2 * $columnWidth)];
                         $columnEndX = [40 + $columnWidth, 40 + (2 * $columnWidth), 40 + (3 * $columnWidth)];
-                        
+
                         // Y position in footer
                         $y = 772;
 
@@ -92,8 +93,8 @@ class InvoicePdfGenerator
                             }
                             $canvas->text($x, $y, $pageNumberText, $font, $fontSize, $color);
                         }
-                    }
-                ]
+                    },
+                ],
             ]);
         }
 
@@ -121,21 +122,36 @@ class InvoicePdfGenerator
     }
 
     /**
-     * Save PDF to disk
+     * Save PDF to Laravel storage (for permanent storage)
+     */
+    public function saveToStorage(Invoice $invoice): string
+    {
+        $pdf = $this->generate($invoice);
+        $filename = "invoice-{$invoice->invoice_number}.pdf";
+        $path = "invoices/{$filename}";
+
+        // Save to Laravel storage
+        Storage::put($path, $pdf->output());
+
+        return $path;
+    }
+
+    /**
+     * Save PDF to disk (legacy method, kept for compatibility)
      */
     public function save(Invoice $invoice, string $path = 'invoices'): string
     {
         $pdf = $this->generate($invoice);
-        $filename = "invoice-{$invoice->invoice_number}-" . now()->timestamp . ".pdf";
+        $filename = "invoice-{$invoice->invoice_number}-".now()->timestamp.'.pdf';
         $fullPath = storage_path("app/{$path}/{$filename}");
-        
+
         // Ensure directory exists
-        if (!file_exists(dirname($fullPath))) {
+        if (! file_exists(dirname($fullPath))) {
             mkdir(dirname($fullPath), 0755, true);
         }
-        
+
         file_put_contents($fullPath, $pdf->output());
-        
+
         return "{$path}/{$filename}";
     }
 
@@ -145,13 +161,15 @@ class InvoicePdfGenerator
     private function getSettings(): array
     {
         $settings = Setting::pluck('value', 'key')->toArray();
-        
+
         // Parse JSON values if needed
         return array_map(function ($value) {
             if (is_string($value) && (str_starts_with($value, '{') || str_starts_with($value, '['))) {
                 $decoded = json_decode($value, true);
+
                 return $decoded !== null ? $decoded : $value;
             }
+
             return $value;
         }, $settings);
     }
