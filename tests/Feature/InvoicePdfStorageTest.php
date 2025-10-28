@@ -22,11 +22,15 @@ class InvoicePdfStorageTest extends TestCase
     {
         parent::setUp();
 
+        // Skip 2FA middleware for tests
+        $this->withoutMiddleware([
+            \App\Http\Middleware\Require2FASetup::class,
+            \App\Http\Middleware\Verify2FA::class,
+        ]);
+
         // Create an admin user
         $this->admin = User::factory()->create([
             'role' => 'admin',
-            'two_factor_enabled' => true,
-            'two_factor_confirmed_at' => now(),
         ]);
 
         // Create a customer

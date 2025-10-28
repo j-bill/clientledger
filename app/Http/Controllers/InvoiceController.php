@@ -328,7 +328,9 @@ class InvoiceController extends Controller
     {
         // If PDF already exists, serve it from storage
         if ($invoice->pdf_path && Storage::exists($invoice->pdf_path)) {
-            return response()->file(Storage::path($invoice->pdf_path));
+            return response()->file(Storage::path($invoice->pdf_path), [
+                'Content-Type' => 'application/pdf',
+            ]);
         }
 
         // Otherwise generate it on-the-fly (shouldn't happen for new invoices)
