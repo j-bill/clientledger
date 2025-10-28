@@ -94,6 +94,9 @@
           <v-btn icon variant="text" size="small" color="success" @click="downloadPdf(item)" :title="$t('invoices.downloadPdf')">
             <v-icon>mdi-download</v-icon>
           </v-btn>
+          <v-btn icon variant="text" size="small" color="secondary" @click="openUploadDialog(item)" :title="$t('invoices.uploadPdf')">
+            <v-icon>mdi-upload</v-icon>
+          </v-btn>
           <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)" :title="$t('common.edit')">
             <v-icon>mdi-pencil</v-icon>
           </v-btn>
@@ -329,6 +332,32 @@
       </v-card>
     </v-dialog>
 
+    <!-- Upload PDF Dialog -->
+    <v-dialog v-model="uploadDialog" max-width="600px">
+      <v-card>
+        <v-card-title>Upload Invoice PDF</v-card-title>
+        <v-card-text>
+          <v-alert type="info" variant="tonal" class="mb-4">
+            Upload an existing invoice PDF. This is useful when migrating from another system.
+            Once uploaded, the PDF cannot be regenerated.
+          </v-alert>
+          <v-file-input
+            v-model="pdfFile"
+            label="Select PDF file"
+            accept="application/pdf"
+            prepend-icon="mdi-file-pdf-box"
+            show-size
+            :rules="[v => !!v || 'PDF file is required', v => !v || v.type === 'application/pdf' || 'File must be a PDF']"
+          ></v-file-input>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="error" variant="text" @click="uploadDialog = false">Cancel</v-btn>
+          <v-btn color="primary" @click="uploadPdf" :loading="uploading" :disabled="!pdfFile">Upload</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-dialog v-model="deleteDialog" max-width="500px">
       <v-card>
         <v-card-title>Delete Invoice</v-card-title>
@@ -365,6 +394,9 @@ export default {
       itemToDelete: null,
       createDialog: false,
       editDialog: false,
+      uploadDialog: false,
+      pdfFile: null,
+      uploading: false,
       currentInvoice: null,
       generateDialog: false,
       customers: [],
@@ -514,6 +546,39 @@ export default {
     openEditDialog(item) {
       this.currentInvoice = { ...item };
       this.editDialog = true;
+    },
+    openUploadDialog(item) {
+      this.currentInvoice = { ...item };
+      this.pdfFile = null;
+      this.uploadDialog = true;
+    },
+    async uploadPdf() {
+      if (!this.pdfFile) {
+        this.showSnackbar('Please select a PDF file', 'error');
+        return;
+      }
+
+      this.uploading = true;
+      try {
+        const formData = new FormData();
+        formData.append('pdf', this.pdfFile);
+
+        await axios.post(`/api/invoices/${this.currentInvoice.id}/upload-pdf`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        this.showSnackbar('Invoice PDF uploaded successfully', 'success');
+        this.uploadDialog = false;
+        this.pdfFile = null;
+        await this.fetchInvoices();
+      } catch (error) {
+        const message = error.response?.data?.message || 'Failed to upload PDF. Please try again.';
+        this.showSnackbar(message, 'error');
+      } finally {
+        this.uploading = false;
+      }
     },
     async handleInvoiceSave(payload) {
       // This handler is used for both create and update via the form's @save event

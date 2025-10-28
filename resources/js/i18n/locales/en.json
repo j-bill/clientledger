@@ -60,6 +60,7 @@
     "availableWorkLogs": "Available Work Logs",
     "viewPdf": "View PDF",
     "downloadPdf": "Download PDF",
+    "uploadPdf": "Upload PDF",
     "billTo": "Bill To",
     "worker": "Worker",
     "rateUnit": "Rate/Unit",
