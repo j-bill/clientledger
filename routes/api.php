@@ -107,6 +107,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/invoices/unbilled-worklogs', [InvoiceController::class, 'unbilledWorkLogs']);
             Route::get('/invoices/customer-projects', [InvoiceController::class, 'customerProjects']);
             Route::post('/invoices/{invoice}/upload-pdf', [InvoiceController::class, 'uploadPdf']);
+            Route::post('/invoices/{invoice}/generate-pdf', [InvoiceController::class, 'generatePdf']);
             Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'viewPdf']);
             Route::get('/invoices/{invoice}/pdf-download', [InvoiceController::class, 'downloadPdf']);
             Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);

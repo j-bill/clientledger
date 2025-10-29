@@ -130,6 +130,13 @@ class InvoicePdfGenerator
         $filename = "invoice-{$invoice->invoice_number}.pdf";
         $path = "invoices/{$filename}";
 
+        // Ensure invoices directory exists
+        $disk = Storage::disk(config('filesystems.default'));
+        $invoicesPath = $disk->path('invoices');
+        if (!file_exists($invoicesPath)) {
+            mkdir($invoicesPath, 0755, true);
+        }
+
         // Save to Laravel storage
         Storage::put($path, $pdf->output());
 

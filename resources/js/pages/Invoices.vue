@@ -88,13 +88,16 @@
           {{ formatCurrency(item.total_amount) }}
         </template>
         <template v-slot:item.actions="{ item }">
-          <v-btn icon variant="text" size="small" color="info" @click="viewPdf(item)" :title="$t('invoices.viewPdf')">
+          <v-btn icon variant="text" size="small" color="info" @click="viewPdf(item)" :disabled="!item.pdf_path" :title="item.pdf_path ? $t('invoices.viewPdf') : $t('common.notAvailable')">
             <v-icon>mdi-file</v-icon>
           </v-btn>
-          <v-btn icon variant="text" size="small" color="success" @click="downloadPdf(item)" :title="$t('invoices.downloadPdf')">
+          <v-btn icon variant="text" size="small" color="success" @click="downloadPdf(item)" :disabled="!item.pdf_path" :title="item.pdf_path ? $t('invoices.downloadPdf') : $t('common.notAvailable')">
             <v-icon>mdi-download</v-icon>
           </v-btn>
-          <v-btn icon variant="text" size="small" color="secondary" @click="openUploadDialog(item)" :title="$t('invoices.uploadPdf')">
+          <v-btn icon variant="text" size="small" color="warning" @click="generatePdfDialog(item)" :disabled="!!item.pdf_path" :title="item.pdf_path ? $t('common.warning') : $t('invoices.generatePdf')">
+            <v-icon>mdi-file-plus</v-icon>
+          </v-btn>
+          <v-btn icon variant="text" size="small" color="secondary" @click="openUploadDialog(item)" :disabled="!!item.pdf_path" :title="item.pdf_path ? $t('common.warning') : $t('invoices.uploadPdf')">
             <v-icon>mdi-upload</v-icon>
           </v-btn>
           <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)" :title="$t('common.edit')">
@@ -339,7 +342,7 @@
         <v-card-text>
           <v-alert type="info" variant="tonal" class="mb-4">
             Upload an existing invoice PDF. This is useful when migrating from another system.
-            Once uploaded, the PDF cannot be regenerated.
+            Once uploaded, the PDF cannot be changed or regenerated.
           </v-alert>
           <v-file-input
             v-model="pdfFile"
@@ -354,6 +357,20 @@
           <v-spacer></v-spacer>
           <v-btn color="error" variant="text" @click="uploadDialog = false">Cancel</v-btn>
           <v-btn color="primary" @click="uploadPdf" :loading="uploading" :disabled="!pdfFile">Upload</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="generatePdfConfirmDialog" max-width="500px">
+      <v-card>
+        <v-card-title>{{ $t('invoices.generatePdf') }}</v-card-title>
+        <v-card-text>
+          {{ $t('invoices.generatePdfConfirm') }}
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" variant="text" @click="generatePdfConfirmDialog = false">{{ $t('common.cancel') }}</v-btn>
+          <v-btn color="warning" @click="generatePdfNow" :loading="generatingPdf">{{ $t('invoices.generatePdf') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -395,8 +412,10 @@ export default {
       createDialog: false,
       editDialog: false,
       uploadDialog: false,
+      generatePdfConfirmDialog: false,
       pdfFile: null,
       uploading: false,
+      generatingPdf: false,
       currentInvoice: null,
       generateDialog: false,
       customers: [],
@@ -760,6 +779,33 @@ export default {
         this.showSnackbar('Invoice PDF downloaded', 'success');
       } catch (e) {
         this.showSnackbar('Failed to download PDF', 'error');
+      }
+    },
+
+    generatePdfDialog(item) {
+      this.currentInvoice = { ...item };
+      this.generatePdfConfirmDialog = true;
+    },
+
+    async generatePdfNow() {
+      this.generatingPdf = true;
+      try {
+        const { data } = await axios.post(`/api/invoices/${this.currentInvoice.id}/generate-pdf`);
+        
+        // Update the invoice in the list with the new pdf_path
+        const idx = this.allInvoices.findIndex(i => i.id === this.currentInvoice.id);
+        if (idx !== -1) {
+          this.allInvoices[idx].pdf_path = data.pdf_path;
+        }
+        
+        this.applyFilters();
+        this.generatePdfConfirmDialog = false;
+        this.showSnackbar(this.$t('invoices.generatePdfSuccess'), 'success');
+      } catch (e) {
+        const message = e.response?.data?.message || this.$t('invoices.generatePdfError');
+        this.showSnackbar(message, 'error');
+      } finally {
+        this.generatingPdf = false;
       }
     }
   }

@@ -72,11 +72,6 @@ class InvoiceController extends Controller
             $invoice->workLogs()->attach($workLogs);
         }
 
-        // Generate and save PDF to filesystem
-        $pdfGenerator = new InvoicePdfGenerator;
-        $pdfPath = $pdfGenerator->saveToStorage($invoice);
-        $invoice->update(['pdf_path' => $pdfPath]);
-
         // Add tax rate and calculated tax to response
         $taxRate = floatval(Setting::where('key', 'tax_rate')->value('value') ?? 0);
         $invoice->load(['customer', 'workLogs']);
@@ -152,17 +147,20 @@ class InvoiceController extends Controller
     /**
      * Upload an existing invoice PDF.
      * This is for migrating from old systems.
+     * PDF can only be uploaded if one doesn't already exist.
      */
     public function uploadPdf(Request $request, Invoice $invoice)
     {
+        // Check if invoice already has a PDF
+        if ($invoice->pdf_path) {
+            return response()->json([
+                'message' => 'Invoice already has a PDF. Cannot upload a new one.',
+            ], 422);
+        }
+
         $validated = $request->validate([
             'pdf' => 'required|file|mimes:pdf|max:10240', // Max 10MB
         ]);
-
-        // Delete old PDF if it exists
-        if ($invoice->pdf_path && Storage::exists($invoice->pdf_path)) {
-            Storage::delete($invoice->pdf_path);
-        }
 
         // Store the uploaded PDF
         $file = $request->file('pdf');
@@ -175,6 +173,30 @@ class InvoiceController extends Controller
         return response()->json([
             'message' => 'Invoice PDF uploaded successfully',
             'pdf_path' => $path,
+        ]);
+    }
+
+    /**
+     * Generate a PDF for an invoice.
+     * PDF can only be generated if one doesn't already exist.
+     */
+    public function generatePdf(Invoice $invoice)
+    {
+        // Check if invoice already has a PDF
+        if ($invoice->pdf_path) {
+            return response()->json([
+                'message' => 'Invoice already has a PDF. Cannot generate a new one.',
+            ], 422);
+        }
+
+        // Generate and save PDF to filesystem
+        $pdfGenerator = new InvoicePdfGenerator;
+        $pdfPath = $pdfGenerator->saveToStorage($invoice);
+        $invoice->update(['pdf_path' => $pdfPath]);
+
+        return response()->json([
+            'message' => 'Invoice PDF generated successfully',
+            'pdf_path' => $pdfPath,
         ]);
     }
 
@@ -225,11 +247,6 @@ class InvoiceController extends Controller
 
         // Attach work logs to the invoice
         $invoice->workLogs()->attach($validated['work_log_ids']);
-
-        // Generate and save PDF to filesystem
-        $pdfGenerator = new InvoicePdfGenerator;
-        $pdfPath = $pdfGenerator->saveToStorage($invoice);
-        $invoice->update(['pdf_path' => $pdfPath]);
 
         // Add tax rate and calculated tax to response
         $taxRate = floatval(Setting::where('key', 'tax_rate')->value('value') ?? 0);
