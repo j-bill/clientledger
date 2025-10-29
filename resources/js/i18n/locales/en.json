@@ -91,7 +91,8 @@
     "hourlyRate": "Hourly Rate",
     "startWorking": "Start Working Now",
     "stopWorking": "Stop Working",
-    "timeTracking": "Time Tracking"
+    "timeTracking": "Time Tracking",
+    "viewingAssignedProjectsOnly": "Showing only projects you are assigned to"
   },
   "customers": {
     "title": "Customers",

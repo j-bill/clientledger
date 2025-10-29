@@ -35,8 +35,7 @@
 			<!-- Time Tracking Button -->
 			<v-btn v-if="!activeWorkLog" 
 				   icon 
-				   class="mx-2"
-				   color="success"
+				   class="mx-2 muted-green"
 				   @click="startTimeTracking"
 				   :loading="isLoading">
 				<v-tooltip activator="parent" location="bottom">
@@ -47,8 +46,7 @@
 
 			<div v-else class="d-flex align-center">
 				<v-btn icon
-					   class="mx-2 pulse-animation"
-					   color="error"
+					   class="mx-2 muted-red pulse-animation"
 					   @click="stopTimeTracking">
 					<v-tooltip activator="parent" location="bottom">
 						{{ $t('workLogs.stopWorking') }}
@@ -124,10 +122,14 @@
 		<!-- Project Selection Dialog -->
 		<v-dialog v-model="projectDialog" max-width="500px" persistent>
 			<v-card>
-				<v-card-title>{{ $t('projects.project') }}</v-card-title>
+				<v-card-title>{{ $t('workLogs.startWorking') }}</v-card-title>
 				<v-card-text>
+					<v-alert type="info" variant="tonal" class="mb-4">
+						{{ $t('workLogs.viewingAssignedProjectsOnly') || 'Showing only projects you are assigned to' }}
+					</v-alert>
+					
 					<v-select v-model="selectedCustomer"
-							  :items="customers"
+							  :items="filteredCustomers"
 							  item-title="name"
 							  item-value="id"
 							  :label="$t('customers.customer')"
@@ -140,7 +142,8 @@
 							  item-value="id"
 							  :label="$t('projects.project')"
 							  prepend-icon="mdi-folder"
-							  :rules="[v => !!v || $t('validation.projectRequired')]"></v-select>
+							  :rules="[v => !!v || $t('validation.projectRequired')]"
+							  :disabled="filteredProjects.length === 0"></v-select>
 					
 					<v-textarea v-model="workDescription"
 							   :label="$t('workLogs.description')"
@@ -181,6 +184,7 @@ export default {
 			timerInterval: null,
 			customers: [],
 			projects: [],
+			filteredCustomers: [],
 			filteredProjects: [],
 			hourlyRate: 0,
 			secondsElapsed: 0,
@@ -226,6 +230,7 @@ export default {
 			try {
 				const response = await axios.get('/api/customers');
 				this.customers = response.data;
+				// Will be filtered in fetchProjects after we know which projects are assigned
 			} catch (error) {
 				console.error('Error fetching customers:', error);
 				this.showSnackbar('Failed to load customers', 'error');
@@ -236,7 +241,28 @@ export default {
 			try {
 				const response = await axios.get('/api/projects');
 				this.projects = response.data;
-				this.filteredProjects = [...this.projects];
+				
+				// Filter projects: only show those assigned to the current user (unless admin)
+				const currentUser = this.getUser;
+				let assignedProjects = this.projects;
+				
+				if (currentUser && !this.isAdmin) {
+					// Filter projects where current user is assigned
+					assignedProjects = this.projects.filter(project => {
+						return project.assigned_users && 
+						       project.assigned_users.some(user => user.id === currentUser.id);
+					});
+				}
+				
+				this.filteredProjects = [...assignedProjects];
+				
+				// Filter customers to only those with assigned projects
+				const assignedCustomerIds = new Set(
+					assignedProjects.map(p => p.customer_id)
+				);
+				this.filteredCustomers = this.customers.filter(c => 
+					assignedCustomerIds.has(c.id)
+				);
 			} catch (error) {
 				console.error('Error fetching projects:', error);
 				this.showSnackbar('Failed to load projects', 'error');
@@ -245,15 +271,21 @@ export default {
 		
 		filterProjects() {
 			if (this.selectedCustomer) {
+				// Get all assigned projects for the selected customer
 				this.filteredProjects = this.projects.filter(
-					project => project.customer_id === this.selectedCustomer
+					project => project.customer_id === this.selectedCustomer && 
+						       (!this.isAdmin ? (project.assigned_users && 
+						        project.assigned_users.some(user => user.id === this.getUser?.id)) : true)
 				);
 				// Reset selected project if it doesn't belong to the selected customer
 				if (this.selectedProject && !this.filteredProjects.some(p => p.id === this.selectedProject)) {
 					this.selectedProject = null;
 				}
 			} else {
-				this.filteredProjects = [...this.projects];
+				this.filteredProjects = [...this.projects.filter(project => 
+					!this.isAdmin ? (project.assigned_users && 
+					               project.assigned_users.some(user => user.id === this.getUser?.id)) : true
+				)];
 			}
 		},
 		
@@ -488,23 +520,27 @@ export default {
 </script>
 
 <style scoped>
+.muted-green {
+	color: #66BB6A !important;
+}
+
+.muted-red {
+	color: #EF5350 !important;
+}
+
 .pulse-animation {
 	animation: pulse 1.5s infinite;
-	border-radius: 50%;
 }
 
 @keyframes pulse {
 	0% {
-		box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.6);
-		transform: scale(1);
+		opacity: 1;
 	}
 	50% {
-		box-shadow: 0 0 0 20px rgba(244, 67, 54, 0);
-		transform: scale(1.1);
+		opacity: 0.6;
 	}
 	100% {
-		box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
-		transform: scale(1);
+		opacity: 1;
 	}
 }
 

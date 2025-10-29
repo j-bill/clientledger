@@ -43,12 +43,9 @@
 								
 							</div>
 
-							<v-btn v-if="isAdminDemo" class="mt-4"
-									   variant="outlined"
-									   size="large"
-									   @click="skipSetup">
-									{{ $t('pages.twoFactor.skipSetupDemo') }}
-								</v-btn>
+							<v-alert v-if="isAdminDemo" type="info" variant="tonal" class="mt-4">
+								<strong>Demo Account:</strong> Use code <code>000000</code> for testing purposes.
+							</v-alert>
 						</div>
 					</v-stepper-window-item>						<!-- Step 2: Scan QR Code and Verify -->
 						<v-stepper-window-item :value="2">
@@ -67,6 +64,10 @@
 									</p>
 									<code class="manual-key">{{ secret }}</code>
 								</div>
+
+								<v-alert v-if="isAdminDemo" type="info" variant="tonal" class="mb-4">
+									<strong>Demo Account:</strong> Use code <code>000000</code> for testing purposes.
+								</v-alert>
 
 								<v-text-field v-model="verificationCode"
 											  :label="$t('pages.twoFactor.enterSixDigitCode')"

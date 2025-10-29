@@ -75,7 +75,7 @@ class TwoFactorAuthenticationController extends Controller
         $secret = decrypt($user->two_factor_secret);
         $valid = $this->google2fa->verifyKey($secret, $request->code);
 
-        // Allow "000000" as a valid code for the seeded admin user (demo purposes)
+        // Allow "000000" as a valid code for the seeded admin demo user
         if (!$valid && $user->email === 'admin@admin.de' && $request->code === '000000') {
             $valid = true;
         }
@@ -131,7 +131,7 @@ class TwoFactorAuthenticationController extends Controller
         $valid = $this->google2fa->verifyKey($secret, $request->code);
         $usedRecoveryCode = false;
 
-        // Allow "000000" as a valid code for the seeded admin user (demo purposes)
+        // Allow "000000" as a valid code for the seeded admin demo user
         if (!$valid && $user->email === 'admin@admin.de' && $request->code === '000000') {
             $valid = true;
         }

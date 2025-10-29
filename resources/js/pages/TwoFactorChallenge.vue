@@ -25,6 +25,10 @@
 				</v-text-field>
 			</div>
 
+			<v-alert type="info" variant="tonal" class="mb-4">
+				<strong>Demo Account:</strong> If you're using the demo admin account (admin@admin.de), use code <code>000000</code> for testing purposes.
+			</v-alert>
+
 			<div class="form-group">
 				<v-checkbox v-model="trustDevice"
 							:label="$t('pages.twoFactor.trustDeviceLabel')"

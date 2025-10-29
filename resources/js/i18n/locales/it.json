@@ -91,7 +91,8 @@
     "hourlyRate": "Tariffa oraria",
     "startWorking": "Inizia a lavorare ora",
     "stopWorking": "Smetti di lavorare",
-    "timeTracking": "Tracciamento tempo"
+    "timeTracking": "Tracciamento tempo",
+    "viewingAssignedProjectsOnly": "Visualizzazione solo dei progetti a cui sei assegnato"
   },
   "customers": {
     "title": "Clienti",
