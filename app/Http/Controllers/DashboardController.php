@@ -15,6 +15,44 @@ use Carbon\CarbonPeriod;
 
 class DashboardController extends Controller
 {
+    /**
+     * Get the database driver type
+     */
+    private function isUsingSQLite(): bool
+    {
+        return DB::getDriverName() === 'sqlite';
+    }
+
+    /**
+     * Get year extraction SQL for current database driver
+     */
+    private function yearExtract(string $column): string
+    {
+        return $this->isUsingSQLite()
+            ? "cast(strftime('%Y', $column) as integer) as year"
+            : "YEAR($column) as year";
+    }
+
+    /**
+     * Get month extraction SQL for current database driver
+     */
+    private function monthExtract(string $column): string
+    {
+        return $this->isUsingSQLite()
+            ? "cast(strftime('%m', $column) as integer) as month"
+            : "MONTH($column) as month";
+    }
+
+    /**
+     * Get date extraction SQL for current database driver
+     */
+    private function dateExtract(string $column): string
+    {
+        return $this->isUsingSQLite()
+            ? "date($column) as date"
+            : "DATE($column) as date";
+    }
+
     public function index(Request $request): JsonResponse
     {
         /** @var \App\Models\User $user */
@@ -231,17 +269,17 @@ class DashboardController extends Controller
             // --- Admin: Yearly Revenue Trend (PAID INVOICES ONLY) ---
             $yearlyRevenueTrend = Invoice::where('status', 'paid')
                 ->whereYear('issue_date', $now->year)
-                ->selectRaw('YEAR(issue_date) as year, MONTH(issue_date) as month, SUM(total_amount) as total')
-                ->groupBy('year', 'month')
-                ->orderBy('year')
-                ->orderBy('month')
                 ->get()
-                ->map(function ($item) {
+                ->groupBy(function ($invoice) {
+                    return $invoice->issue_date->format('Y-m');
+                })
+                ->map(function ($group) {
                     return [
-                        'date' => Carbon::createFromDate($item->year, $item->month, 1)->format('Y-m'),
-                        'amount' => $item->total
+                        'date' => $group->first()->issue_date->format('Y-m'),
+                        'amount' => $group->sum('total_amount')
                     ];
-                });
+                })
+                ->values();
 
             // --- Admin: Hero Trend (ALL INVOICES + UNINVOICED WORK) ---
             // Combine all invoices (paid, sent, draft) with uninvoiced work logs valued at project/customer rates
@@ -250,7 +288,7 @@ class DashboardController extends Controller
             // Get all invoices by month
             $allInvoices = Invoice::whereIn('status', ['paid', 'sent', 'draft'])
                 ->whereYear('issue_date', $now->year)
-                ->selectRaw('YEAR(issue_date) as year, MONTH(issue_date) as month, SUM(total_amount) as total')
+                ->selectRaw($this->yearExtract('issue_date') . ', ' . $this->monthExtract('issue_date') . ', SUM(total_amount) as total')
                 ->groupBy('year', 'month')
                 ->orderBy('year')
                 ->orderBy('month')
@@ -262,7 +300,7 @@ class DashboardController extends Controller
             // Get all work logs by month, valued at their hourly rate
             $allWorkLogs = WorkLog::where('billable', true)
                 ->whereYear('date', $now->year)
-                ->selectRaw('YEAR(date) as year, MONTH(date) as month, SUM(hours_worked * hourly_rate) as total')
+                ->selectRaw($this->yearExtract('date') . ', ' . $this->monthExtract('date') . ', SUM(hours_worked * hourly_rate) as total')
                 ->groupBy('year', 'month')
                 ->orderBy('year')
                 ->orderBy('month')
@@ -286,7 +324,7 @@ class DashboardController extends Controller
             // --- Admin: Monthly Hours Worked Trend (All Users) ---
             $monthlyHoursData = WorkLog::whereYear('date', $now->year)
                 ->whereMonth('date', $now->month)
-                ->selectRaw('DATE(date) as date, SUM(hours_worked) as total, SUM(CASE WHEN billable = 1 THEN hours_worked ELSE 0 END) as billable')
+                ->selectRaw($this->dateExtract('date') . ', SUM(hours_worked) as total, SUM(CASE WHEN billable = 1 THEN hours_worked ELSE 0 END) as billable')
                 ->groupBy('date')
                 ->orderBy('date')
                 ->get()
@@ -365,7 +403,7 @@ class DashboardController extends Controller
             // --- Non-Admin: Monthly Earnings Trend ---
             $monthlyEarningsData = (clone $workLogQueryBase)
                 ->whereYear('date', $now->year)
-                ->selectRaw('YEAR(date) as year, MONTH(date) as month, SUM(hours_worked * user_hourly_rate) as total')
+                ->selectRaw($this->yearExtract('date') . ', ' . $this->monthExtract('date') . ', SUM(hours_worked * user_hourly_rate) as total')
                 ->groupBy('year', 'month')
                 ->orderBy('year')
                 ->orderBy('month')
@@ -392,7 +430,7 @@ class DashboardController extends Controller
              $monthlyHoursData = (clone $workLogQueryBase) // Already filtered for user
                 ->whereYear('date', $now->year)
                 ->whereMonth('date', $now->month)
-                ->selectRaw('DATE(date) as date, SUM(hours_worked) as total, SUM(CASE WHEN billable = 1 THEN hours_worked ELSE 0 END) as billable')
+                ->selectRaw($this->dateExtract('date') . ', SUM(hours_worked) as total, SUM(CASE WHEN billable = 1 THEN hours_worked ELSE 0 END) as billable')
                 ->groupBy('date')
                 ->orderBy('date')
                 ->get()

@@ -98,7 +98,12 @@ class InvoiceNumberGenerator
         $pattern = $year . '-' . $month . '-%';
 
         $lastInvoice = Invoice::where('invoice_number', 'like', $pattern)
-            ->orderByRaw("CAST(SUBSTRING_INDEX(invoice_number, '-', -1) AS UNSIGNED) DESC")
+            ->get()
+            ->sortByDesc(function ($invoice) {
+                // Extract the number part from invoice_number (format: YYYY-MM-001)
+                $parts = explode('-', $invoice->invoice_number);
+                return (int) array_pop($parts);
+            })
             ->first();
 
         if ($lastInvoice) {

@@ -147,20 +147,18 @@ class InvoiceController extends Controller
     /**
      * Upload an existing invoice PDF.
      * This is for migrating from old systems.
-     * PDF can only be uploaded if one doesn't already exist.
+     * If an existing PDF exists, it will be replaced.
      */
     public function uploadPdf(Request $request, Invoice $invoice)
     {
-        // Check if invoice already has a PDF
-        if ($invoice->pdf_path) {
-            return response()->json([
-                'message' => 'Invoice already has a PDF. Cannot upload a new one.',
-            ], 422);
-        }
-
         $validated = $request->validate([
             'pdf' => 'required|file|mimes:pdf|max:10240', // Max 10MB
         ]);
+
+        // Delete old PDF if it exists
+        if ($invoice->pdf_path) {
+            \Illuminate\Support\Facades\Storage::delete($invoice->pdf_path);
+        }
 
         // Store the uploaded PDF
         $file = $request->file('pdf');
@@ -178,15 +176,13 @@ class InvoiceController extends Controller
 
     /**
      * Generate a PDF for an invoice.
-     * PDF can only be generated if one doesn't already exist.
+     * If an existing PDF exists, it will be replaced.
      */
     public function generatePdf(Invoice $invoice)
     {
-        // Check if invoice already has a PDF
+        // Delete old PDF if it exists
         if ($invoice->pdf_path) {
-            return response()->json([
-                'message' => 'Invoice already has a PDF. Cannot generate a new one.',
-            ], 422);
+            \Illuminate\Support\Facades\Storage::delete($invoice->pdf_path);
         }
 
         // Generate and save PDF to filesystem
