@@ -35,7 +35,8 @@
     "update": "Aktualisieren",
     "back": "Zurück",
     "important": "Wichtig",
-    "due": "Fällig"
+    "due": "Fällig",
+    "created": "Erstellt"
   },
   "invoices": {
     "title": "Rechnungen",

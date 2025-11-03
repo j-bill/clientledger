@@ -35,7 +35,8 @@
     "update": "Mettre à Jour",
     "due": "Dû",
     "back": "Retour",
-    "important": "Important"
+    "important": "Important",
+    "created": "Créé"
   },
   "invoices": {
     "title": "Factures",

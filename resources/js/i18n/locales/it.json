@@ -35,7 +35,8 @@
     "update": "Aggiorna",
     "due": "Dovuto",
     "back": "Indietro",
-    "important": "Importante"
+    "important": "Importante",
+    "created": "Creato"
   },
   "invoices": {
     "title": "Fatture",

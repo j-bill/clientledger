@@ -69,12 +69,16 @@
         class="elevation-1"
         :search="search"
         :sort-by="sortBy"
+        :row-props="getRowProps"
       >
         <template v-slot:item.invoice_number="{ item }">
           {{ item.invoice_number || '-' }}
         </template>
-        <template v-slot:item.created_at="{ item }">
-          {{ formatDate(item.created_at) }}
+        <template v-slot:item.issue_date="{ item }">
+          {{ formatDate(item.issue_date) }}
+        </template>
+        <template v-slot:item.due_date="{ item }">
+          {{ formatDate(item.due_date) }}
         </template>
         <template v-slot:item.status="{ item }">
           <v-chip
@@ -448,7 +452,8 @@ export default {
         { title: 'ID', key: 'id' },
         { title: this.$t('invoices.invoiceNumber'), key: 'invoice_number' },
         { title: this.$t('customers.customer'), key: 'customer.name' },
-        { title: this.$t('common.loading').replace('...', ''), key: 'created_at' },
+        { title: this.$t('invoices.issueDate'), key: 'issue_date' },
+        { title: this.$t('invoices.dueDate'), key: 'due_date' },
         { title: this.$t('invoices.total'), key: 'total_amount' },
         { title: this.$t('invoices.status'), key: 'status' },
         { title: this.$t('common.actions'), key: 'actions', sortable: false }
@@ -807,6 +812,30 @@ export default {
       } finally {
         this.generatingPdf = false;
       }
+    },
+    
+    isOverdue(invoice) {
+      if (!invoice.due_date || invoice.status.toLowerCase() === 'paid') {
+        return false;
+      }
+      
+      const status = invoice.status.toLowerCase();
+      if (status !== 'sent') {
+        return false;
+      }
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const dueDate = new Date(invoice.due_date);
+      dueDate.setHours(0, 0, 0, 0);
+      
+      return dueDate < today;
+    },
+    
+    getRowProps({ item }) {
+      return {
+        style: this.isOverdue(item) ? 'background-color: rgba(255, 0, 0, 0.1);' : ''
+      };
     }
   }
 };
