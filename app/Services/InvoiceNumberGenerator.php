@@ -14,6 +14,7 @@ class InvoiceNumberGenerator
     public static function generate(): string
     {
         $useRandom = self::getSettingValue('invoice_number_random', 'false') === 'true' || 
+                     self::getSettingValue('invoice_number_random', 'false') === '1' ||
                      self::getSettingValue('invoice_number_random', 'false') === true;
 
         if ($useRandom) {
