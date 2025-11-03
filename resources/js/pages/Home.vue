@@ -108,7 +108,7 @@
               <div class="kpi-icon-bg success">
                 <v-icon>mdi-history</v-icon>
               </div>
-              <div class="kpi-label">{{ $t('pages.home.yesterday') }}</div>
+              <div class="kpi-label">{{ $t('pages.home.lastMonth') }}</div>
               <div class="kpi-primary-value">{{
                 formatCurrency(isAdmin ? kpis.revenue.last_month.paid : kpis.earnings.last_month.paid)
               }}</div>
@@ -137,7 +137,7 @@
               <div class="kpi-icon-bg info">
                 <v-icon>mdi-trending-up</v-icon>
               </div>
-              <div class="kpi-label">{{ $t('pages.home.lastSeven') }}</div>
+              <div class="kpi-label">{{ $t('pages.home.lastYear') }}</div>
               <div class="kpi-primary-value">{{
                 formatCurrency(isAdmin ? kpis.revenue.last_year.paid : kpis.earnings.last_year.paid)
               }}</div>
