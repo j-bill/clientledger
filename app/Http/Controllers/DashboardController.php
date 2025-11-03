@@ -71,10 +71,14 @@ class DashboardController extends Controller
         $lastMonthStart = $now->copy()->subMonthNoOverflow()->startOfMonth();
         $lastMonthEnd = $lastMonthStart->copy()->endOfMonth();
 
-        // Extrapolation factor
+        // Extrapolation factors
         $daysInMonth = $now->daysInMonth;
         $currentDay = $now->day;
-        $extrapolationFactor = ($currentDay > 0 && $currentDay < $daysInMonth) ? $daysInMonth / $currentDay : 1; // Avoid extrapolation on day 1 or last day
+        $monthlyExtrapolationFactor = ($currentDay > 0 && $currentDay < $daysInMonth) ? $daysInMonth / $currentDay : 1; // Avoid extrapolation on day 1 or last day
+        
+        // Yearly extrapolation: based on how many months have passed
+        $currentMonth = $now->month; // 1-12
+        $yearlyExtrapolationFactor = ($currentMonth > 0 && $currentMonth < 12) ? 12 / $currentMonth : 1;
 
         // Initialize response data structure with defaults for all keys
         $responseData = [
@@ -139,7 +143,7 @@ class DashboardController extends Controller
         $currentMonthHours = (clone $workLogQueryBase)
             ->whereBetween('date', [$thisMonthStart, $now]) // Sum up to current day for extrapolation base
             ->sum('hours_worked');
-        $monthlyHours = number_format($currentMonthHours * $extrapolationFactor, 2, '.', '');
+        $monthlyHours = number_format($currentMonthHours * $monthlyExtrapolationFactor, 2, '.', '');
         $lastMonthHours = (clone $workLogQueryBase)
             ->whereBetween('date', [$lastMonthStart, $lastMonthEnd])
             ->sum('hours_worked');
@@ -155,7 +159,7 @@ class DashboardController extends Controller
         $currentMonthBillableHours = (clone $billableWorkLogQuery)
             ->whereBetween('date', [$thisMonthStart, $now])
             ->sum('hours_worked');
-        $monthlyBillableHours = number_format($currentMonthBillableHours * $extrapolationFactor, 2, '.', '');
+        $monthlyBillableHours = number_format($currentMonthBillableHours * $monthlyExtrapolationFactor, 2, '.', '');
         $lastMonthBillableHours = (clone $billableWorkLogQuery)
             ->whereBetween('date', [$lastMonthStart, $lastMonthEnd])
             ->sum('hours_worked');
@@ -227,14 +231,14 @@ class DashboardController extends Controller
             $currentMonthActual = WorkLog::where('billable', true)
                 ->whereBetween('date', [$thisMonthStart, $now])
                 ->sum(DB::raw('hours_worked * hourly_rate'));
-            $currentMonthExtrapolated = $currentMonthActual * $extrapolationFactor;
+            $currentMonthExtrapolated = $currentMonthActual * $monthlyExtrapolationFactor;
             
             // LAST MONTH: Paid invoices + Due invoices + Uninvoiced work logs
             $lastMonthPaid = Invoice::where('status', 'paid')
-                ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
+                ->whereBetween('issue_date', [$lastMonthStart, $lastMonthEnd])
                 ->sum('total_amount');
             $lastMonthDue = Invoice::whereIn('status', ['sent', 'draft'])
-                ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
+                ->whereBetween('issue_date', [$lastMonthStart, $lastMonthEnd])
                 ->sum('total_amount');
             // Include uninvoiced work logs valued at their hourly rate
             $lastMonthUninvoiced = WorkLog::where('billable', true)
@@ -246,7 +250,7 @@ class DashboardController extends Controller
             $thisYearActual = Invoice::whereIn('status', ['paid', 'sent', 'draft'])
                 ->whereYear('issue_date', $now->year)
                 ->sum('total_amount');
-            $thisYearExtrapolated = $thisYearActual * $extrapolationFactor;
+            $thisYearExtrapolated = $thisYearActual * $yearlyExtrapolationFactor;
             
             // LAST YEAR: Paid + Due
             $lastYearPaid = Invoice::where('status', 'paid')
@@ -361,7 +365,7 @@ class DashboardController extends Controller
                     'paid' => $lastMonthPaid,
                     'due' => $lastMonthDue
                 ],
-                'is_extrapolated' => ($extrapolationFactor > 1)
+                'is_extrapolated' => ($monthlyExtrapolationFactor > 1 || $yearlyExtrapolationFactor > 1)
             ];
             $responseData['monthly_hours'] = $monthlyHoursWorked; // Admin sees all hours trend
             $responseData['revenue_by_customer'] = $revenueByCustomer; // Assign revenue by customer
@@ -379,7 +383,7 @@ class DashboardController extends Controller
             $currentMonthEarnings = (clone $workLogQueryBase)
                 ->whereBetween('date', [$thisMonthStart, $now])
                 ->sum(DB::raw('hours_worked * user_hourly_rate')); // Calculate sum
-            $monthlyEarnings = number_format($currentMonthEarnings * $extrapolationFactor, 2, '.', '');
+            $monthlyEarnings = number_format($currentMonthEarnings * $monthlyExtrapolationFactor, 2, '.', '');
             $lastMonthEarnings = (clone $workLogQueryBase)
                 ->whereBetween('date', [$lastMonthStart, $lastMonthEnd])
                 ->sum(DB::raw('hours_worked * user_hourly_rate')); // Calculate sum
@@ -461,13 +465,13 @@ class DashboardController extends Controller
                 ],
                 'monthly' => [
                     'actual' => floatval($currentMonthEarnings),
-                    'extrapolated' => floatval(number_format($currentMonthEarnings * $extrapolationFactor, 2, '.', ''))
+                    'extrapolated' => floatval(number_format($currentMonthEarnings * $monthlyExtrapolationFactor, 2, '.', ''))
                 ],
                 'last_month' => [
                     'paid' => floatval($lastMonthEarnings), // All last month earnings are "earned"
                     'due' => 0 // No unpaid earnings for freelancer
                 ],
-                'is_extrapolated' => ($extrapolationFactor > 1)
+                'is_extrapolated' => ($monthlyExtrapolationFactor > 1)
             ];
             $responseData['monthly_hours'] = $monthlyHoursWorked; // Non-admin sees own hours trend
             $responseData['earnings_by_project'] = $earningsByProject; // Assign earnings by project
