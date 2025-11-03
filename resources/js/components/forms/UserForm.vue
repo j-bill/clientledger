@@ -34,28 +34,30 @@
         ></v-select>
       </v-col>
       
-      <v-col cols="12" md="6" v-if="formData.role === 'freelancer'">
+      <v-col cols="12" md="6">
         <v-text-field
-          v-model="formData.hourly_rate"
+          v-model.number="formData.hourly_rate"
           :label="$t('forms.user.hourlyRate')"
           type="number"
+          step="0.01"
           prepend-icon="mdi-cash"
           :rules="[
-            v => !!v || $t('forms.user.hourlyRateRequired'),
-            v => v >= 0 || $t('forms.user.hourlyRatePositive')
+            v => (v !== null && v !== undefined && v !== '') || $t('forms.user.hourlyRateRequired'),
+            v => (v === null || v === undefined || v === '' || v >= 0) || $t('forms.user.hourlyRatePositive')
           ]"
         ></v-text-field>
       </v-col>
       
-      <v-col cols="12" v-if="user">
+      <v-col cols="12" md="6">
         <v-checkbox
-          v-model="changePassword"
-          :label="$t('forms.user.changePassword')"
+          v-model="formData.notify_on_project_assignment"
+          :label="$t('forms.user.notifyOnProjectAssignment')"
+          prepend-icon="mdi-bell"
           hide-details
         ></v-checkbox>
       </v-col>
       
-      <v-col cols="12" md="6" v-if="!user || changePassword">
+      <v-col cols="12" md="6" v-if="!user">
         <v-text-field
           v-model="formData.password"
           :label="$t('forms.user.password')"
@@ -63,13 +65,13 @@
           prepend-icon="mdi-lock"
           autocomplete="new-password"
           :rules="[
-            v => (!user || changePassword) ? (!!v || $t('forms.user.passwordRequired')) : true,
+            v => !!v || $t('forms.user.passwordRequired'),
             v => !v || v.length >= 8 || $t('forms.user.passwordMinLength')
           ]"
         ></v-text-field>
       </v-col>
       
-      <v-col cols="12" md="6" v-if="!user || changePassword">
+      <v-col cols="12" md="6" v-if="!user">
         <v-text-field
           v-model="formData.password_confirmation"
           :label="$t('forms.user.confirmPassword')"
@@ -77,7 +79,7 @@
           prepend-icon="mdi-lock-check"
           autocomplete="new-password"
           :rules="[
-            v => (!user || changePassword) ? (!!v || $t('forms.user.confirmPasswordRequired')) : true,
+            v => !!v || $t('forms.user.confirmPasswordRequired'),
             v => v === formData.password || 'Passwords must match'
           ]"
         ></v-text-field>
@@ -99,14 +101,14 @@ export default {
   data() {
     return {
       roles: ['admin', 'freelancer'],
-      changePassword: false,
       formData: {
         name: '',
         email: '',
         role: 'freelancer',
         password: '',
         password_confirmation: '',
-        hourly_rate: 0
+        hourly_rate: 0,
+        notify_on_project_assignment: false
       }
     };
   },
@@ -131,8 +133,8 @@ export default {
       
       const data = { ...this.formData };
       
-      // Only include password if creating new user or change password is checked
-      if (!data.password || (this.user && !this.changePassword)) {
+      // Only include password if creating new user
+      if (this.user || !data.password) {
         delete data.password;
         delete data.password_confirmation;
       }

@@ -269,7 +269,9 @@
       "passwordMinLength": "La password deve contenere almeno 8 caratteri",
       "confirmPassword": "Conferma Password",
       "confirmPasswordRequired": "La conferma della password è obbligatoria",
-      "changePassword": "Cambia Password"
+      "changePassword": "Cambia Password",
+      "avatar": "Avatar",
+      "notifyOnProjectAssignment": "Notifica su assegnazione progetto"
     },
     "invoice": {
       "customer": "Cliente",

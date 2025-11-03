@@ -23,6 +23,8 @@ class UserController extends Controller
             'password' => ['required', 'confirmed', PasswordRule::defaults()],
             'role' => 'required|string|in:admin,freelancer',
             'hourly_rate' => 'required|numeric|min:0',
+            'notify_on_project_assignment' => 'sometimes|boolean',
+            'avatar' => 'nullable|string|max:255',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
@@ -43,6 +45,8 @@ class UserController extends Controller
             'password' => ['sometimes', 'confirmed', PasswordRule::defaults()],
             'role' => 'sometimes|string|in:admin,freelancer',
             'hourly_rate' => 'sometimes|numeric|min:0',
+            'notify_on_project_assignment' => 'sometimes|boolean',
+            'avatar' => 'nullable|string|max:255',
         ]);
 
         if (isset($validated['password'])) {

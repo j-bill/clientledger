@@ -48,8 +48,7 @@
           {{ formatDate(item.updated_at) }}
         </template>
         <template v-slot:item.hourly_rate="{ item }">
-          <span v-if="item.role === 'freelancer'">{{ formatCurrency(item.hourly_rate || 0) }}</span>
-          <span v-else>-</span>
+          {{ formatCurrency(item.hourly_rate || 0) }}
         </template>
       </v-data-table>
     </v-card>
