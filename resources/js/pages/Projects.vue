@@ -117,7 +117,7 @@
     </v-card>
     
     <!-- Delete Confirmation Dialog -->
-    <v-dialog v-model="deleteDialog" max-width="500px">
+    <v-dialog v-model="deleteDialog" max-width="500px" persistent>
       <v-card>
         <v-card-title>{{ $t('pages.projects.deleteProject') }}</v-card-title>
         <v-card-text>
@@ -132,7 +132,7 @@
     </v-dialog>
     
     <!-- Create Project Dialog -->
-    <v-dialog v-model="createDialog" max-width="800px">
+    <v-dialog v-model="createDialog" max-width="800px" persistent>
       <v-card>
         <v-card-title>{{ $t('pages.projects.newProject') }}</v-card-title>
         <v-card-text>
@@ -147,7 +147,7 @@
     </v-dialog>
     
     <!-- Edit Project Dialog -->
-    <v-dialog v-model="editDialog" max-width="800px">
+    <v-dialog v-model="editDialog" max-width="800px" persistent>
       <v-card>
         <v-card-title>{{ $t('pages.projects.editProject') }}</v-card-title>
         <v-card-text>

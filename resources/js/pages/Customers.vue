@@ -44,7 +44,7 @@
       </v-data-table>
     </v-card>
 
-    <v-dialog v-model="deleteDialog" max-width="500px">
+    <v-dialog v-model="deleteDialog" max-width="500px" persistent>
       <v-card>
         <v-card-title>{{ $t('common.delete') }} {{ $t('customers.customer') }}</v-card-title>
         <v-card-text>
@@ -59,7 +59,7 @@
     </v-dialog>
     
     <!-- Create Customer Dialog -->
-    <v-dialog v-model="createDialog" max-width="800px">
+    <v-dialog v-model="createDialog" max-width="800px" persistent>
       <v-card>
         <v-card-title>{{ $t('customers.newCustomer') }}</v-card-title>
         <v-card-text>
@@ -74,7 +74,7 @@
     </v-dialog>
     
     <!-- Edit Customer Dialog -->
-    <v-dialog v-model="editDialog" max-width="800px">
+    <v-dialog v-model="editDialog" max-width="800px" persistent>
       <v-card>
         <v-card-title>{{ $t('common.edit') }} {{ $t('customers.customer') }}</v-card-title>
         <v-card-text>

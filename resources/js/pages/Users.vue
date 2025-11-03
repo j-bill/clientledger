@@ -53,7 +53,7 @@
       </v-data-table>
     </v-card>
 
-    <v-dialog v-model="deleteDialog" max-width="500px">
+    <v-dialog v-model="deleteDialog" max-width="500px" persistent>
       <v-card>
         <v-card-title>{{ $t('pages.users.deleteUser') }}</v-card-title>
         <v-card-text>
@@ -68,7 +68,7 @@
     </v-dialog>
 
     <!-- Reset Password Dialog -->
-    <v-dialog v-model="resetPasswordDialog" max-width="500px">
+    <v-dialog v-model="resetPasswordDialog" max-width="500px" persistent>
       <v-card>
         <v-card-title>{{ $t('pages.users.resetPassword') }}</v-card-title>
         <v-card-text>
@@ -85,7 +85,7 @@
     </v-dialog>
 
     <!-- Create User Dialog -->
-    <v-dialog v-model="createDialog" max-width="800px">
+    <v-dialog v-model="createDialog" max-width="800px" persistent>
       <v-card>
         <v-card-title>{{ $t('pages.users.newUser') }}</v-card-title>
         <v-card-text>
@@ -100,7 +100,7 @@
     </v-dialog>
     
     <!-- Edit User Dialog -->
-    <v-dialog v-model="editDialog" max-width="800px">
+    <v-dialog v-model="editDialog" max-width="800px" persistent>
       <v-card>
         <v-card-title>{{ $t('common.edit') }} {{ $t('users.user') }}</v-card-title>
         <v-card-text>

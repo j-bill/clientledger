@@ -111,7 +111,7 @@
     </v-card>
 
     <!-- Create Invoice Dialog -->
-    <v-dialog v-model="createDialog" max-width="800px">
+    <v-dialog v-model="createDialog" max-width="800px" persistent>
       <v-card>
         <v-card-title>{{ $t('invoices.newInvoice') }}</v-card-title>
         <v-card-text>
@@ -126,7 +126,7 @@
     </v-dialog>
 
     <!-- Generate from Work Logs Dialog -->
-    <v-dialog v-model="generateDialog" max-width="1200px">
+    <v-dialog v-model="generateDialog" max-width="1200px" persistent>
       <v-card>
         <v-card-title>Generate Invoice from Work Logs</v-card-title>
         <v-card-text>
@@ -321,7 +321,7 @@
     </v-dialog>
 
     <!-- Edit Invoice Dialog -->
-    <v-dialog v-model="editDialog" max-width="800px">
+    <v-dialog v-model="editDialog" max-width="800px" persistent>
       <v-card>
         <v-card-title>Edit Invoice</v-card-title>
         <v-card-text>
@@ -336,7 +336,7 @@
     </v-dialog>
 
     <!-- Upload PDF Dialog -->
-    <v-dialog v-model="uploadDialog" max-width="600px">
+    <v-dialog v-model="uploadDialog" max-width="600px" persistent>
       <v-card>
         <v-card-title>Upload Invoice PDF</v-card-title>
         <v-card-text>
@@ -361,7 +361,7 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="generatePdfConfirmDialog" max-width="500px">
+    <v-dialog v-model="generatePdfConfirmDialog" max-width="500px" persistent>
       <v-card>
         <v-card-title>{{ $t('invoices.generatePdf') }}</v-card-title>
         <v-card-text>
@@ -375,7 +375,7 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="deleteDialog" max-width="500px">
+    <v-dialog v-model="deleteDialog" max-width="500px" persistent>
       <v-card>
         <v-card-title>Delete Invoice</v-card-title>
         <v-card-text>

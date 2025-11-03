@@ -736,7 +736,7 @@
 		</v-row>
 
 		<!-- Reset 2FA Confirmation Dialog -->
-		<v-dialog v-model="reset2FADialog" max-width="600">
+		<v-dialog v-model="reset2FADialog" max-width="600" persistent>
 			<v-card>
 				<v-card-title class="d-flex align-center bg-warning pa-4">
 					<v-icon color="white" class="mr-2">mdi-refresh-circle</v-icon>
@@ -790,7 +790,7 @@
 		</v-dialog>
 
 		<!-- Regenerate Recovery Codes Confirmation Dialog -->
-		<v-dialog v-model="regenerateCodesDialog" max-width="600">
+		<v-dialog v-model="regenerateCodesDialog" max-width="600" persistent>
 			<v-card>
 				<v-card-title class="d-flex align-center bg-warning pa-4">
 					<v-icon color="white" class="mr-2">mdi-shield-refresh</v-icon>

@@ -194,7 +194,7 @@
 
 		<!-- Delete Confirmation Dialog -->
 		<v-dialog v-model="deleteDialog"
-				  max-width="500px">
+				  max-width="500px" persistent>
 			<v-card>
 				<v-card-title>{{ $t('pages.workLogs.deleteWorkLog') }}</v-card-title>
 				<v-card-text>
@@ -213,7 +213,7 @@
 
 		<!-- Create Work Log Dialog -->
 		<v-dialog v-model="createDialog"
-				  max-width="1000px">
+				  max-width="1000px" persistent>
 			<v-card>
 				<v-card-title>{{ $t('pages.workLogs.newWorkLog') }}</v-card-title>
 				<v-card-text>
@@ -234,7 +234,7 @@
 
 		<!-- Edit Work Log Dialog -->
 		<v-dialog v-model="editDialog"
-				  max-width="1000px">
+				  max-width="1000px" persistent>
 			<v-card>
 				<v-card-title>
 					<span v-if="currentWorkLog?.wasAutoSaved">{{ $t('pages.workLogs.reviewTimeTracking') }}</span>
