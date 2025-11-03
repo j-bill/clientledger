@@ -591,7 +591,7 @@ export default {
 			return formatNumber(value, decimals, this.settings);
 		},
 		
-		truncateDescription(description, maxWords = 78) {
+		truncateDescription(description, maxWords = 8) {
 			if (!description) return '';
 			const words = description.trim().split(/\s+/);
 			if (words.length > maxWords) {
