@@ -30,6 +30,7 @@ class InvoiceNumberGenerator
     private static function generateRandomInvoiceNumber(): string
     {
         $prefix = self::getSettingValue('invoice_prefix', 'INV-');
+        $format = self::getSettingValue('invoice_number_format', 'YYYY-MM-number');
         $length = (int) self::getSettingValue('invoice_number_random_length', '8');
         $maxAttempts = 100;
         $attempt = 0;
@@ -37,13 +38,32 @@ class InvoiceNumberGenerator
         // Ensure length is within reasonable bounds
         $length = max(4, min(20, $length));
 
+        $now = Carbon::now();
+        $year = $now->format('Y');
+        $month = $now->format('m');
+
         while ($attempt < $maxAttempts) {
             // Generate a random number with the specified length
             $min = (int) str_pad('1', $length, '0');
             $max = (int) str_pad('9', $length, '9');
             $randomNumber = random_int($min, $max);
             $randomPart = str_pad($randomNumber, $length, '0', STR_PAD_LEFT);
-            $invoiceNumber = $prefix . $randomPart;
+
+            // Build invoice number based on format
+            switch ($format) {
+                case 'YYYY-MM-number':
+                    $invoiceNumber = $prefix . $year . '-' . $month . '-' . $randomPart;
+                    break;
+
+                case 'YYYY-number':
+                    $invoiceNumber = $prefix . $year . '-' . $randomPart;
+                    break;
+
+                case 'number':
+                default:
+                    $invoiceNumber = $prefix . $randomPart;
+                    break;
+            }
 
             // Check if this number already exists
             if (!Invoice::where('invoice_number', $invoiceNumber)->exists()) {
