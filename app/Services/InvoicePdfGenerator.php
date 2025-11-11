@@ -28,9 +28,14 @@ class InvoicePdfGenerator
         // Check if we have multiple users
         $userCount = \App\Models\User::count();
 
+        // Load invoice with related data and order work logs by ID
+        $invoice->load(['customer', 'workLogs' => function ($query) {
+            $query->orderBy('id', 'asc');
+        }]);
+
         // Prepare invoice data with translations
         $data = [
-            'invoice' => $invoice->load(['customer', 'workLogs']),
+            'invoice' => $invoice,
             'company' => $settings,
             'currency_symbol' => $settings['currency_symbol'] ?? '$',
             'date_format' => $settings['date_format'] ?? 'DD/MM/YYYY',
