@@ -37,5 +37,8 @@ return [
         'subtotal' => 'Zwischensumme',
         'tax' => 'Steuer',
         'no_work_logs_found' => 'Keine Arbeitslogs gefunden',
+        'payment_terms' => 'Zahlungsbedingungen',
+        'page' => 'Seite',
+        'of' => 'von',
     ],
 ];

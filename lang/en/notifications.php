@@ -37,5 +37,8 @@ return [
         'subtotal' => 'Subtotal',
         'tax' => 'Tax',
         'no_work_logs_found' => 'No work logs found',
+        'payment_terms' => 'Payment Terms',
+        'page' => 'Page',
+        'of' => 'of',
     ],
 ];

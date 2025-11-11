@@ -59,8 +59,10 @@ class InvoicePdfGenerator
                 [
                     'event' => 'end_document',
                     'f' => function ($pageNumber, $pageCount, $canvas, $fontMetrics) use ($pageInfoColumns) {
-                        // Set the page number text
-                        $pageNumberText = "Page $pageNumber of $pageCount";
+                        // Set the page number text with translation
+                        $pageText = __('notifications.invoice.page');
+                        $ofText = __('notifications.invoice.of');
+                        $pageNumberText = "$pageText $pageNumber $ofText $pageCount";
 
                         // Set font, font size, and color to match footer
                         $font = $fontMetrics->get_font('Arial', 'normal');

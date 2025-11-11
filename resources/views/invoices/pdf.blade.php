@@ -366,11 +366,9 @@
             <div style="text-align: right; margin-bottom: 10px;">
                 <strong>{{ __('notifications.invoice.subtotal') }}: {{ $currency_symbol }}{{ number_format($totalAmount, 2) }}</strong>
             </div>
-            @if($tax_rate > 0)
             <div style="text-align: right; margin-bottom: 10px; font-size: 11px;">
                 {{ __('notifications.invoice.tax') }} ({{ number_format($tax_rate, 2) }}%): {{ $currency_symbol }}{{ number_format($totalAmount * ($tax_rate / 100), 2) }}
             </div>
-            @endif
         </div>
 
         <div class="invoice-total">
@@ -379,7 +377,7 @@
 
         @if($company['invoice_payment_terms'] ?? false)
         <div class="payment-terms">
-            <div class="payment-terms-label">Payment Terms</div>
+            <div class="payment-terms-label">{{ __('notifications.invoice.payment_terms') }}</div>
             {!! nl2br(e($company['invoice_payment_terms'])) !!}
         </div>
         @endif

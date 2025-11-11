@@ -37,5 +37,8 @@ return [
         'subtotal' => 'Sous-total',
         'tax' => 'Taxe',
         'no_work_logs_found' => 'Aucun journal de travail trouvé',
+        'payment_terms' => 'Conditions de paiement',
+        'page' => 'Page',
+        'of' => 'sur',
     ],
 ];
