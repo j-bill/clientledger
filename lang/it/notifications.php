@@ -28,6 +28,8 @@ return [
         'bill_to' => 'Fattura a',
         'worker' => 'Lavoratore',
         'description' => 'Descrizione',
+        'start_time' => 'Ora di inizio',
+        'end_time' => 'Ora di fine',
         'rate_unit' => 'Tariffa/Unità',
         'amount' => 'Importo',
         'total' => 'Totale',

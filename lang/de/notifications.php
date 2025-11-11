@@ -28,6 +28,8 @@ return [
         'bill_to' => 'Rechnung an',
         'worker' => 'Mitarbeiter',
         'description' => 'Beschreibung',
+        'start_time' => 'Startzeit',
+        'end_time' => 'Endzeit',
         'rate_unit' => 'Satz/Einheit',
         'amount' => 'Betrag',
         'total' => 'Gesamt',

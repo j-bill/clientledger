@@ -25,6 +25,9 @@ class InvoicePdfGenerator
         // Get tax rate from settings
         $taxRate = floatval($settings['tax_rate'] ?? 0);
 
+        // Check if we have multiple users
+        $userCount = \App\Models\User::count();
+
         // Prepare invoice data with translations
         $data = [
             'invoice' => $invoice->load(['customer', 'workLogs']),
@@ -32,6 +35,7 @@ class InvoicePdfGenerator
             'currency_symbol' => $settings['currency_symbol'] ?? '$',
             'date_format' => $settings['date_format'] ?? 'DD/MM/YYYY',
             'tax_rate' => $taxRate,
+            'multiple_users' => $userCount > 1,
         ];
 
         // Generate PDF from view

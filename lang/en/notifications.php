@@ -28,6 +28,8 @@ return [
         'bill_to' => 'Bill To',
         'worker' => 'Worker',
         'description' => 'Description',
+        'start_time' => 'Start Time',
+        'end_time' => 'End Time',
         'rate_unit' => 'Rate/Unit',
         'amount' => 'Amount',
         'total' => 'Total',

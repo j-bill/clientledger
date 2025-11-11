@@ -296,12 +296,14 @@
             <table class="worklogs-table">
                 <thead>
                     <tr>
-                        <th>{{ __('notifications.invoice.date') }}</th>
-                        <th>{{ __('notifications.invoice.worker') }}</th>
-                        <th>{{ __('notifications.invoice.description') }}</th>
-                        <th class="text-right">{{ __('notifications.invoice.rate_unit') }}</th>
-                        <th class="text-right">{{ __('notifications.invoice.amount') }}</th>
-                        <th class="text-right">{{ __('notifications.invoice.total') }}</th>
+                        <th width="10%">{{ __('notifications.invoice.date') }}</th>
+                        @if($multiple_users)
+                        <th width="12%">{{ __('notifications.invoice.worker') }}</th>
+                        @endif
+                        <th width="@if($multiple_users)48%@else60%@endif">{{ __('notifications.invoice.description') }}</th>
+                        <th width="10%" style="text-align: right">{{ __('notifications.invoice.rate_unit') }}</th>
+                        <th width="10%" style="text-align: right">{{ __('notifications.invoice.amount') }}</th>
+                        <th width="10%" style="text-align: right">{{ __('notifications.invoice.total') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -319,12 +321,34 @@
                                 $dateObj = is_string($workLog->date) ? \Carbon\Carbon::parse($workLog->date) : $workLog->date;
                             @endphp
                             {{ $dateObj->format($phpFormat) }}
+                            @if($workLog->start_time || $workLog->end_time)
+                                <br>
+                                <span style="font-size: 9px; color: #666;">
+                                    @if($workLog->start_time)
+                                        @php
+                                            $startTime = is_string($workLog->start_time) ? \Carbon\Carbon::parse($workLog->start_time) : $workLog->start_time;
+                                        @endphp
+                                        {{ $startTime->format('H:i') }}
+                                    @endif
+                                    @if($workLog->start_time && $workLog->end_time)
+                                        -
+                                    @endif
+                                    @if($workLog->end_time)
+                                        @php
+                                            $endTime = is_string($workLog->end_time) ? \Carbon\Carbon::parse($workLog->end_time) : $workLog->end_time;
+                                        @endphp
+                                        {{ $endTime->format('H:i') }}
+                                    @endif
+                                </span>
+                            @endif
                         </td>
+                        @if($multiple_users)
                         <td>{{ $workLog->user->name ?? 'N/A' }}</td>
-                        <td>{{ $workLog->description ?? '-' }}</td>
-                        <td class="text-right">{{ $currency_symbol }}{{ number_format($workLog->hourly_rate ?? 0, 2) }}</td>
-                        <td class="text-right">{{ number_format($workLog->hours_worked ?? 0, 2) }}</td>
-                        <td class="text-right">{{ $currency_symbol }}{{ number_format($lineTotal, 2) }}</td>
+                        @endif
+                        <td>{!! nl2br(e($workLog->description ?? '-')) !!}</td>
+                        <td style="text-align: right">{{ $currency_symbol }}{{ number_format($workLog->hourly_rate ?? 0, 2) }}</td>
+                        <td style="text-align: right">{{ number_format($workLog->hours_worked ?? 0, 2) }}</td>
+                        <td style="text-align: right">{{ $currency_symbol }}{{ number_format($lineTotal, 2) }}</td>
                     </tr>
                     @endforeach
                 </tbody>
