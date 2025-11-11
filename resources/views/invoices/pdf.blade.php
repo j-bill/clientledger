@@ -389,7 +389,7 @@
                         @endif
                         @if($company['company_phone'] ?? false){{ $company['company_phone'] }}<br>@endif
                         @if($company['company_email'] ?? false){{ $company['company_email'] }}@endif
-                    @elseif($column === 'bank_info')
+                    @elseif($column === 'bank_info' || $column === 'bankInfo')
                         @if($company['company_bank_info'] ?? false)
                             {!! nl2br(e($company['company_bank_info'])) !!}
                         @endif

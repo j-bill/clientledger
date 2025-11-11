@@ -891,7 +891,7 @@ export default {
 		footerColumnOptions() {
 			return [
 				{ title: this.t('pages.settings.dropdownOptions.footerColumns.companyInfo'), value: 'company_info' },
-				{ title: this.t('pages.settings.dropdownOptions.footerColumns.bankInfo'), value: 'bankInfo' },
+				{ title: this.t('pages.settings.dropdownOptions.footerColumns.bankInfo'), value: 'bank_info' },
 				{ title: this.t('pages.settings.dropdownOptions.footerColumns.pageInfo'), value: 'page_info' },
 				{ title: this.t('pages.settings.dropdownOptions.footerColumns.empty'), value: 'empty' }
 			];
