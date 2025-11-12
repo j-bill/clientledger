@@ -1,7 +1,7 @@
 <template>
 	<div class="two-factor-setup-container">
 		<v-card class="setup-card"
-				max-width="600"
+				max-width="800"
 				elevation="8">
 			<v-card-title class="text-h5 pa-6">
 				<v-icon left
@@ -43,8 +43,20 @@
 								
 							</div>
 
-							<v-alert v-if="isAdminDemo" type="info" variant="tonal" class="mt-4">
-								<strong>Demo Account:</strong> Use code <code>000000</code> for testing purposes.
+							<!-- Demo Site Info -->
+							<v-alert v-if="isAdminDemo" 
+									 type="info" 
+									 variant="elevated" 
+									 class="mt-4"
+									 icon="mdi-shield-check">
+								<div class="demo-setup-info">
+									<div class="text-subtitle-2 mb-2">
+										<strong>Demo Account Setup</strong>
+									</div>
+									<div class="text-caption">
+										When setting up 2FA on the demo site, use code <code class="demo-code">000000</code> for testing purposes.
+									</div>
+								</div>
 							</v-alert>
 						</div>
 					</v-stepper-window-item>						<!-- Step 2: Scan QR Code and Verify -->
@@ -65,8 +77,23 @@
 									<code class="manual-key">{{ secret }}</code>
 								</div>
 
-								<v-alert v-if="isAdminDemo" type="info" variant="tonal" class="mb-4">
-									<strong>Demo Account:</strong> Use code <code>000000</code> for testing purposes.
+								<!-- Demo Site Verification Info -->
+								<v-alert v-if="isAdminDemo" 
+										 type="info" 
+										 variant="elevated" 
+										 class="mb-4"
+										 icon="mdi-shield-check">
+									<div class="demo-verify-info">
+										<div class="text-subtitle-2 mb-2">
+											<strong>Demo Verification Code</strong>
+										</div>
+										<div class="text-caption mb-2">
+											For testing on the demo site, use the verification code:
+										</div>
+										<div class="demo-code-display">
+											<code class="demo-verification-code">000000</code>
+										</div>
+									</div>
 								</v-alert>
 
 								<v-text-field v-model="verificationCode"
@@ -173,7 +200,7 @@ export default {
 	computed: {
 		...mapState(store, ['user']),
 		isAdminDemo() {
-			return this.user?.email === 'admin@admin.de'
+			return window.location.hostname === 'clientledger.billinger.dev'
 		}
 	},
 	async mounted() {
@@ -373,5 +400,41 @@ export default {
 	border-radius: 4px;
 	text-align: center;
 	color: #000;
+}
+
+.demo-setup-info,
+.demo-verify-info {
+	font-size: 0.875rem;
+}
+
+.demo-code {
+	background: rgba(255, 255, 255, 0.15);
+	padding: 0.15rem 0.4rem;
+	border-radius: 3px;
+	font-family: monospace;
+	font-weight: bold;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	margin: 0 0.25rem;
+}
+
+.demo-verify-info {
+	text-align: center;
+}
+
+.demo-code-display {
+	display: flex;
+	justify-content: center;
+	margin-top: 0.5rem;
+}
+
+.demo-verification-code {
+	background: rgba(255, 255, 255, 0.15);
+	padding: 0.5rem 1rem;
+	border-radius: 6px;
+	font-family: monospace;
+	font-size: 1.25rem;
+	font-weight: bold;
+	letter-spacing: 0.2em;
+	border: 1px solid rgba(255, 255, 255, 0.2);
 }
 </style>

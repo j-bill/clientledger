@@ -23,6 +23,34 @@
 							  :label="$t('pages.login.password')"
 							  required />
 			</div>
+
+			<!-- Demo Account Info (only shown on demo site) -->
+			<v-alert v-if="isDemoSite" 
+					 type="info" 
+					 variant="elevated" 
+					 class="mb-4"
+					 icon="mdi-information-outline">
+				<div class="demo-info">
+					<div class="text-subtitle-2 mb-2">
+						<strong>Demo Admin Account</strong>
+					</div>
+					<div class="demo-credentials mb-3">
+						<div class="credential-item">
+							<span class="credential-label">Email:</span>
+							<code class="credential-value">admin@admin.de</code>
+						</div>
+						<div class="credential-item">
+							<span class="credential-label">Password:</span>
+							<code class="credential-value">adminadmin</code>
+						</div>
+					</div>
+					<v-divider class="my-2"></v-divider>
+					<div class="text-caption">
+						<strong>2FA Code:</strong> Use <code class="demo-2fa-code">000000</code> for testing
+					</div>
+				</div>
+			</v-alert>
+
 			<v-btn type="submit"
 				   data-test="btn-login"
 				   block
@@ -55,15 +83,18 @@ export default {
 	data() {
 		return {
 			form: {
-				email: 'admin@admin.de',
-				password: 'adminadmin'
+				email: '',
+				password: ''
 			},
 			loading: false,
 			companyLogo: null
 		}
 	},
 	computed: {
-		...mapState(store, ['settings'])
+		...mapState(store, ['settings']),
+		isDemoSite() {
+			return window.location.hostname === 'clientledger.billinger.dev'
+		}
 	},
 	async created() {
 		// Fetch settings to get the company logo
@@ -178,5 +209,45 @@ export default {
 	max-width: 200px;
 	max-height: 80px;
 	object-fit: contain;
+}
+
+.demo-info {
+	font-size: 0.875rem;
+}
+
+.demo-credentials {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.credential-item {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.credential-label {
+	font-weight: 500;
+	min-width: 70px;
+}
+
+.credential-value {
+	background: rgba(255, 255, 255, 0.15);
+	padding: 0.25rem 0.5rem;
+	border-radius: 4px;
+	font-family: monospace;
+	font-size: 0.85rem;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.demo-2fa-code {
+	background: rgba(255, 255, 255, 0.15);
+	padding: 0.15rem 0.4rem;
+	border-radius: 3px;
+	font-family: monospace;
+	font-weight: bold;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	margin: 0 0.25rem;
 }
 </style>

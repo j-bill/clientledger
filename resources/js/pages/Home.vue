@@ -61,11 +61,19 @@
                 </div>
                 <div class="meta-row">
                   <span class="meta-label">{{ $t('pages.home.hours') }}:</span>
-                  <span class="meta-value">{{ formatHours(kpis.hours.yearly.total) }}</span>
+                  <span class="meta-value">{{ formatHours(kpis.hours.yearly.actual) }}</span>
+                </div>
+                <div class="meta-row" v-if="kpis.hours.yearly.extrapolated && kpis.hours.yearly.extrapolated != kpis.hours.yearly.actual">
+                  <span class="meta-label">{{ $t('pages.home.estimated') }} {{ $t('pages.home.hours') }}:</span>
+                  <span class="meta-value">{{ formatHours(kpis.hours.yearly.extrapolated) }}</span>
                 </div>
                 <div class="meta-row">
                   <span class="meta-label">{{ $t('pages.home.billable') }}:</span>
-                  <span class="meta-value">{{ formatHours(kpis.hours.yearly.billable) }}</span>
+                  <span class="meta-value">{{ formatHours(kpis.hours.yearly.actual_billable) }}</span>
+                </div>
+                <div class="meta-row" v-if="kpis.hours.yearly.extrapolated_billable && kpis.hours.yearly.extrapolated_billable != kpis.hours.yearly.actual_billable">
+                  <span class="meta-label">{{ $t('pages.home.estimated') }} {{ $t('pages.home.billable') }}:</span>
+                  <span class="meta-value">{{ formatHours(kpis.hours.yearly.extrapolated_billable) }}</span>
                 </div>
               </div>
             </v-card-text>
@@ -90,11 +98,19 @@
                 </div>
                 <div class="meta-row">
                   <span class="meta-label">{{ $t('pages.home.totalHours') }}:</span>
-                  <span class="meta-value">{{ formatHours(kpis.hours.monthly.total) }}</span>
+                  <span class="meta-value">{{ formatHours(kpis.hours.monthly.actual) }}</span>
+                </div>
+                <div class="meta-row" v-if="kpis.hours.monthly.extrapolated && kpis.hours.monthly.extrapolated != kpis.hours.monthly.actual">
+                  <span class="meta-label">{{ $t('pages.home.estimated') }} {{ $t('pages.home.hours') }}:</span>
+                  <span class="meta-value">{{ formatHours(kpis.hours.monthly.extrapolated) }}</span>
                 </div>
                 <div class="meta-row">
                   <span class="meta-label">{{ $t('pages.home.billable') }}:</span>
-                  <span class="meta-value">{{ formatHours(kpis.hours.monthly.billable) }}</span>
+                  <span class="meta-value">{{ formatHours(kpis.hours.monthly.actual_billable) }}</span>
+                </div>
+                <div class="meta-row" v-if="kpis.hours.monthly.extrapolated_billable && kpis.hours.monthly.extrapolated_billable != kpis.hours.monthly.actual_billable">
+                  <span class="meta-label">{{ $t('pages.home.estimated') }} {{ $t('pages.home.billable') }}:</span>
+                  <span class="meta-value">{{ formatHours(kpis.hours.monthly.extrapolated_billable) }}</span>
                 </div>
               </div>
             </v-card-text>

@@ -25,8 +25,23 @@
 				</v-text-field>
 			</div>
 
-			<v-alert type="info" variant="tonal" class="mb-4">
-				<strong>Demo Account:</strong> If you're using the demo admin account (admin@admin.de), use code <code>000000</code> for testing purposes.
+			<!-- Demo Site 2FA Info -->
+			<v-alert v-if="isDemoSite" 
+					 type="info" 
+					 variant="elevated" 
+					 class="mb-4"
+					 icon="mdi-shield-check">
+				<div class="demo-2fa-info">
+					<div class="text-subtitle-2 mb-2">
+						<strong>Demo 2FA Code</strong>
+					</div>
+					<div class="text-caption mb-2">
+						For testing purposes on the demo site, use the code:
+					</div>
+					<div class="demo-code-display">
+						<code class="demo-2fa-code">000000</code>
+					</div>
+				</div>
 			</v-alert>
 
 			<div class="form-group">
@@ -105,6 +120,11 @@ export default {
 				required: v => !!v || 'This field is required',
 				sixDigits: v => /^\d{6}$/.test(v) || 'Must be 6 digits'
 			}
+		}
+	},
+	computed: {
+		isDemoSite() {
+			return window.location.hostname === 'clientledger.billinger.dev'
 		}
 	},
 	methods: {
@@ -221,5 +241,27 @@ export default {
 
 .form-group {
 	margin-bottom: 1rem;
+}
+
+.demo-2fa-info {
+	font-size: 0.875rem;
+	text-align: center;
+}
+
+.demo-code-display {
+	display: flex;
+	justify-content: center;
+	margin-top: 0.5rem;
+}
+
+.demo-2fa-code {
+	background: rgba(255, 255, 255, 0.15);
+	padding: 0.5rem 1rem;
+	border-radius: 6px;
+	font-family: monospace;
+	font-size: 1.25rem;
+	font-weight: bold;
+	letter-spacing: 0.2em;
+	border: 1px solid rgba(255, 255, 255, 0.2);
 }
 </style>

@@ -91,9 +91,9 @@ class DashboardController extends Controller
                     'is_extrapolated' => false
                 ],
                 'hours' => [
-                    'yearly' => ['total' => 0, 'billable' => 0],
+                    'yearly' => ['actual' => 0, 'extrapolated' => 0, 'actual_billable' => 0, 'extrapolated_billable' => 0],
                     'last_year' => ['total' => 0, 'billable' => 0],
-                    'monthly' => ['total' => 0, 'billable' => 0],
+                    'monthly' => ['actual' => 0, 'extrapolated' => 0, 'actual_billable' => 0, 'extrapolated_billable' => 0],
                     'last_month' => ['total' => 0, 'billable' => 0]
                 ],
                 'projects' => [
@@ -137,13 +137,21 @@ class DashboardController extends Controller
         $yearlyHours = (clone $workLogQueryBase)
             ->whereYear('date', $now->year)
             ->sum('hours_worked');
+        $yearlyHoursExtrapolated = $currentMonth > 0 && $currentMonth < 12 
+            ? number_format($yearlyHours * $yearlyExtrapolationFactor, 2, '.', '')
+            : $yearlyHours;
+        
         $lastYearHours = (clone $workLogQueryBase)
             ->whereBetween('date', [$lastYearStart, $lastYearEnd])
             ->sum('hours_worked');
+        
         $currentMonthHours = (clone $workLogQueryBase)
             ->whereBetween('date', [$thisMonthStart, $now]) // Sum up to current day for extrapolation base
             ->sum('hours_worked');
-        $monthlyHours = number_format($currentMonthHours * $monthlyExtrapolationFactor, 2, '.', '');
+        $monthlyHoursExtrapolated = $currentDay > 0 && $currentDay < $daysInMonth
+            ? number_format($currentMonthHours * $monthlyExtrapolationFactor, 2, '.', '')
+            : $currentMonthHours;
+        
         $lastMonthHours = (clone $workLogQueryBase)
             ->whereBetween('date', [$lastMonthStart, $lastMonthEnd])
             ->sum('hours_worked');
@@ -153,13 +161,21 @@ class DashboardController extends Controller
         $yearlyBillableHours = (clone $billableWorkLogQuery)
             ->whereYear('date', $now->year)
             ->sum('hours_worked');
+        $yearlyBillableHoursExtrapolated = $currentMonth > 0 && $currentMonth < 12
+            ? number_format($yearlyBillableHours * $yearlyExtrapolationFactor, 2, '.', '')
+            : $yearlyBillableHours;
+        
         $lastYearBillableHours = (clone $billableWorkLogQuery)
             ->whereBetween('date', [$lastYearStart, $lastYearEnd])
             ->sum('hours_worked');
+        
         $currentMonthBillableHours = (clone $billableWorkLogQuery)
             ->whereBetween('date', [$thisMonthStart, $now])
             ->sum('hours_worked');
-        $monthlyBillableHours = number_format($currentMonthBillableHours * $monthlyExtrapolationFactor, 2, '.', '');
+        $monthlyBillableHoursExtrapolated = $currentDay > 0 && $currentDay < $daysInMonth
+            ? number_format($currentMonthBillableHours * $monthlyExtrapolationFactor, 2, '.', '')
+            : $currentMonthBillableHours;
+        
         $lastMonthBillableHours = (clone $billableWorkLogQuery)
             ->whereBetween('date', [$lastMonthStart, $lastMonthEnd])
             ->sum('hours_worked');
@@ -167,16 +183,20 @@ class DashboardController extends Controller
         // Assign common hours KPIs
         $responseData['kpis']['hours'] = [
             'yearly' => [
-                'total' => $yearlyHours,
-                'billable' => $yearlyBillableHours
+                'actual' => $yearlyHours,
+                'extrapolated' => $yearlyHoursExtrapolated,
+                'actual_billable' => $yearlyBillableHours,
+                'extrapolated_billable' => $yearlyBillableHoursExtrapolated
             ],
             'last_year' => [
                 'total' => $lastYearHours,
                 'billable' => $lastYearBillableHours
             ],
             'monthly' => [
-                'total' => $monthlyHours, // Keep extrapolated total for KPI card
-                'billable' => $monthlyBillableHours, // Keep extrapolated billable for KPI card
+                'actual' => $currentMonthHours,
+                'extrapolated' => $monthlyHoursExtrapolated,
+                'actual_billable' => $currentMonthBillableHours,
+                'extrapolated_billable' => $monthlyBillableHoursExtrapolated
             ],
             'last_month' => [
                 'total' => $lastMonthHours,
