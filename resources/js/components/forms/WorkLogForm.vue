@@ -116,7 +116,7 @@
 							prepend-icon="mdi-text"
 							:rules="[v => !!v || $t('forms.workLog.descriptionRequired')]"
 							counter
-							:maxlength="500"
+							:maxlength="1500"
 							rows="4"
 							auto-grow></v-textarea>
 			</v-col>

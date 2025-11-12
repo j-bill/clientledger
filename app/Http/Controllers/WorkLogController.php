@@ -112,7 +112,7 @@ class WorkLogController extends Controller
             'date' => 'required|date',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'nullable|date_format:H:i',
-            'description' => 'nullable|string',
+            'description' => 'nullable|string|max:1500',
             'billable' => 'boolean',
         ]);
 
@@ -189,7 +189,7 @@ class WorkLogController extends Controller
             'date' => 'sometimes|required|date',
             'start_time' => 'sometimes|required|date_format:H:i',
             'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time',
-            'description' => 'nullable|string',
+            'description' => 'nullable|string|max:1500',
             'billable' => 'boolean',
         ]);
 
@@ -229,7 +229,7 @@ class WorkLogController extends Controller
 
         $validated = $request->validate([
             'end_time' => 'required|date_format:H:i|after_or_equal:start_time',
-            'description' => 'nullable|string',
+            'description' => 'nullable|string|max:1500',
         ]);
 
         $hours_worked = (strtotime($validated['end_time']) - strtotime($workLog->start_time)) / 3600;
