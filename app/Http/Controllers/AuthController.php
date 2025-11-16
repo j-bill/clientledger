@@ -18,36 +18,36 @@ class AuthController extends Controller
             
             $user = Auth::user();
             
-            Log::info('AuthController::login - User authenticated:', [
-                'user_id' => $user->id,
-                'has_2fa_enabled' => $user->hasTwoFactorEnabled(),
-            ]);
+            // Log::info('AuthController::login - User authenticated:', [
+            //     'user_id' => $user->id,
+            //     'has_2fa_enabled' => $user->hasTwoFactorEnabled(),
+            // ]);
             
             // Check if user has 2FA enabled
             if ($user->hasTwoFactorEnabled()) {
                 // Get device fingerprint
                 $fingerprint = $this->getDeviceFingerprint($request);
                 
-                Log::info('AuthController::login - Checking device trust:', [
-                    'fingerprint' => $fingerprint,
-                    'user_agent' => $request->userAgent(),
-                    'ip' => $request->ip(),
-                ]);
+                // Log::info('AuthController::login - Checking device trust:', [
+                //     'fingerprint' => $fingerprint,
+                //     'user_agent' => $request->userAgent(),
+                //     'ip' => $request->ip(),
+                // ]);
                 
                 // Check if device is trusted
                 $isDeviceTrusted = $user->isDeviceTrusted($fingerprint);
                 
-                Log::info('AuthController::login - Device trust check result:', [
-                    'is_trusted' => $isDeviceTrusted,
-                    'trusted_devices' => $user->two_factor_device_fingerprints,
-                ]);
+                // Log::info('AuthController::login - Device trust check result:', [
+                //     'is_trusted' => $isDeviceTrusted,
+                //     'trusted_devices' => $user->two_factor_device_fingerprints,
+                // ]);
                 
                 if (!$isDeviceTrusted) {
                     // Logout temporarily but keep user ID in session for 2FA verification
                     session(['2fa_pending_user_id' => $user->id]);
                     Auth::logout();
                     
-                    Log::info('AuthController::login - Requiring 2FA verification');
+                    // Log::info('AuthController::login - Requiring 2FA verification');
                     
                     return response()->json([
                         'message' => '2FA verification required',
@@ -55,19 +55,19 @@ class AuthController extends Controller
                     ]);
                 }
                 
-                Log::info('AuthController::login - Device is trusted, allowing login');
+                // Log::info('AuthController::login - Device is trusted, allowing login');
             }
             
             // Check if user needs to setup 2FA
             if (!$user->hasTwoFactorEnabled()) {
-                Log::info('AuthController::login - Requiring 2FA setup');
+                // Log::info('AuthController::login - Requiring 2FA setup');
                 return response()->json([
                     'message' => 'Logged in successfully',
                     'requires_2fa_setup' => true,
                 ]);
             }
             
-            Log::info('AuthController::login - Login successful');
+            // Log::info('AuthController::login - Login successful');
             return response()->json(['message' => 'Logged in successfully']);
         }
 
@@ -95,13 +95,13 @@ class AuthController extends Controller
         $user = User::where('id', Auth::id())->first();
         
         if ($user) {
-            Log::info('AuthController::user - Returning user data:', [
-                'user_id' => $user->id,
-                'has_two_factor_secret' => !is_null($user->two_factor_secret),
-                'has_two_factor_confirmed_at' => !is_null($user->two_factor_confirmed_at),
-                'has_two_factor_enabled_accessor' => $user->has_two_factor_enabled,
-                'user_array' => $user->toArray()
-            ]);
+            // Log::info('AuthController::user - Returning user data:', [
+            //     'user_id' => $user->id,
+            //     'has_two_factor_secret' => !is_null($user->two_factor_secret),
+            //     'has_two_factor_confirmed_at' => !is_null($user->two_factor_confirmed_at),
+            //     'has_two_factor_enabled_accessor' => $user->has_two_factor_enabled,
+            //     'user_array' => $user->toArray()
+            // ]);
             return response()->json($user);
         }
 

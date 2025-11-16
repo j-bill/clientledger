@@ -148,9 +148,9 @@ class TwoFactorAuthenticationController extends Controller
 
         // If recovery code was used, disable 2FA and force re-setup
         if ($usedRecoveryCode) {
-            Log::info('AuthController::verify - Recovery code used, disabling 2FA', [
-                'user_id' => $user->id,
-            ]);
+            // Log::info('AuthController::verify - Recovery code used, disabling 2FA', [
+            //     'user_id' => $user->id,
+            // ]);
             
             // Disable 2FA
             $user->two_factor_secret = null;

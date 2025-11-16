@@ -40,10 +40,10 @@ class EmailVerificationController extends Controller
         try {
             $user->notify(new EmailVerificationCode($code));
             
-            Log::info('Email verification code sent', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-            ]);
+            // Log::info('Email verification code sent', [
+            //     'user_id' => $user->id,
+            //     'email' => $user->email,
+            // ]);
 
             return response()->json([
                 'message' => 'Verification code sent to your email',
@@ -117,10 +117,10 @@ class EmailVerificationController extends Controller
         $user->email_verification_code_expires_at = null;
         $user->save();
 
-        Log::info('Email verified successfully', [
-            'user_id' => $user->id,
-            'email' => $user->email,
-        ]);
+        // Log::info('Email verified successfully', [
+        //     'user_id' => $user->id,
+        //     'email' => $user->email,
+        // ]);
 
         return response()->json([
             'message' => 'Email verified successfully!',
