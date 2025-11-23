@@ -337,13 +337,14 @@ class DashboardController extends Controller
                 });
 
             // Merge invoices and work logs by month
-            $allMonthKeys = array_unique(array_merge(array_keys($allInvoices->toArray()), array_keys($allWorkLogs->toArray())));
-            foreach ($allMonthKeys as $monthKey) {
+            // Iterate through all months of the current year to ensure no gaps
+            for ($m = 1; $m <= 12; $m++) {
+                $monthKey = $now->year . '-' . str_pad($m, 2, '0', STR_PAD_LEFT);
                 $invoiceAmount = $allInvoices->get($monthKey)?->total ?? 0;
                 $workLogAmount = $allWorkLogs->get($monthKey)?->total ?? 0;
-                list($year, $month) = explode('-', $monthKey);
+                
                 $heroTrendData[] = [
-                    'date' => Carbon::createFromDate($year, $month, 1)->format('Y-m'),
+                    'date' => Carbon::createFromDate($now->year, $m, 1)->format('Y-m'),
                     'amount' => $invoiceAmount + $workLogAmount
                 ];
             }
