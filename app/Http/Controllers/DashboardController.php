@@ -323,6 +323,9 @@ class DashboardController extends Controller
 
             // Get all work logs by month, valued at their hourly rate
             $allWorkLogs = WorkLog::where('billable', true)
+                ->whereDoesntHave('invoices', function ($query) {
+                    $query->whereIn('status', ['paid', 'sent', 'draft']);
+                })
                 ->whereYear('date', $now->year)
                 ->selectRaw($this->yearExtract('date') . ', ' . $this->monthExtract('date') . ', SUM(hours_worked * hourly_rate) as total')
                 ->groupBy('year', 'month')
