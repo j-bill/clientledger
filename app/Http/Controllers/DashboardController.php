@@ -337,8 +337,8 @@ class DashboardController extends Controller
                 });
 
             // Merge invoices and work logs by month
-            // Iterate through all months of the current year to ensure no gaps
-            for ($m = 1; $m <= 12; $m++) {
+            // Iterate through all months up to and including the current month to ensure no gaps
+            for ($m = 1; $m <= $now->month; $m++) {
                 $monthKey = $now->year . '-' . str_pad($m, 2, '0', STR_PAD_LEFT);
                 $invoiceAmount = $allInvoices->get($monthKey)?->total ?? 0;
                 $workLogAmount = $allWorkLogs->get($monthKey)?->total ?? 0;
