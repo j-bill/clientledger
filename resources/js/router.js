@@ -6,6 +6,7 @@ import Login from "./pages/Login.vue";
 import WorkLogs from "./pages/Worklogs.vue";
 import Projects from "./pages/Projects.vue";
 import Customers from "./pages/Customers.vue";
+import Expenses from "./pages/Expenses.vue";
 import Invoices from "./pages/Invoices.vue";
 import Users from "./pages/Users.vue";
 import Profile from "./pages/Profile.vue";
@@ -103,6 +104,14 @@ const routes = [
   {
     path: "/users",
     component: Users,
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
+  
+  // Expenses routes (admin only)
+  {
+    path: "/expenses",
+    name: "Expenses",
+    component: Expenses,
     meta: { requiresAuth: true, requiresAdmin: true },
   },
   

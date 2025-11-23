@@ -189,6 +189,7 @@
     "projects": "Projekte",
     "customers": "Kunden",
     "invoices": "Rechnungen",
+    "expenses": "Ausgaben",
     "workLogs": "Arbeitslogs",
     "users": "Benutzer",
     "profile": "Profil",
@@ -744,6 +745,24 @@
       "verifiedSuccess": "E-Mail erfolgreich bestätigt!",
       "codeExpired": "Code ist abgelaufen. Bitte fordern Sie einen neuen an."
     }
+  },
+  "expenses": {
+    "title": "Ausgaben",
+    "newExpense": "Neue Ausgabe",
+    "editExpense": "Ausgabe bearbeiten",
+    "date": "Datum",
+    "description": "Beschreibung",
+    "amount": "Betrag",
+    "currency": "Währung",
+    "category": "Kategorie",
+    "project": "Projekt",
+    "customer": "Kunde",
+    "taxDeductible": "Steuerlich absetzbar",
+    "receipt": "Beleg",
+    "exportCSV": "CSV Exportieren",
+    "deleteConfirmation": "Sind Sie sicher, dass Sie diese Ausgabe löschen möchten?",
+    "startDate": "Startdatum",
+    "endDate": "Enddatum"
   }
 }
 

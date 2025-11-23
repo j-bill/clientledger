@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\ProfileController;
@@ -97,6 +98,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/worklogs/{workLog}', [WorkLogController::class, 'destroy']);
         Route::post('/worklogs/{workLog}/complete', [WorkLogController::class, 'completeTracking']);
         Route::get('/active-worklog', [WorkLogController::class, 'getActiveWorkLog']);
+
+        // Expense routes
+        Route::get('/expenses/export', [ExpenseController::class, 'export']);
+        Route::get('/expenses', [ExpenseController::class, 'index']);
+        Route::post('/expenses', [ExpenseController::class, 'store']);
+        Route::get('/expenses/{expense}', [ExpenseController::class, 'show']);
+        Route::post('/expenses/{expense}', [ExpenseController::class, 'update']); // Using POST for file upload support with method spoofing if needed, or just handling it
+        Route::delete('/expenses/{expense}', [ExpenseController::class, 'destroy']);
 
         // Invoice routes (admin only)
         Route::middleware(CheckRole::class.':admin')->group(function () {

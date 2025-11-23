@@ -189,6 +189,7 @@
     "projects": "Projects",
     "customers": "Customers",
     "invoices": "Invoices",
+    "expenses": "Expenses",
     "workLogs": "Work Logs",
     "users": "Users",
     "profile": "Profile",
@@ -744,6 +745,24 @@
       "verifiedSuccess": "Email verified successfully!",
       "codeExpired": "Code has expired. Please request a new one."
     }
+  },
+  "expenses": {
+    "title": "Expenses",
+    "newExpense": "New Expense",
+    "editExpense": "Edit Expense",
+    "date": "Date",
+    "description": "Description",
+    "amount": "Amount",
+    "currency": "Currency",
+    "category": "Category",
+    "project": "Project",
+    "customer": "Customer",
+    "taxDeductible": "Tax Deductible",
+    "receipt": "Receipt",
+    "exportCSV": "Export CSV",
+    "deleteConfirmation": "Are you sure you want to delete this expense?",
+    "startDate": "Start Date",
+    "endDate": "End Date"
   }
 }
 

@@ -12,6 +12,8 @@ Built with Laravel and Vue.js, supporting PostgreSQL, MySQL, and SQLite.
 
 **Project Management** - Organize work by project and customer. Configure hourly rates per project or team member. Track deadlines.
 
+**Expense Tracking** - Log general business expenses for tax deduction purposes. Upload receipts, categorize expenses, and export reports. Admin-only feature for business-level expense management.
+
 **Invoicing** - Generate invoices from logged hours. Consolidate multiple projects into single invoices. Track payment status (paid, pending, overdue).
 
 **Analytics Dashboard** - View revenue, billable hours, and earnings trends. Month-to-month and year-to-year comparisons with forecasting.
@@ -127,6 +129,7 @@ tests/
 - **Project** - Tracks projects with deadlines and rate configuration
 - **WorkLog** - Records individual time entries with billable status
 - **Invoice** - Generated invoices with payment tracking
+- **Expense** - Business expenses with optional customer/project linking for tax deduction tracking
 - **Setting** - User and application-level configuration
 
 ---
@@ -141,6 +144,12 @@ Time tracking and projects:
 - `GET|POST /api/work-logs` - List and create work logs
 - `GET|POST /api/projects` - List and create projects
 - `GET|POST /api/customers` - List and create customers
+
+Expense tracking (admin only):
+- `GET|POST /api/expenses` - List and create expenses
+- `PUT /api/expenses/{id}` - Update expense
+- `DELETE /api/expenses/{id}` - Delete expense
+- `GET /api/expenses/export` - Export expenses as CSV
 
 Invoicing and analytics:
 - `GET|POST /api/invoices` - List and create invoices
@@ -200,7 +209,7 @@ Supports English, German, Spanish, French, and Italian. Users can configure lang
 - 13+ API controllers
 - 50+ RESTful endpoints
 - 20+ Vue components
-- 19 database migrations
+- 20 database migrations
 - 54 passing tests
 - 5 supported languages
 

@@ -28,6 +28,8 @@
 					   text>{{ $t('navigation.customers') }}</v-btn>
 				<v-btn v-if="isAdmin" to="/invoices"
 					   text>{{ $t('navigation.invoices') }}</v-btn>
+				<v-btn v-if="isAdmin" to="/expenses"
+					   text>{{ $t('navigation.expenses') }}</v-btn>
 				<v-btn to="/work-logs"
 					   text>{{ $t('navigation.workLogs') }}</v-btn>
 			</div>
@@ -109,6 +111,9 @@
 				<v-list-item prepend-icon="mdi-receipt"
 							 :title="$t('navigation.invoices')"
 							 to="/invoices"></v-list-item>
+				<v-list-item v-if="isAdmin" prepend-icon="mdi-cash-multiple"
+							 :title="$t('navigation.expenses')"
+							 to="/expenses"></v-list-item>
 				<v-list-item prepend-icon="mdi-account-group"
 							 :title="$t('navigation.users')"
 							 to="/users"></v-list-item>
