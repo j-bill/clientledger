@@ -695,7 +695,7 @@
       "title": "Autenticazione a Due Fattori",
       "subtitle": "Immettere il codice a 6 cifre dall'app di autenticazione",
       "authenticationCode": "Codice di Autenticazione",
-      "trustDeviceLabel": "Fidati di questo dispositivo per 2 settimane",
+      "trustDeviceLabel": "Fidati di questo dispositivo per 90 giorni",
       "verify": "Verifica",
       "useRecoveryCodeInstead": "Utilizza il codice di recupero invece",
       "useAuthenticatorCode": "Utilizza il Codice di Autenticazione",

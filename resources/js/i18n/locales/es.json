@@ -696,7 +696,7 @@
       "title": "Autenticación de Dos Factores",
       "subtitle": "Ingrese el código de 6 dígitos de su aplicación autenticadora",
       "authenticationCode": "Código de Autenticación",
-      "trustDeviceLabel": "Confiar en este dispositivo durante 2 semanas",
+      "trustDeviceLabel": "Confiar en este dispositivo durante 90 días",
       "verify": "Verificar",
       "useRecoveryCodeInstead": "Usar código de recuperación en su lugar",
       "useAuthenticatorCode": "Usar código de autenticador",

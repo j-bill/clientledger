@@ -696,7 +696,7 @@
       "title": "Two-Factor Authentication",
       "subtitle": "Enter the 6-digit code from your authenticator app",
       "authenticationCode": "Authentication Code",
-      "trustDeviceLabel": "Trust this device for 2 weeks",
+      "trustDeviceLabel": "Trust this device for 90 days",
       "verify": "Verify",
       "useRecoveryCodeInstead": "Use recovery code instead",
       "useAuthenticatorCode": "Use authenticator code",
