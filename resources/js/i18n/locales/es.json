@@ -90,6 +90,7 @@
     "minutes": "Minutos",
     "description": "Descripción",
     "hourlyRate": "Tarifa por hora",
+    "startTime": "Hora de inicio",
     "startWorking": "Comenzar a trabajar ahora",
     "stopWorking": "Dejar de trabajar",
     "timeTracking": "Seguimiento de tiempo",

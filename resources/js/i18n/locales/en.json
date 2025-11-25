@@ -90,6 +90,7 @@
     "minutes": "Minutes",
     "description": "Description",
     "hourlyRate": "Hourly Rate",
+    "startTime": "Start Time",
     "startWorking": "Start Working Now",
     "stopWorking": "Stop Working",
     "timeTracking": "Time Tracking",

@@ -150,6 +150,14 @@
 							  :rules="[v => !!v || $t('validation.projectRequired')]"
 							  :disabled="filteredProjects.length === 0"></v-select>
 					
+					<v-text-field
+						v-model="startTime"
+						:label="$t('workLogs.startTime')"
+						type="time"
+						prepend-icon="mdi-clock-start"
+						class="mb-2"
+					></v-text-field>
+					
 					<v-textarea v-model="workDescription"
 							   :label="$t('workLogs.description')"
 							   prepend-icon="mdi-text"
@@ -183,6 +191,7 @@ export default {
 			selectedCustomer: null,
 			selectedProject: null,
 			workDescription: '',
+			startTime: null,
 			activeWorkLog: null,
 			trackingStartTime: null,
 			timeElapsed: '00:00:00',
@@ -330,6 +339,8 @@ export default {
 				}
 				
 				// No active work log, show dialog to start a new one
+				const now = new Date();
+				this.startTime = now.toTimeString().slice(0, 5);
 				this.projectDialog = true;
 			} catch (error) {
 				console.error('Error checking for active work logs:', error);
@@ -343,13 +354,14 @@ export default {
 			this.projectDialog = false;
 			this.selectedProject = null;
 			this.workDescription = '';
+			this.startTime = null;
 		},
 		
 		async confirmStartTracking() {
 			this.isLoading = true;
 			try {
 				const now = new Date();
-				const currentTime = now.toTimeString().slice(0, 5); // Format: HH:MM
+				const currentTime = this.startTime || now.toTimeString().slice(0, 5); // Format: HH:MM
 				
 				// Get the project hourly rate
 				const selectedProject = this.projects.find(p => p.id === this.selectedProject);
@@ -366,7 +378,18 @@ export default {
 				
 				const response = await axios.post('/api/worklogs', workLog);
 				this.activeWorkLog = response.data;
-				this.trackingStartTime = now;
+				
+				// Calculate tracking start time based on the selected start time
+				const startTimeParts = currentTime.split(':');
+				const startDate = new Date();
+				startDate.setHours(parseInt(startTimeParts[0]), parseInt(startTimeParts[1]), 0, 0);
+				
+				// If the start time is in the future (relative to now), assume it started yesterday
+				if (startDate > now) {
+					startDate.setDate(startDate.getDate() - 1);
+				}
+				
+				this.trackingStartTime = startDate;
 				
 				this.startElapsedTimer();
 				this.projectDialog = false;
