@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use App\Models\User;
+use App\Services\DeviceFingerprintService;
 
 class AuthController extends Controller
 {
@@ -18,36 +18,19 @@ class AuthController extends Controller
             
             $user = Auth::user();
             
-            // Log::info('AuthController::login - User authenticated:', [
-            //     'user_id' => $user->id,
-            //     'has_2fa_enabled' => $user->hasTwoFactorEnabled(),
-            // ]);
-            
             // Check if user has 2FA enabled
             if ($user->hasTwoFactorEnabled()) {
-                // Get device fingerprint
-                $fingerprint = $this->getDeviceFingerprint($request);
+                // Get device fingerprints using the same service as Verify2FA middleware
+                $clientFingerprint = $request->header('X-Device-Fingerprint');
+                $fingerprint = DeviceFingerprintService::generate($request, $clientFingerprint);
                 
-                // Log::info('AuthController::login - Checking device trust:', [
-                //     'fingerprint' => $fingerprint,
-                //     'user_agent' => $request->userAgent(),
-                //     'ip' => $request->ip(),
-                // ]);
-                
-                // Check if device is trusted
-                $isDeviceTrusted = $user->isDeviceTrusted($fingerprint);
-                
-                // Log::info('AuthController::login - Device trust check result:', [
-                //     'is_trusted' => $isDeviceTrusted,
-                //     'trusted_devices' => $user->two_factor_device_fingerprints,
-                // ]);
+                // Check if device is trusted (check both server and client fingerprints)
+                $isDeviceTrusted = $user->isDeviceTrusted($fingerprint, $clientFingerprint);
                 
                 if (!$isDeviceTrusted) {
                     // Logout temporarily but keep user ID in session for 2FA verification
                     session(['2fa_pending_user_id' => $user->id]);
                     Auth::logout();
-                    
-                    // Log::info('AuthController::login - Requiring 2FA verification');
                     
                     return response()->json([
                         'message' => '2FA verification required',
@@ -55,31 +38,22 @@ class AuthController extends Controller
                     ]);
                 }
                 
-                // Log::info('AuthController::login - Device is trusted, allowing login');
+                // Device is trusted, set session flag
+                session(['2fa_verified' => true]);
             }
             
             // Check if user needs to setup 2FA
             if (!$user->hasTwoFactorEnabled()) {
-                // Log::info('AuthController::login - Requiring 2FA setup');
                 return response()->json([
                     'message' => 'Logged in successfully',
                     'requires_2fa_setup' => true,
                 ]);
             }
             
-            // Log::info('AuthController::login - Login successful');
             return response()->json(['message' => 'Logged in successfully']);
         }
 
         return response()->json(['message' => 'Invalid credentials'], 401);
-    }
-    
-    /**
-     * Get device fingerprint
-     */
-    protected function getDeviceFingerprint($request)
-    {
-        return hash('sha256', $request->ip() . $request->userAgent());
     }
 
     public function logout(Request $request)

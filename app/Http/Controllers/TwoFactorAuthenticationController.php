@@ -161,7 +161,7 @@ class TwoFactorAuthenticationController extends Controller
             $user->save();
 
             // Log the user in
-            Auth::login($user);
+            Auth::guard('web')->login($user);
             $request->session()->regenerate();
             
             // Clear pending 2FA session
@@ -182,7 +182,7 @@ class TwoFactorAuthenticationController extends Controller
         }
 
         // Log the user in
-        Auth::login($user);
+        Auth::guard('web')->login($user);
         $request->session()->regenerate();
         
         // Clear pending 2FA session
