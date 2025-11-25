@@ -13,6 +13,7 @@ use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use App\Services\DeviceFingerprintService;
 
 class TwoFactorAuthenticationController extends Controller
 {
@@ -64,6 +65,7 @@ class TwoFactorAuthenticationController extends Controller
     {
         $request->validate([
             'code' => 'required|string',
+            'client_fingerprint' => 'sometimes|string',
         ]);
 
         $user = $request->user();
@@ -93,8 +95,10 @@ class TwoFactorAuthenticationController extends Controller
         $user->save();
 
         // Automatically trust the current device after initial setup
-        $fingerprint = $this->getDeviceFingerprint($request);
-        $user->addTrustedDevice($fingerprint, $request->userAgent());
+        $clientFingerprint = $request->input('client_fingerprint') ?? $request->header('X-Device-Fingerprint');
+        $fingerprint = DeviceFingerprintService::generate($request, $clientFingerprint);
+        $deviceInfo = DeviceFingerprintService::getDeviceInfo($request);
+        $user->addTrustedDevice($fingerprint, $request->userAgent(), $clientFingerprint, $deviceInfo);
 
         // Set session flag that 2FA is verified for this session
         session(['2fa_verified' => true]);
@@ -113,6 +117,7 @@ class TwoFactorAuthenticationController extends Controller
         $request->validate([
             'code' => 'required|string',
             'trust_device' => 'sometimes|boolean',
+            'client_fingerprint' => 'sometimes|string',
         ]);
 
         // Get user from pending session
@@ -148,10 +153,6 @@ class TwoFactorAuthenticationController extends Controller
 
         // If recovery code was used, disable 2FA and force re-setup
         if ($usedRecoveryCode) {
-            // Log::info('AuthController::verify - Recovery code used, disabling 2FA', [
-            //     'user_id' => $user->id,
-            // ]);
-            
             // Disable 2FA
             $user->two_factor_secret = null;
             $user->two_factor_recovery_codes = null;
@@ -174,8 +175,10 @@ class TwoFactorAuthenticationController extends Controller
 
         // Trust this device if requested (default to true)
         if ($request->input('trust_device', true)) {
-            $fingerprint = $this->getDeviceFingerprint($request);
-            $user->addTrustedDevice($fingerprint, $request->userAgent());
+            $clientFingerprint = $request->input('client_fingerprint') ?? $request->header('X-Device-Fingerprint');
+            $fingerprint = DeviceFingerprintService::generate($request, $clientFingerprint);
+            $deviceInfo = DeviceFingerprintService::getDeviceInfo($request);
+            $user->addTrustedDevice($fingerprint, $request->userAgent(), $clientFingerprint, $deviceInfo);
         }
 
         // Log the user in
@@ -294,7 +297,8 @@ class TwoFactorAuthenticationController extends Controller
         $devices = $user->two_factor_device_fingerprints ?: [];
 
         // Add current device indicator
-        $currentFingerprint = $this->getDeviceFingerprint($request);
+        $clientFingerprint = $request->header('X-Device-Fingerprint');
+        $currentFingerprint = DeviceFingerprintService::generate($request, $clientFingerprint);
         
         $devices = array_map(function($device) use ($currentFingerprint) {
             $device['is_current'] = $device['fingerprint'] === $currentFingerprint;
@@ -340,10 +344,13 @@ class TwoFactorAuthenticationController extends Controller
     }
 
     /**
-     * Get device fingerprint
+     * Get device fingerprint using the DeviceFingerprintService.
+     * 
+     * @deprecated Use DeviceFingerprintService::generate() directly
      */
     protected function getDeviceFingerprint(Request $request)
     {
-        return hash('sha256', $request->ip() . $request->userAgent());
+        $clientFingerprint = $request->header('X-Device-Fingerprint');
+        return DeviceFingerprintService::generate($request, $clientFingerprint);
     }
 }

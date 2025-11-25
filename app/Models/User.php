@@ -123,14 +123,31 @@ class User extends Authenticatable
         return $this->hasTwoFactorEnabled();
     }
 
-    public function isDeviceTrusted($fingerprint)
+    /**
+     * Check if a device is trusted by fingerprint or client fingerprint.
+     */
+    public function isDeviceTrusted($fingerprint, $clientFingerprint = null)
     {
         if (!$this->two_factor_device_fingerprints) {
             return false;
         }
 
+        $now = now()->timestamp;
+
         foreach ($this->two_factor_device_fingerprints as $device) {
-            if ($device['fingerprint'] === $fingerprint && $device['expires_at'] > now()->timestamp) {
+            // Skip expired devices
+            if ($device['expires_at'] <= $now) {
+                continue;
+            }
+            
+            // Check server-side fingerprint match
+            if ($device['fingerprint'] === $fingerprint) {
+                return true;
+            }
+            
+            // Check client-side fingerprint match as fallback
+            if ($clientFingerprint && isset($device['client_fingerprint']) 
+                && $device['client_fingerprint'] === $clientFingerprint) {
                 return true;
             }
         }
@@ -138,22 +155,35 @@ class User extends Authenticatable
         return false;
     }
 
-    public function addTrustedDevice($fingerprint, $userAgent)
+    /**
+     * Add a trusted device with optional client fingerprint and device info.
+     */
+    public function addTrustedDevice($fingerprint, $userAgent, $clientFingerprint = null, $deviceInfo = null)
     {
         $devices = $this->two_factor_device_fingerprints ?: [];
         
-        // Remove old device with same fingerprint if exists
+        // Remove existing entry for this fingerprint
         $devices = array_filter($devices, function($device) use ($fingerprint) {
             return $device['fingerprint'] !== $fingerprint;
         });
 
-        // Add new device (trust for 2 weeks)
-        $devices[] = [
+        // Build device entry
+        $device = [
             'fingerprint' => $fingerprint,
             'user_agent' => $userAgent,
             'added_at' => now()->timestamp,
-            'expires_at' => now()->addWeeks(2)->timestamp,
+            'expires_at' => now()->addDays(90)->timestamp, // Extended to 90 days
         ];
+        
+        if ($clientFingerprint) {
+            $device['client_fingerprint'] = $clientFingerprint;
+        }
+        
+        if ($deviceInfo) {
+            $device['device_info'] = $deviceInfo;
+        }
+        
+        $devices[] = $device;
 
         // Keep only last 10 devices
         $devices = array_slice($devices, -10);

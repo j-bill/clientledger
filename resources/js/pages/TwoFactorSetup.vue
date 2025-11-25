@@ -178,6 +178,7 @@
 import { mapActions, mapState } from 'pinia'
 import { store } from '../store'
 import axios from 'axios'
+import { getDeviceFingerprint } from '../utils/deviceFingerprintUtil'
 
 export default {
 	name: 'TwoFactorSetup',
@@ -233,9 +234,13 @@ export default {
 				// First generate the QR code (creates the secret)
 				const enableResponse = await axios.post('/api/2fa/enable')
 				
+				// Get client fingerprint
+				const clientFingerprint = await getDeviceFingerprint()
+				
 				// Then verify with the bypass code
 				const confirmResponse = await axios.post('/api/2fa/confirm', {
-					code: '000000'
+					code: '000000',
+					client_fingerprint: clientFingerprint
 				})
 				
 				this.recoveryCodes = confirmResponse.data.recovery_codes
@@ -264,8 +269,12 @@ export default {
 
 			this.loading = true
 			try {
+				// Get client fingerprint for better device trust
+				const clientFingerprint = await getDeviceFingerprint()
+				
 				const response = await axios.post('/api/2fa/confirm', {
-					code: this.verificationCode
+					code: this.verificationCode,
+					client_fingerprint: clientFingerprint
 				})
 				this.recoveryCodes = response.data.recovery_codes
 				this.step = 3

@@ -106,6 +106,7 @@
 import { mapActions } from 'pinia'
 import { store } from '../store'
 import axios from 'axios'
+import { getDeviceFingerprint } from '../utils/deviceFingerprintUtil'
 
 export default {
 	name: 'TwoFactorChallenge',
@@ -138,9 +139,13 @@ export default {
 
 			this.loading = true
 			try {
+				// Get client fingerprint for better device trust
+				const clientFingerprint = await getDeviceFingerprint()
+				
 				const response = await axios.post('/api/2fa/verify', {
 					code: this.code,
-					trust_device: this.trustDevice
+					trust_device: this.trustDevice,
+					client_fingerprint: clientFingerprint
 				})
 
 				// Check if 2FA setup is required (recovery code was used)
@@ -172,9 +177,13 @@ export default {
 
 			this.loading = true
 			try {
+				// Get client fingerprint for better device trust
+				const clientFingerprint = await getDeviceFingerprint()
+				
 				const response = await axios.post('/api/2fa/verify', {
 					code: this.recoveryCode,
-					trust_device: this.trustDevice
+					trust_device: this.trustDevice,
+					client_fingerprint: clientFingerprint
 				})
 
 				// Check if 2FA setup is required (recovery code was used)

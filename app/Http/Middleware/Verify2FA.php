@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use App\Services\DeviceFingerprintService;
 
 class Verify2FA
 {
@@ -32,11 +33,12 @@ class Verify2FA
             return $next($request);
         }
 
-        // Get device fingerprint
-        $fingerprint = $this->getDeviceFingerprint($request);
+        // Get device fingerprints (server-side and client-side)
+        $clientFingerprint = $request->header('X-Device-Fingerprint');
+        $fingerprint = DeviceFingerprintService::generate($request, $clientFingerprint);
 
-        // Check if device is trusted
-        if ($user->isDeviceTrusted($fingerprint)) {
+        // Check if device is trusted (checks both server and client fingerprints)
+        if ($user->isDeviceTrusted($fingerprint, $clientFingerprint)) {
             return $next($request);
         }
 
@@ -50,13 +52,5 @@ class Verify2FA
             'message' => '2FA verification required',
             'requires_2fa_verification' => true,
         ], 403);
-    }
-
-    /**
-     * Get device fingerprint
-     */
-    protected function getDeviceFingerprint(Request $request)
-    {
-        return hash('sha256', $request->ip() . $request->userAgent());
     }
 }
