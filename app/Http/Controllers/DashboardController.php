@@ -261,7 +261,9 @@ class DashboardController extends Controller
                 ->whereBetween('issue_date', [$lastMonthStart, $lastMonthEnd])
                 ->sum('total_amount');
             // Include uninvoiced work logs valued at their hourly rate
+            // Exclude work logs that have been attached to any invoice (paid, sent, or draft)
             $lastMonthUninvoiced = WorkLog::where('billable', true)
+                ->whereDoesntHave('invoices')
                 ->whereBetween('date', [$lastMonthStart, $lastMonthEnd])
                 ->sum(DB::raw('hours_worked * hourly_rate'));
             $lastMonthDue += $lastMonthUninvoiced;
