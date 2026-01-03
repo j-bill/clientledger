@@ -183,7 +183,7 @@
         <v-card class="chart-card" :elevation="0">
           <v-card-title class="chart-title">
             <v-icon size="24" class="mr-2">mdi-chart-line-variant</v-icon>
-            {{ isAdmin ? $t('pages.home.revenue') : $t('pages.home.earnings') }} {{ $t('pages.home.trend') }} ({{ new Date().getFullYear() }})
+            {{ isAdmin ? $t('pages.home.revenue') : $t('pages.home.earnings') }} {{ $t('pages.home.trend') }} ({{ $t('pages.home.thisYear') }})
           </v-card-title>
           <v-card-text>
             <GChart

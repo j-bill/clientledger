@@ -292,28 +292,30 @@ class DashboardController extends Controller
                 })
                 ->sortDesc();
 
-            // --- Admin: Yearly Revenue Trend (PAID INVOICES ONLY) ---
+            // --- Admin: Revenue Trend (PAID INVOICES - LAST 12 MONTHS) ---
+            $twelveMonthsAgo = $now->copy()->subYear()->startOfMonth();
             $yearlyRevenueTrend = Invoice::where('status', 'paid')
-                ->whereYear('issue_date', $now->year)
+                ->where('issue_date', '>=', $twelveMonthsAgo)
                 ->get()
                 ->groupBy(function ($invoice) {
                     return $invoice->issue_date->format('Y-m');
                 })
                 ->map(function ($group) {
                     return [
-                        'date' => $group->first()->issue_date->format('Y-m'),
+                        'date' => $group->first()->issue_date->format('Y-m-01'),
                         'amount' => $group->sum('total_amount')
                     ];
                 })
                 ->values();
 
-            // --- Admin: Hero Trend (ALL INVOICES + UNINVOICED WORK) ---
+            // --- Admin: Hero Trend (ALL INVOICES + UNINVOICED WORK - LAST 12 MONTHS) ---
             // Combine all invoices (paid, sent, draft) with uninvoiced work logs valued at project/customer rates
             $heroTrendData = [];
+            $twelveMonthsAgo = $now->copy()->subYear()->startOfMonth();
             
-            // Get all invoices by month
+            // Get all invoices by month for the last 12 months
             $allInvoices = Invoice::whereIn('status', ['paid', 'sent', 'draft'])
-                ->whereYear('issue_date', $now->year)
+                ->where('issue_date', '>=', $twelveMonthsAgo)
                 ->selectRaw($this->yearExtract('issue_date') . ', ' . $this->monthExtract('issue_date') . ', SUM(total_amount) as total')
                 ->groupBy('year', 'month')
                 ->orderBy('year')
@@ -328,7 +330,7 @@ class DashboardController extends Controller
                 ->whereDoesntHave('invoices', function ($query) {
                     $query->whereIn('status', ['paid', 'sent', 'draft']);
                 })
-                ->whereYear('date', $now->year)
+                ->where('date', '>=', $twelveMonthsAgo)
                 ->selectRaw($this->yearExtract('date') . ', ' . $this->monthExtract('date') . ', SUM(hours_worked * hourly_rate) as total')
                 ->groupBy('year', 'month')
                 ->orderBy('year')
@@ -338,17 +340,19 @@ class DashboardController extends Controller
                     return $item->year . '-' . str_pad($item->month, 2, '0', STR_PAD_LEFT);
                 });
 
-            // Merge invoices and work logs by month
-            // Iterate through all months up to and including the current month to ensure no gaps
-            for ($m = 1; $m <= $now->month; $m++) {
-                $monthKey = $now->year . '-' . str_pad($m, 2, '0', STR_PAD_LEFT);
+            // Merge invoices and work logs by month for the last 12 months
+            $startDate = $twelveMonthsAgo->copy();
+            while ($startDate <= $now) {
+                $monthKey = $startDate->format('Y-m');
                 $invoiceAmount = $allInvoices->get($monthKey)?->total ?? 0;
                 $workLogAmount = $allWorkLogs->get($monthKey)?->total ?? 0;
                 
                 $heroTrendData[] = [
-                    'date' => Carbon::createFromDate($now->year, $m, 1)->format('Y-m'),
+                    'date' => $startDate->copy()->startOfMonth()->format('Y-m-d'),
                     'amount' => $invoiceAmount + $workLogAmount
                 ];
+                
+                $startDate->addMonth();
             }
 
             // --- Admin: Monthly Hours Worked Trend (All Users) ---
