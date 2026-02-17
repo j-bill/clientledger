@@ -14,7 +14,7 @@ Built with Laravel and Vue.js, supporting PostgreSQL, MySQL, and SQLite.
 
 **Expense Tracking** - Log general business expenses for tax deduction purposes. Upload receipts, categorize expenses, and export reports. Admin-only feature for business-level expense management.
 
-**Invoicing** - Generate invoices from logged hours. Consolidate multiple projects into single invoices. Track payment status (paid, pending, overdue).
+**Invoicing** - Generate invoices from logged hours. Consolidate multiple projects into single invoices. Track payment status (paid, pending, overdue). Per-customer invoice intro text and payment terms with global defaults as fallback.
 
 **Analytics Dashboard** - View revenue, billable hours, and earnings trends. Month-to-month and year-to-year comparisons with forecasting.
 
@@ -125,7 +125,7 @@ tests/
 ## Database Models
 
 - **User** - Handles authentication, 2FA, email verification, and role assignment
-- **Customer** - Stores client information and contact details
+- **Customer** - Stores client information, contact details, and per-customer invoice settings
 - **Project** - Tracks projects with deadlines and rate configuration
 - **WorkLog** - Records individual time entries with billable status
 - **Invoice** - Generated invoices with payment tracking
