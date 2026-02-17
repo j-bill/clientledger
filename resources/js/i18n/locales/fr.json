@@ -220,7 +220,12 @@
       "vatNumber": "Numéro de TVA",
       "hourlyRate": "Taux horaire",
       "nameRequired": "Le nom est obligatoire",
-      "emailValid": "L'e-mail doit être valide"
+      "emailValid": "L'e-mail doit être valide",
+      "invoiceSettings": "Paramètres de facturation",
+      "invoiceDefaultMessage": "Texte d'introduction de la facture",
+      "invoiceDefaultMessageHint": "Message d'accueil personnalisé pour les factures de ce client. Laisser vide pour utiliser la valeur par défaut globale.",
+      "invoicePaymentTerms": "Conditions de paiement",
+      "invoicePaymentTermsHint": "Conditions de paiement personnalisées pour les factures de ce client. Laisser vide pour utiliser la valeur par défaut globale."
     },
     "project": {
       "name": "Nom du projet",
@@ -579,9 +584,9 @@
       "autoSendInvoicesHint": "Envoyer automatiquement les factures à la création",
       "invoiceContent": "Contenu de la Facture",
       "defaultInvoiceMessage": "Message de Facture par Défaut",
-      "defaultInvoiceMessageHint": "Message de salutation qui apparaît au début des factures",
+      "defaultInvoiceMessageHint": "Message de salutation par défaut pour les factures. Peut être remplacé par client.",
       "paymentTerms": "Conditions de Paiement",
-      "paymentTermsHint": "Conditions de paiement, frais de retard et règles",
+      "paymentTermsHint": "Conditions de paiement par défaut pour les factures. Peut être remplacé par client.",
       "invoiceFooterLayout": "Mise en page du Pied de Page de Facture",
       "leftColumn": "Colonne Gauche",
       "centerColumn": "Colonne Centrale",

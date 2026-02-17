@@ -221,7 +221,12 @@
       "vatNumber": "Steuernummer",
       "hourlyRate": "Stundensatz",
       "nameRequired": "Name ist erforderlich",
-      "emailValid": "E-Mail muss gültig sein"
+      "emailValid": "E-Mail muss gültig sein",
+      "invoiceSettings": "Rechnungseinstellungen",
+      "invoiceDefaultMessage": "Rechnungs-Einleitungstext",
+      "invoiceDefaultMessageHint": "Individuelle Begrüßungsnachricht für die Rechnungen dieses Kunden. Leer lassen, um den globalen Standard zu verwenden.",
+      "invoicePaymentTerms": "Zahlungsbedingungen",
+      "invoicePaymentTermsHint": "Individuelle Zahlungsbedingungen für die Rechnungen dieses Kunden. Leer lassen, um den globalen Standard zu verwenden."
     },
     "project": {
       "name": "Projektname",
@@ -580,9 +585,9 @@
       "autoSendInvoicesHint": "Rechnungen beim Erstellen automatisch versenden",
       "invoiceContent": "Rechnungsinhalt",
       "defaultInvoiceMessage": "Standard-Rechnungsmitteilung",
-      "defaultInvoiceMessageHint": "Grußbotschaft, die am Anfang von Rechnungen angezeigt wird",
+      "defaultInvoiceMessageHint": "Standard-Begrüßungsnachricht für Rechnungen. Kann pro Kunde überschrieben werden.",
       "paymentTerms": "Zahlungsbedingungen",
-      "paymentTermsHint": "Zahlungsbedingungen, Verspätungsgebühren und Regeln",
+      "paymentTermsHint": "Standard-Zahlungsbedingungen für Rechnungen. Kann pro Kunde überschrieben werden.",
       "invoiceFooterLayout": "Rechnungs-Fußzeilenlayout",
       "leftColumn": "Linke Spalte",
       "centerColumn": "Mittlere Spalte",

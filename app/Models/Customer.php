@@ -22,6 +22,8 @@ class Customer extends Model
         'country',
         'vat_number',
         'hourly_rate',
+        'invoice_default_message',
+        'invoice_payment_terms',
     ];
 
     public function projects()

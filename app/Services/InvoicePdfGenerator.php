@@ -33,6 +33,16 @@ class InvoicePdfGenerator
             $query->orderBy('id', 'asc');
         }]);
 
+        // Override global settings with customer-level values if set
+        if ($invoice->customer) {
+            if ($invoice->customer->invoice_default_message) {
+                $settings['invoice_default_message'] = $invoice->customer->invoice_default_message;
+            }
+            if ($invoice->customer->invoice_payment_terms) {
+                $settings['invoice_payment_terms'] = $invoice->customer->invoice_payment_terms;
+            }
+        }
+
         // Prepare invoice data with translations
         $data = [
             'invoice' => $invoice,

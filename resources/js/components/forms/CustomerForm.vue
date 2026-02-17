@@ -92,6 +92,36 @@
         ></v-text-field>
       </v-col>
     </v-row>
+
+    <v-divider class="my-4"></v-divider>
+
+    <div class="text-subtitle-1 font-weight-bold mb-2 d-flex align-center">
+      <v-icon class="mr-2" size="small">mdi-file-document-outline</v-icon>
+      {{ $t('forms.customer.invoiceSettings') }}
+    </div>
+
+    <v-row>
+      <v-col cols="12">
+        <v-textarea
+          v-model="formData.invoice_default_message"
+          :label="$t('forms.customer.invoiceDefaultMessage')"
+          prepend-icon="mdi-message-text"
+          rows="3"
+          :hint="$t('forms.customer.invoiceDefaultMessageHint')"
+          persistent-hint
+        ></v-textarea>
+      </v-col>
+      <v-col cols="12">
+        <v-textarea
+          v-model="formData.invoice_payment_terms"
+          :label="$t('forms.customer.invoicePaymentTerms')"
+          prepend-icon="mdi-file-document-outline"
+          rows="4"
+          :hint="$t('forms.customer.invoicePaymentTermsHint')"
+          persistent-hint
+        ></v-textarea>
+      </v-col>
+    </v-row>
   </v-form>
 </template>
 
@@ -119,7 +149,9 @@ export default {
         postcode: '',
         country: '',
         vat_number: '',
-        hourly_rate: 0
+        hourly_rate: 0,
+        invoice_default_message: '',
+        invoice_payment_terms: ''
       }
     };
   },

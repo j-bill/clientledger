@@ -46,6 +46,8 @@ class CustomerController extends Controller
             'country' => 'nullable|string|max:255',
             'vat_number' => 'nullable|string|max:255',
             'hourly_rate' => 'nullable|numeric',
+            'invoice_default_message' => 'nullable|string',
+            'invoice_payment_terms' => 'nullable|string',
         ]);
 
         $customer = Customer::create($validated);
@@ -78,6 +80,8 @@ class CustomerController extends Controller
             'country' => 'nullable|string|max:255',
             'vat_number' => 'nullable|string|max:255',
             'hourly_rate' => 'nullable|numeric',
+            'invoice_default_message' => 'nullable|string',
+            'invoice_payment_terms' => 'nullable|string',
         ]);
 
         $customer->update($validated);

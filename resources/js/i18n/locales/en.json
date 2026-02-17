@@ -221,7 +221,12 @@
       "vatNumber": "VAT Number",
       "hourlyRate": "Hourly Rate",
       "nameRequired": "Name is required",
-      "emailValid": "Email must be valid"
+      "emailValid": "Email must be valid",
+      "invoiceSettings": "Invoice Settings",
+      "invoiceDefaultMessage": "Invoice Intro Text",
+      "invoiceDefaultMessageHint": "Custom greeting message for this customer's invoices. Leave empty to use the global default.",
+      "invoicePaymentTerms": "Payment Terms",
+      "invoicePaymentTermsHint": "Custom payment terms for this customer's invoices. Leave empty to use the global default."
     },
     "project": {
       "name": "Project Name",
@@ -580,9 +585,9 @@
       "autoSendInvoicesHint": "Automatically send invoices when created",
       "invoiceContent": "Invoice Content",
       "defaultInvoiceMessage": "Default Invoice Message",
-      "defaultInvoiceMessageHint": "Greeting message that appears at the top of invoices",
+      "defaultInvoiceMessageHint": "Default greeting message for invoices. Can be overridden per customer.",
       "paymentTerms": "Payment Terms",
-      "paymentTermsHint": "Payment terms, late fees, and rules",
+      "paymentTermsHint": "Default payment terms for invoices. Can be overridden per customer.",
       "invoiceFooterLayout": "Invoice Footer Layout",
       "leftColumn": "Left Column",
       "centerColumn": "Center Column",
