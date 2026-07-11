@@ -14,9 +14,9 @@
 			</div>
 			
 			<!-- Message -->
-			<h1 class="error-title">{{ $t('errorPages.accessDenied') }}</h1>
+			<h1 class="error-title">{{ $t('pages.errorPages.accessDenied') }}</h1>
 			<p class="error-message">
-				{{ $t('errorPages.accessDeniedMessage') }}
+				{{ $t('pages.errorPages.accessDeniedMessage') }}
 			</p>
 			
 			<!-- Action Buttons -->
@@ -28,7 +28,7 @@
 					@click="goHome"
 					class="mr-3"
 				>
-					{{ $t('errorPages.goHome') }}
+					{{ $t('pages.errorPages.goHome') }}
 				</v-btn>
 				<v-btn
 					variant="outlined"
@@ -36,7 +36,7 @@
 					prepend-icon="mdi-arrow-left"
 					@click="goBack"
 				>
-					{{ $t('errorPages.goBack') }}
+					{{ $t('pages.errorPages.goBack') }}
 				</v-btn>
 			</div>
 		</div>

@@ -258,7 +258,9 @@
       "endTimeRequired": "L'heure de fin est requise",
       "descriptionRequired": "La description est requise",
       "hourlyRate": "Taux horaire du freelance",
-      "hourlyRateHint": "Le taux est hérité du freelance pour les nouveaux journaux de travail"
+      "hourlyRateHint": "Le taux est hérité du freelance pour les nouveaux journaux de travail",
+      "generateWithAi": "Générer avec l'IA",
+      "aiGenerationFailed": "Échec de la génération de la description"
     },
     "user": {
       "name": "Nom",
@@ -686,8 +688,29 @@
           "french": "Français (French)",
           "italian": "Italiano (Italian)",
           "spanish": "Español (Spanish)"
+        },
+        "worklogSounds": {
+          "cashRegister": "Caisse enregistreuse (ka-ching)",
+          "coinBag": "Sac de pièces",
+          "coinRetro": "Pièce rétro (8 bits)",
+          "coinChime": "Tintement de pièce"
         }
-      }
+      },
+      "ai": "IA",
+      "aiConfiguration": "Configuration de l'IA",
+      "aiWorklogEnabled": "Activer les descriptions de journal de travail générées par l'IA",
+      "openaiApiKey": "Clé API OpenAI",
+      "openaiModel": "Modèle OpenAI",
+      "openaiModelHint": "p. ex. gpt-4o-mini",
+      "aiWorklogPrompt": "Prompt de style de description",
+      "aiWorklogPromptHint": "Instructions indiquant à l'IA comment réécrire vos notes",
+      "sounds": "Sons",
+      "soundConfiguration": "Paramètres audio",
+      "worklogSoundEnabled": "Jouer un son à l'arrêt du travail",
+      "worklogSoundEnabledHint": "Un son court est joué lorsque vous arrêtez le suivi du temps",
+      "worklogSound": "Son",
+      "previewSound": "Écouter",
+      "soundPlaybackFailed": "Impossible de lire le son"
     },
     "errorPages": {
       "accessDenied": "Accès refusé",

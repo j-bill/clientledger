@@ -258,7 +258,9 @@
       "endTimeRequired": "La hora de finalización es obligatoria",
       "descriptionRequired": "La descripción es obligatoria",
       "hourlyRate": "Tarifa por hora del freelancer",
-      "hourlyRateHint": "La tarifa se hereda del freelancer para nuevos registros de trabajo"
+      "hourlyRateHint": "La tarifa se hereda del freelancer para nuevos registros de trabajo",
+      "generateWithAi": "Generar con IA",
+      "aiGenerationFailed": "No se pudo generar la descripción"
     },
     "user": {
       "name": "Nombre",
@@ -687,8 +689,29 @@
           "french": "Français (French)",
           "italian": "Italiano (Italian)",
           "spanish": "Español (Spanish)"
+        },
+        "worklogSounds": {
+          "cashRegister": "Caja registradora (ka-ching)",
+          "coinBag": "Bolsa de monedas",
+          "coinRetro": "Moneda retro (8 bits)",
+          "coinChime": "Tintineo de moneda"
         }
-      }
+      },
+      "ai": "IA",
+      "aiConfiguration": "Configuración de IA",
+      "aiWorklogEnabled": "Activar descripciones de registro de trabajo generadas por IA",
+      "openaiApiKey": "Clave API de OpenAI",
+      "openaiModel": "Modelo de OpenAI",
+      "openaiModelHint": "p. ej. gpt-4o-mini",
+      "aiWorklogPrompt": "Prompt de estilo de descripción",
+      "aiWorklogPromptHint": "Instrucciones que indican a la IA cómo reescribir sus notas",
+      "sounds": "Sonidos",
+      "soundConfiguration": "Configuración de sonido",
+      "worklogSoundEnabled": "Reproducir sonido al dejar de trabajar",
+      "worklogSoundEnabledHint": "Se reproduce un sonido breve al detener el registro de tiempo",
+      "worklogSound": "Sonido",
+      "previewSound": "Escuchar",
+      "soundPlaybackFailed": "No se pudo reproducir el sonido"
     },
     "errorPages": {
       "accessDenied": "Acceso denegado",

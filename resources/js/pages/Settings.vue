@@ -63,6 +63,14 @@
 							<v-icon start>mdi-gavel</v-icon>
 							{{ $t('pages.settings.legal') }}
 						</v-tab>
+						<v-tab value="ai">
+							<v-icon start>mdi-robot</v-icon>
+							{{ $t('pages.settings.ai') }}
+						</v-tab>
+						<v-tab value="sounds">
+							<v-icon start>mdi-volume-high</v-icon>
+							{{ $t('pages.settings.sounds') }}
+						</v-tab>
 					</v-tabs>
 
 					<v-card-text class="pa-8">
@@ -739,6 +747,114 @@
 									</v-row>
 								</v-form>
 							</v-window-item>
+
+							<!-- AI Settings Tab -->
+							<v-window-item value="ai">
+								<v-form ref="aiForm">
+									<div class="text-h6 mb-4 d-flex align-center">
+										<v-icon class="mr-2" color="primary">mdi-robot</v-icon>
+										{{ $t('pages.settings.aiConfiguration') }}
+									</div>
+
+									<v-row>
+										<v-col cols="12">
+											<v-switch
+												v-model="settings.ai_worklog_enabled"
+												:label="$t('pages.settings.aiWorklogEnabled')"
+												color="primary"
+												hide-details
+											></v-switch>
+										</v-col>
+
+										<v-col cols="12" md="6">
+											<v-text-field
+												v-model="settings.openai_api_key"
+												:label="$t('pages.settings.openaiApiKey')"
+												variant="outlined"
+												prepend-inner-icon="mdi-key"
+												:type="showOpenAiKey ? 'text' : 'password'"
+												:append-inner-icon="showOpenAiKey ? 'mdi-eye-off' : 'mdi-eye'"
+												@click:append-inner="showOpenAiKey = !showOpenAiKey"
+												density="comfortable"
+											></v-text-field>
+										</v-col>
+
+										<v-col cols="12" md="6">
+											<v-text-field
+												v-model="settings.openai_model"
+												:label="$t('pages.settings.openaiModel')"
+												variant="outlined"
+												prepend-inner-icon="mdi-brain"
+												density="comfortable"
+												:hint="$t('pages.settings.openaiModelHint')"
+												persistent-hint
+											></v-text-field>
+										</v-col>
+
+										<v-col cols="12">
+											<v-textarea
+												v-model="settings.ai_worklog_prompt"
+												:label="$t('pages.settings.aiWorklogPrompt')"
+												variant="outlined"
+												prepend-inner-icon="mdi-message-text"
+												density="comfortable"
+												rows="5"
+												:hint="$t('pages.settings.aiWorklogPromptHint')"
+												persistent-hint
+											></v-textarea>
+										</v-col>
+									</v-row>
+								</v-form>
+							</v-window-item>
+
+							<!-- Sound Settings Tab -->
+							<v-window-item value="sounds">
+								<v-form ref="soundsForm">
+									<div class="text-h6 mb-4 d-flex align-center">
+										<v-icon class="mr-2" color="primary">mdi-volume-high</v-icon>
+										{{ $t('pages.settings.soundConfiguration') }}
+									</div>
+
+									<v-row>
+										<v-col cols="12">
+											<v-switch
+												v-model="settings.worklog_sound_enabled"
+												:label="$t('pages.settings.worklogSoundEnabled')"
+												color="primary"
+												:hint="$t('pages.settings.worklogSoundEnabledHint')"
+												persistent-hint
+											></v-switch>
+										</v-col>
+
+										<v-col cols="12" md="6">
+											<v-select
+												v-model="settings.worklog_sound"
+												:items="worklogSoundOptions"
+												:label="$t('pages.settings.worklogSound')"
+												variant="outlined"
+												prepend-inner-icon="mdi-music-note"
+												density="comfortable"
+												item-title="title"
+												item-value="value"
+												:disabled="!settings.worklog_sound_enabled"
+											></v-select>
+										</v-col>
+
+										<v-col cols="12" md="6" class="d-flex align-start">
+											<v-btn
+												color="primary"
+												variant="tonal"
+												height="48"
+												:disabled="!settings.worklog_sound_enabled"
+												@click="previewSound"
+											>
+												<v-icon start>mdi-play</v-icon>
+												{{ $t('pages.settings.previewSound') }}
+											</v-btn>
+										</v-col>
+									</v-row>
+								</v-form>
+							</v-window-item>
 						</v-window>
 					</v-card-text>
 
@@ -789,6 +905,7 @@ export default {
 			loading: false,
 			tab: 'company',
 			showMailPassword: false,
+			showOpenAiKey: false,
 			settings: {
 				// Company Information
 				company_name: '',
@@ -839,7 +956,17 @@ export default {
 				
 				// Legal
 				privacy_notice: '',
-				imprint: ''
+				imprint: '',
+
+				// AI
+				ai_worklog_enabled: false,
+				openai_api_key: '',
+				openai_model: 'gpt-4o-mini',
+				ai_worklog_prompt: 'You are an assistant that rewrites rough time-tracking notes into a polished work log description. Write in first person, past tense, professional but plain language. Keep it concise (1-4 sentences), factual, and suitable for a client-facing invoice. Do not invent work that is not mentioned in the notes. Respond only with the rewritten description, in the same language as the notes.',
+
+				// Sounds
+				worklog_sound_enabled: true,
+				worklog_sound: 'cash-register'
 			},
 			originalSettings: {},
 			
@@ -929,6 +1056,14 @@ export default {
 				{ title: this.t('pages.settings.dropdownOptions.numberFormats.deDE'), value: 'de-DE' },
 				{ title: this.t('pages.settings.dropdownOptions.numberFormats.frFR'), value: 'fr-FR' },
 				{ title: this.t('pages.settings.dropdownOptions.numberFormats.enIN'), value: 'en-IN' }
+			];
+		},
+		worklogSoundOptions() {
+			return [
+				{ title: this.t('pages.settings.dropdownOptions.worklogSounds.cashRegister'), value: 'cash-register' },
+				{ title: this.t('pages.settings.dropdownOptions.worklogSounds.coinBag'), value: 'coin-bag' },
+				{ title: this.t('pages.settings.dropdownOptions.worklogSounds.coinRetro'), value: 'coin-retro' },
+				{ title: this.t('pages.settings.dropdownOptions.worklogSounds.coinChime'), value: 'coin-chime' }
 			];
 		},
 		mailEncryptions() {
@@ -1069,6 +1204,13 @@ export default {
 			return formatTime(date, this.settings)
 		},
 		
+		previewSound() {
+			const audio = new Audio(`/sounds/${this.settings.worklog_sound || 'cash-register'}.mp3`)
+			audio.play().catch(() => {
+				this.showSnackbar(this.t('pages.settings.soundPlaybackFailed'), 'error')
+			})
+		},
+
 		getLanguageName(code) {
 			const language = this.languageOptionsComputed.find(l => l.value === code)
 			return language ? language.title : code

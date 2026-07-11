@@ -1,14 +1,10 @@
-import { test, expect, Page } from '@playwright/test';
-import { loginAsAdmin, openInvoices } from './helpers';
-
-const today = new Date().toISOString().slice(0, 10);
-
-// Simple helper to locate a table row containing a text
-async function findRowByText(page: Page, text: string) {
-  const row = page.locator('tr', { hasText: text }).first();
-  await expect(row).toBeVisible();
-  return row;
-}
+import { test, expect } from '@playwright/test';
+import {
+  loginAsAdmin,
+  openInvoices,
+  selectFirstOption,
+  pickTodayInOpenDatePicker,
+} from './helpers';
 
 test.describe('Invoices e2e', () => {
   test('create invoice via dialog and generate from work logs', async ({ page, baseURL }) => {
@@ -18,48 +14,40 @@ test.describe('Invoices e2e', () => {
     await openInvoices(page, baseURL);
 
     // Create a new invoice
-  await page.locator('[data-test="btn-new"]').click();
+    await page.locator('[data-test="btn-new"]').click();
+    await expect(page.locator('.v-dialog').getByText('New Invoice')).toBeVisible();
 
-    // Select first customer
-  const customerField = page.locator('[data-test="invoice-customer"] input');
-  await customerField.click();
-    // Opened listbox, pick first option
-    const firstOption = page.locator('.v-overlay-container .v-list-item').first();
-    await firstOption.click();
+    await selectFirstOption(page, 'invoice-customer');
 
-    // Fill dates and amount
-  await page.locator('[data-test="invoice-issue-date"] input').fill(today);
-  await page.locator('[data-test="invoice-due-date"] input').fill(today);
-  await page.locator('[data-test="invoice-total"] input').fill('1234');
-  await page.locator('[data-test="btn-save-create"]').click();
+    // Issue date defaults to today; the date fields are readonly picker
+    // activators, so set the due date through the picker.
+    await page.locator('[data-test="invoice-due-date"] input').click();
+    await pickTodayInOpenDatePicker(page);
 
-    // Expect snackbar and new row present
+    await page.locator('[data-test="invoice-total"] input').fill('1234');
+    await page.locator('[data-test="btn-save-create"]').click();
+
     await expect(page.getByText('Invoice created successfully')).toBeVisible();
 
     // Generate from work logs
-  await page.locator('[data-test="btn-generate"]').click();
+    await page.locator('[data-test="btn-generate"]').click();
+    await expect(page.getByText('Generate Invoice from Work Logs')).toBeVisible();
 
-    // Choose a customer
-  const genCustomer = page.locator('[data-test="gen-customer"] input');
-  await genCustomer.click();
-    await page.locator('.v-overlay-container .v-list-item').first().click();
+    await selectFirstOption(page, 'gen-customer');
 
-    // Wait unbilled logs to load and pick first if exists
-  const logsSelect = page.locator('[data-test="gen-worklogs"] .v-field');
-  await logsSelect.click();
-    const anyLog = page.locator('.v-overlay-container .v-list-item').first();
-    const hasAny = await anyLog.isVisible();
-    if (hasAny) {
-      await anyLog.click();
-      await page.keyboard.press('Escape');
+    // Work logs load into a checkbox list; pick the first one if any exist
+    const workLogList = page.locator('.v-dialog .v-list-item').first();
+    const noLogsAlert = page.getByText('No unbilled work logs found');
+    await expect(workLogList.or(noLogsAlert)).toBeVisible();
 
-      // Dates default to today; just ensure status present
-  await page.locator('[data-test="btn-generate-confirm"]').click();
+    if (await workLogList.isVisible()) {
+      await workLogList.click();
 
+      // Due date defaults to today, status to draft; confirm generation
+      await page.locator('[data-test="btn-generate-confirm"]').click();
       await expect(page.getByText('Invoice generated from work logs')).toBeVisible();
     } else {
-      // Close dialog if no logs; still a pass for create flow
-  await page.locator('[data-test="btn-cancel-generate"]').click();
+      await page.locator('[data-test="btn-cancel-generate"]').click();
     }
 
     // Basic sanity: table visible and has rows

@@ -259,7 +259,9 @@
       "endTimeRequired": "End time is required",
       "descriptionRequired": "Description is required",
       "hourlyRate": "Freelancer Hourly Rate",
-      "hourlyRateHint": "Rate is inherited from freelancer for new work logs"
+      "hourlyRateHint": "Rate is inherited from freelancer for new work logs",
+      "generateWithAi": "Generate with AI",
+      "aiGenerationFailed": "Failed to generate description"
     },
     "user": {
       "name": "Name",
@@ -687,8 +689,29 @@
           "french": "Français (French)",
           "italian": "Italiano (Italian)",
           "spanish": "Español (Spanish)"
+        },
+        "worklogSounds": {
+          "cashRegister": "Cash register (ka-ching)",
+          "coinBag": "Bag of coins",
+          "coinRetro": "Retro coin (8-bit)",
+          "coinChime": "Coin chime"
         }
-      }
+      },
+      "ai": "AI",
+      "aiConfiguration": "AI Configuration",
+      "aiWorklogEnabled": "Enable AI-generated work log descriptions",
+      "openaiApiKey": "OpenAI API Key",
+      "openaiModel": "OpenAI Model",
+      "openaiModelHint": "e.g. gpt-4o-mini",
+      "aiWorklogPrompt": "Description style prompt",
+      "aiWorklogPromptHint": "Instructions telling the AI how to rewrite your notes",
+      "sounds": "Sounds",
+      "soundConfiguration": "Sound Settings",
+      "worklogSoundEnabled": "Play sound when stopping work",
+      "worklogSoundEnabledHint": "A short sound plays when you stop time tracking",
+      "worklogSound": "Sound",
+      "previewSound": "Preview",
+      "soundPlaybackFailed": "Could not play sound"
     },
     "errorPages": {
       "accessDenied": "Access Denied",

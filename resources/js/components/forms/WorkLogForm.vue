@@ -119,6 +119,17 @@
 							:maxlength="1500"
 							rows="4"
 							auto-grow></v-textarea>
+				<v-btn v-if="aiEnabled"
+					   class="mt-2 ml-9"
+					   variant="tonal"
+					   color="primary"
+					   size="small"
+					   prepend-icon="mdi-creation"
+					   :loading="generatingAi"
+					   :disabled="!formData.description"
+					   @click="generateDescription">
+					{{ $t('forms.workLog.generateWithAi') }}
+				</v-btn>
 			</v-col>
 
 			<v-col cols="12">
@@ -133,7 +144,7 @@
 </template>
 
 <script>
-import { mapState } from 'pinia'
+import { mapState, mapActions } from 'pinia'
 import { store } from '../../store'
 import { formatDate } from '../../utils/formatters';
 import axios from 'axios'
@@ -172,7 +183,9 @@ export default {
 			filteredProjects: [],
 			projectUsers: [],
 			isNewWorkLog: true,
-			isAdmin: false
+			isAdmin: false,
+			aiEnabled: false,
+			generatingAi: false
 		};
 	},
 
@@ -206,6 +219,7 @@ export default {
 			this.internalDate = new Date();
 		}
 		this.fetchCustomers();
+		this.checkAiEnabled();
 		this.filteredProjects = [...this.projects];
 		
 		// If editing a work log with a project, populate the project users
@@ -215,6 +229,34 @@ export default {
 	},
 
 	methods: {
+		...mapActions(store, ['showSnackbar']),
+
+		async checkAiEnabled() {
+			try {
+				const response = await axios.get('/api/settings/public');
+				this.aiEnabled = response.data.ai_worklog_enabled === '1';
+			} catch (error) {
+				console.error('Error checking AI settings:', error);
+			}
+		},
+
+		async generateDescription() {
+			if (!this.formData.description) return;
+
+			try {
+				this.generatingAi = true;
+				const response = await axios.post('/api/worklogs/generate-description', {
+					notes: this.formData.description,
+					project_id: this.formData.project_id
+				});
+				this.formData.description = response.data.description;
+			} catch (error) {
+				this.showSnackbar(error.response?.data?.message || this.$t('forms.workLog.aiGenerationFailed'), 'error');
+			} finally {
+				this.generatingAi = false;
+			}
+		},
+
 		async checkUserRole() {
 			try {
 				const response = await axios.get('/api/user');

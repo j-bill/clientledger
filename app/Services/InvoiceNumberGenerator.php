@@ -92,12 +92,12 @@ class InvoiceNumberGenerator
         switch ($format) {
             case 'YYYY-MM-number':
                 // Get the next number for this year-month
-                $nextNumber = self::getNextSequentialNumber($year, $month, $startNumber);
+                $nextNumber = self::getNextSequentialNumber($year, $month, $startNumber, $prefix);
                 return $prefix . $year . '-' . $month . '-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
             case 'YYYY-number':
                 // Get the next number for this year
-                $nextNumber = self::getNextSequentialNumberForYear($year, $startNumber);
+                $nextNumber = self::getNextSequentialNumberForYear($year, $startNumber, $prefix);
                 return $prefix . $year . '-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
             case 'number':
@@ -113,10 +113,12 @@ class InvoiceNumberGenerator
     /**
      * Get the next sequential number for YYYY-MM-number format
      */
-    private static function getNextSequentialNumber(string $year, string $month, int $startNumber): int
+    private static function getNextSequentialNumber(string $year, string $month, int $startNumber, string $prefix = ''): int
     {
-        // Find the highest invoice number for this year-month
-        $pattern = $year . '-' . $month . '-%';
+        // Find the highest invoice number for this year-month.
+        // The stored numbers include the configured prefix (e.g. INV-2026-07-001),
+        // so the pattern must include it too or existing numbers are never found.
+        $pattern = $prefix . $year . '-' . $month . '-%';
 
         $lastInvoice = Invoice::where('invoice_number', 'like', $pattern)
             ->get()
@@ -140,10 +142,11 @@ class InvoiceNumberGenerator
     /**
      * Get the next sequential number for YYYY-number format
      */
-    private static function getNextSequentialNumberForYear(string $year, int $startNumber): int
+    private static function getNextSequentialNumberForYear(string $year, int $startNumber, string $prefix = ''): int
     {
-        // Find the highest invoice number for this year
-        $pattern = $year . '-%';
+        // Find the highest invoice number for this year (pattern must include
+        // the configured prefix, see getNextSequentialNumber)
+        $pattern = $prefix . $year . '-%';
 
         $lastInvoice = Invoice::where('invoice_number', 'like', $pattern)
             ->orderByRaw("CAST(SUBSTRING_INDEX(invoice_number, '-', -1) AS UNSIGNED) DESC")

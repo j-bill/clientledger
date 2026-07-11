@@ -422,7 +422,9 @@ export default {
 					end_time: currentTime,
 					description: this.activeWorkLog.description
 				});
-				
+
+				this.playStopSound();
+
 				// Navigate to work logs page and pass the active work log ID
 				this.$router.push({ 
 					path: '/work-logs', 
@@ -447,6 +449,19 @@ export default {
 			}
 		},
 		
+		playStopSound() {
+			const enabled = this.settings?.worklog_sound_enabled;
+			if (enabled === '0' || enabled === 'false' || enabled === false) return;
+
+			const sound = this.settings?.worklog_sound || 'cash-register';
+			try {
+				const audio = new Audio(`/sounds/${sound}.mp3`);
+				audio.play().catch(() => {});
+			} catch (error) {
+				// Sound is best-effort; never block stopping the timer
+			}
+		},
+
 		checkForActiveWorkLog() {
 			try {
 				// First try to restore from localStorage

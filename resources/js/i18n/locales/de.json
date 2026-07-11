@@ -259,7 +259,9 @@
       "endTimeRequired": "Endzeit ist erforderlich",
       "descriptionRequired": "Beschreibung ist erforderlich",
       "hourlyRate": "Freelancer-Stundensatz",
-      "hourlyRateHint": "Satz wird für neue Arbeitsprotokolle von Freelancer geerbt"
+      "hourlyRateHint": "Satz wird für neue Arbeitsprotokolle von Freelancer geerbt",
+      "generateWithAi": "Mit KI generieren",
+      "aiGenerationFailed": "Beschreibung konnte nicht generiert werden"
     },
     "user": {
       "name": "Name",
@@ -687,8 +689,29 @@
           "french": "Français (French)",
           "italian": "Italiano (Italian)",
           "spanish": "Español (Spanish)"
+        },
+        "worklogSounds": {
+          "cashRegister": "Kasse (Ka-ching)",
+          "coinBag": "Münzbeutel",
+          "coinRetro": "Retro-Münze (8-Bit)",
+          "coinChime": "Münzklang"
         }
-      }
+      },
+      "ai": "KI",
+      "aiConfiguration": "KI-Konfiguration",
+      "aiWorklogEnabled": "KI-generierte Arbeitsbeschreibungen aktivieren",
+      "openaiApiKey": "OpenAI API-Schlüssel",
+      "openaiModel": "OpenAI-Modell",
+      "openaiModelHint": "z. B. gpt-4o-mini",
+      "aiWorklogPrompt": "Stil-Prompt für Beschreibungen",
+      "aiWorklogPromptHint": "Anweisungen, wie die KI Ihre Notizen umschreiben soll",
+      "sounds": "Töne",
+      "soundConfiguration": "Ton-Einstellungen",
+      "worklogSoundEnabled": "Ton beim Beenden der Arbeit abspielen",
+      "worklogSoundEnabledHint": "Beim Stoppen der Zeiterfassung wird ein kurzer Ton abgespielt",
+      "worklogSound": "Ton",
+      "previewSound": "Anhören",
+      "soundPlaybackFailed": "Ton konnte nicht abgespielt werden"
     },
     "errorPages": {
       "accessDenied": "Zugriff verweigert",

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AiController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
@@ -98,6 +99,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/worklogs/{workLog}', [WorkLogController::class, 'destroy']);
         Route::post('/worklogs/{workLog}/complete', [WorkLogController::class, 'completeTracking']);
         Route::get('/active-worklog', [WorkLogController::class, 'getActiveWorkLog']);
+        Route::post('/worklogs/generate-description', [AiController::class, 'generateWorkLogDescription'])->middleware('throttle:10,1');
 
         // Expense routes
         Route::get('/expenses/export', [ExpenseController::class, 'export']);

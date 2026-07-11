@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Setting;
 use App\Helpers\LanguageHelper;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 
 class SettingController extends Controller
@@ -27,6 +27,7 @@ class SettingController extends Controller
         ]);
 
         $setting = Setting::create($validated);
+
         return response()->json($setting, 201);
     }
 
@@ -44,11 +45,12 @@ class SettingController extends Controller
     public function update(Request $request, Setting $setting)
     {
         $validated = $request->validate([
-            'key' => 'sometimes|required|string|max:255|unique:settings,key,' . $setting->id,
+            'key' => 'sometimes|required|string|max:255|unique:settings,key,'.$setting->id,
             'value' => 'sometimes|required|string',
         ]);
 
         $setting->update($validated);
+
         return response()->json($setting);
     }
 
@@ -58,6 +60,7 @@ class SettingController extends Controller
     public function destroy(Setting $setting)
     {
         $setting->delete();
+
         return response()->json(null, 204);
     }
 
@@ -67,6 +70,7 @@ class SettingController extends Controller
     public function getBatch()
     {
         $settings = Setting::all()->pluck('value', 'key');
+
         return response()->json($settings);
     }
 
@@ -76,9 +80,9 @@ class SettingController extends Controller
     public function saveBatch(Request $request)
     {
         $data = $request->all();
-        
+
         // Validate that we have an object/array
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             return response()->json(['message' => 'Invalid data format'], 400);
         }
 
@@ -89,28 +93,28 @@ class SettingController extends Controller
                 if (empty($key)) {
                     continue;
                 }
-                
+
                 // Validate language setting
-                if ($key === 'language' && !LanguageHelper::isLanguageSupported($value)) {
+                if ($key === 'language' && ! LanguageHelper::isLanguageSupported($value)) {
                     return response()->json([
                         'message' => 'Invalid language selected',
-                        'error' => 'Language must be one of: ' . implode(', ', LanguageHelper::getLanguageCodes())
+                        'error' => 'Language must be one of: '.implode(', ', LanguageHelper::getLanguageCodes()),
                     ], 422);
                 }
-                
+
                 // Convert boolean to string for storage
                 if (is_bool($value)) {
                     $value = $value ? '1' : '0';
                 }
-                
+
                 // Convert null to empty string
                 if (is_null($value)) {
                     $value = '';
                 }
-                
+
                 // Ensure value is a string
                 $value = (string) $value;
-                
+
                 Setting::updateOrCreate(
                     ['key' => $key],
                     ['value' => $value]
@@ -122,12 +126,12 @@ class SettingController extends Controller
 
             return response()->json([
                 'message' => 'Settings saved successfully',
-                'settings' => Setting::all()->pluck('value', 'key')
+                'settings' => Setting::all()->pluck('value', 'key'),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to save settings',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -141,6 +145,7 @@ class SettingController extends Controller
         $publicSettings = Setting::whereIn('key', [
             'company_logo',
             'company_name',
+            'ai_worklog_enabled',
         ])->pluck('value', 'key');
 
         return response()->json($publicSettings);

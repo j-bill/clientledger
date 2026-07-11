@@ -565,6 +565,9 @@ export default {
       return colors[status.toLowerCase()] || 'grey';
     },
     openCreateDialog() {
+      // Clear any stale selection from a previous edit/upload, otherwise
+      // handleInvoiceSave would treat the new invoice as an update
+      this.currentInvoice = null;
       this.createDialog = true;
     },
     openEditDialog(item) {
@@ -600,44 +603,21 @@ export default {
         this.uploading = false;
       }
     },
-    async handleInvoiceSave(payload) {
-      // This handler is used for both create and update via the form's @save event
+    handleInvoiceSave(savedInvoice) {
+      // The form's submit() already persisted the invoice through the store
+      // (which also shows the snackbar). The @save event carries the saved
+      // record, so only sync the local list here — re-posting would create
+      // the invoice twice.
       if (this.currentInvoice?.id) {
-        // Update existing invoice
-        await this.updateInvoiceRecord(payload);
-      } else {
-        // Create new invoice
-        await this.saveInvoice(payload);
-      }
-    },
-    async saveInvoice(payload) {
-      try {
-        const { data } = await axios.post('/api/invoices', payload);
-        this.allInvoices.unshift(data);
-        this.applyFilters();
-        this.createDialog = false;
-        this.showSnackbar('Invoice created successfully', 'success');
-      } catch (e) {
-        const message = e.response?.data?.errors 
-          ? Object.values(e.response.data.errors)[0][0]
-          : (e.response?.data?.message || 'Failed to create invoice');
-        this.showSnackbar(message, 'error');
-      }
-    },
-    async updateInvoiceRecord(payload) {
-      try {
-        const { data } = await axios.put(`/api/invoices/${this.currentInvoice.id}`, payload);
-        const idx = this.allInvoices.findIndex(i => i.id === data.id);
-        if (idx !== -1) this.allInvoices.splice(idx, 1, data);
-        this.applyFilters();
+        const idx = this.allInvoices.findIndex(i => i.id === savedInvoice.id);
+        if (idx !== -1) this.allInvoices.splice(idx, 1, savedInvoice);
         this.editDialog = false;
-        this.showSnackbar('Invoice updated successfully', 'success');
-      } catch (e) {
-        const message = e.response?.data?.errors 
-          ? Object.values(e.response.data.errors)[0][0]
-          : (e.response?.data?.message || 'Failed to update invoice');
-        this.showSnackbar(message, 'error');
+        this.currentInvoice = null;
+      } else {
+        this.allInvoices.unshift(savedInvoice);
+        this.createDialog = false;
       }
+      this.applyFilters();
     },
     async openGenerateDialog() {
       // Reset the form with proper dates

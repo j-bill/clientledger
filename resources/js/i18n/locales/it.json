@@ -136,7 +136,7 @@
   "notifications": {
     "invoiceCreated": "Fattura creata con successo",
     "invoiceSent": "Fattura inviata con successo",
-        "settingsSaved": "Impostazioni salvate correttamente",
+    "settingsSaved": "Impostazioni salvate correttamente",
     "settingsFailedToSave": "Errore nel salvataggio delle impostazioni",
     "logoSizeTooLarge": "La dimensione del logo deve essere inferiore a 2MB",
     "logoMustBeImage": "Si prega di selezionare un file immagine",
@@ -258,7 +258,9 @@
       "endTimeRequired": "L'ora di fine è obbligatoria",
       "descriptionRequired": "La descrizione è obbligatoria",
       "hourlyRate": "Tariffa oraria del freelancer",
-      "hourlyRateHint": "La tariffa viene ereditata dal freelancer per i nuovi registri di lavoro"
+      "hourlyRateHint": "La tariffa viene ereditata dal freelancer per i nuovi registri di lavoro",
+      "generateWithAi": "Genera con IA",
+      "aiGenerationFailed": "Impossibile generare la descrizione"
     },
     "user": {
       "name": "Nome",
@@ -686,8 +688,29 @@
           "french": "Français (French)",
           "italian": "Italiano (Italian)",
           "spanish": "Español (Spanish)"
+        },
+        "worklogSounds": {
+          "cashRegister": "Registratore di cassa (ka-ching)",
+          "coinBag": "Sacchetto di monete",
+          "coinRetro": "Moneta retrò (8-bit)",
+          "coinChime": "Tintinnio di moneta"
         }
-      }
+      },
+      "ai": "IA",
+      "aiConfiguration": "Configurazione IA",
+      "aiWorklogEnabled": "Attiva descrizioni del registro di lavoro generate dall'IA",
+      "openaiApiKey": "Chiave API OpenAI",
+      "openaiModel": "Modello OpenAI",
+      "openaiModelHint": "es. gpt-4o-mini",
+      "aiWorklogPrompt": "Prompt di stile della descrizione",
+      "aiWorklogPromptHint": "Istruzioni che indicano all'IA come riscrivere le tue note",
+      "sounds": "Suoni",
+      "soundConfiguration": "Impostazioni audio",
+      "worklogSoundEnabled": "Riproduci suono quando termini il lavoro",
+      "worklogSoundEnabledHint": "Un breve suono viene riprodotto quando fermi il monitoraggio del tempo",
+      "worklogSound": "Suono",
+      "previewSound": "Ascolta",
+      "soundPlaybackFailed": "Impossibile riprodurre il suono"
     },
     "errorPages": {
       "accessDenied": "Accesso negato",

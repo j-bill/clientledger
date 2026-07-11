@@ -91,7 +91,16 @@ class ProjectController extends Controller
             // Send notification to the assigned user
             $user = User::find($userData['id']);
             if ($user) {
-                $user->notify(new ProjectAssigned($project->load('customer'), $userData['hourly_rate']));
+                try {
+                    $user->notify(new ProjectAssigned($project->load('customer'), $userData['hourly_rate']));
+                } catch (\Throwable $e) {
+                    // A failing mail transport must not fail project creation
+                    \Log::warning('Project assignment notification failed', [
+                        'user_id' => $user->id,
+                        'project_id' => $project->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
         }
 
@@ -141,7 +150,16 @@ class ProjectController extends Controller
                 if (!in_array($userData['id'], $previousUserIds)) {
                     $user = User::find($userData['id']);
                     if ($user) {
-                        $user->notify(new ProjectAssigned($project->load('customer'), $userData['hourly_rate']));
+                        try {
+                            $user->notify(new ProjectAssigned($project->load('customer'), $userData['hourly_rate']));
+                        } catch (\Throwable $e) {
+                            // A failing mail transport must not fail project update
+                            \Log::warning('Project assignment notification failed', [
+                                'user_id' => $user->id,
+                                'project_id' => $project->id,
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
                     }
                 }
             }
