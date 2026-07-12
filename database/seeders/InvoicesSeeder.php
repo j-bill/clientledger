@@ -21,6 +21,12 @@ class InvoicesSeeder extends Seeder
 
         $customers = Customer::all();
 
+        // Guarantees the dashboard's revenue trend (which only counts PAID
+        // invoices) climbs every month: any month whose paid total would dip
+        // below the previous month's gets enough 'sent' invoices flipped to
+        // 'paid' to close the gap.
+        $previousPaidTotal = 0;
+
         while ($currentDate <= $now) {
             // Only create invoices for months that have ended
             $monthEnd = $currentDate->copy()->endOfMonth();
@@ -29,6 +35,8 @@ class InvoicesSeeder extends Seeder
                 $currentDate->addMonth();
                 continue;
             }
+
+            $monthInvoices = [];
 
             foreach ($customers as $customer) {
                 // Get all billable work logs for this customer in this month
@@ -48,15 +56,13 @@ class InvoicesSeeder extends Seeder
 
                     // Create invoice at the end of the month for work done that month
                     $invoiceDate = $currentDate->copy()->endOfMonth();
-                    
-                    // Determine status based on how far in the past the invoice is
-                    if ($invoiceDate->isAfter($now->copy()->subDays(60))) {
-                        // Recent invoices (last 2 months) are more likely to be sent
-                        $status = $faker->randomElement(['sent', 'paid', 'sent']);
-                    } else {
-                        // Older invoices should mostly be paid
-                        $status = $faker->randomElement(['paid', 'paid', 'paid', 'sent']);
-                    }
+
+                    // Invoices have had time to be paid by the time they're a
+                    // couple of months old; only the most recent completed
+                    // month still has a few genuinely outstanding.
+                    $status = $invoiceDate->isAfter($now->copy()->subDays(45))
+                        ? $faker->randomElement(['paid', 'paid', 'paid', 'sent'])
+                        : 'paid';
 
                     // Create invoice with custom timestamps
                     $invoice = new Invoice([
@@ -68,7 +74,7 @@ class InvoicesSeeder extends Seeder
                         'status' => $status,
                         'notes' => $faker->optional(0.3)->sentence()
                     ]);
-                    
+
                     // Set custom timestamps
                     $invoice->created_at = $invoiceDate;
                     $invoice->updated_at = $invoiceDate;
@@ -76,9 +82,30 @@ class InvoicesSeeder extends Seeder
 
                     // Attach work logs to invoice
                     $invoice->workLogs()->attach($workLogs->pluck('id'));
+
+                    $monthInvoices[] = $invoice;
                 }
             }
-            
+
+            $paidTotal = collect($monthInvoices)->where('status', 'paid')->sum('total_amount');
+            $minRequired = $previousPaidTotal * 1.03;
+
+            if ($paidTotal < $minRequired) {
+                $flippable = collect($monthInvoices)
+                    ->where('status', '!=', 'paid')
+                    ->sortByDesc('total_amount');
+
+                foreach ($flippable as $invoice) {
+                    if ($paidTotal >= $minRequired) {
+                        break;
+                    }
+                    $invoice->status = 'paid';
+                    $invoice->save();
+                    $paidTotal += $invoice->total_amount;
+                }
+            }
+
+            $previousPaidTotal = $paidTotal;
             $currentDate->addMonth();
         }
     }

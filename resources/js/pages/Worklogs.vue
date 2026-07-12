@@ -1,272 +1,193 @@
 <template>
-	<v-container fluid>
-		<h1 class="text-h4 mb-4">{{ $t('pages.workLogs.title') }}</h1>
-
-		<!-- Search & Actions -->
-		<v-row class="mb-4">
-			<v-col cols="12" sm="6">
-				<v-text-field
-					v-model="filters.search"
-					:label="$t('common.search')"
-					prepend-inner-icon="mdi-magnify"
-					single-line
-					hide-details
-					clearable
-					@input="loadWorkLogs"
-				></v-text-field>
-			</v-col>
-			<v-col cols="12" sm="6" class="d-flex justify-end">
-				<v-btn color="secondary" @click="toggleFilters" class="mr-2">
-					<v-icon>mdi-filter</v-icon>
-				</v-btn>
-				<v-btn color="primary"
-					   data-test="btn-new-worklog"
-					   @click="openCreateDialog"
-					   prepend-icon="mdi-plus">
+	<div class="mx-auto max-w-[1800px] px-6 py-8 lg:px-10">
+		<!-- Heading + actions -->
+		<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+			<h1 class="text-2xl font-semibold tracking-tight">{{ $t('pages.workLogs.title') }}</h1>
+			<div class="flex items-center gap-2">
+				<ui-button variant="ghost" :icon="Filter" @click="toggleFilters" />
+				<ui-button
+					variant="primary"
+					:icon="Plus"
+					data-test="btn-new-worklog"
+					@click="openCreateDialog"
+				>
 					{{ $t('pages.workLogs.newWorkLog') }}
-				</v-btn>
-			</v-col>
-		</v-row>
+				</ui-button>
+			</div>
+		</div>
+
+		<!-- Search -->
+		<div class="mb-4 max-w-sm">
+			<ui-input
+				v-model="filters.search"
+				:icon="Search"
+				clearable
+				:placeholder="$t('common.search')"
+				@update:model-value="loadWorkLogs"
+			/>
+		</div>
 
 		<!-- Filters -->
-		<v-card v-if="showFilters"
-				class="mb-4">
-			<v-card-title>{{ $t('common.filters') }}</v-card-title>
-			<v-card-text>
-				<v-row>
-					<v-col cols="12"
-						   sm="6"
-						   md="3">
-						<v-menu ref="startMenu"
-								v-model="startMenu"
-								:close-on-content-click="false"
-								transition="scale-transition"
-								offset-y
-								min-width="auto">
-							<template v-slot:activator="{ props }">
-								<v-text-field v-model="filters.start_date"
-											  :label="$t('pages.workLogs.startDate')"
-											  prepend-icon="mdi-calendar"
-											  readonly
-											  v-bind="props"></v-text-field>
-							</template>
-							<v-date-picker v-model="filters.start_date"
-										   @change="startMenu = false"></v-date-picker>
-						</v-menu>
-					</v-col>
+		<ui-card v-if="showFilters" :title="$t('common.filters')" class="mb-4">
+			<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+				<ui-input
+					v-model="filters.start_date"
+					type="date"
+					:label="$t('pages.workLogs.startDate')"
+					:icon="Calendar"
+				/>
 
-					<v-col cols="12"
-						   sm="6"
-						   md="3">
-						<v-menu ref="endMenu"
-								v-model="endMenu"
-								:close-on-content-click="false"
-								transition="scale-transition"
-								offset-y
-								min-width="auto">
-							<template v-slot:activator="{ props }">
-								<v-text-field v-model="filters.end_date"
-											  :label="$t('pages.workLogs.endDate')"
-											  prepend-icon="mdi-calendar"
-											  readonly
-											  v-bind="props"></v-text-field>
-							</template>
-							<v-date-picker v-model="filters.end_date"
-										   @change="endMenu = false"></v-date-picker>
-						</v-menu>
-					</v-col>
+				<ui-input
+					v-model="filters.end_date"
+					type="date"
+					:label="$t('pages.workLogs.endDate')"
+					:icon="Calendar"
+				/>
 
-					<v-col cols="12"
-						   sm="6"
-						   md="3">
-						<v-select v-model="filters.project_id"
-								  :items="projects"
-								  item-title="name"
-								  item-value="id"
-								  :label="$t('pages.workLogs.project')"
-								  clearable
-								  prepend-icon="mdi-folder"></v-select>
-					</v-col>
+				<ui-select
+					v-model="filters.project_id"
+					:items="projects"
+					item-title="name"
+					item-value="id"
+					:label="$t('pages.workLogs.project')"
+					clearable
+				/>
 
-					<v-col cols="12"
-						   sm="6"
-						   md="3">
-						<v-select v-model="filters.user_id"
-								  :items="users"
-								  item-title="name"
-								  item-value="id"
-								  :label="$t('pages.workLogs.userFreelancer')"
-								  clearable
-								  prepend-icon="mdi-account"></v-select>
-					</v-col>
+				<ui-select
+					v-model="filters.user_id"
+					:items="users"
+					item-title="name"
+					item-value="id"
+					:label="$t('pages.workLogs.userFreelancer')"
+					clearable
+				/>
 
-					<v-col cols="12"
-						   sm="6"
-						   md="3">
-						<v-select v-model="filters.billable"
-								  :items="billableOptions"
-								  :label="$t('pages.workLogs.billable')"
-								  clearable
-								  prepend-icon="mdi-cash"></v-select>
-					</v-col>
-				</v-row>
+				<ui-select
+					v-model="filters.billable"
+					:items="billableOptions"
+					:label="$t('pages.workLogs.billable')"
+					clearable
+				/>
+			</div>
 
-				<v-row>
-					<v-col cols="12"
-						   class="text-right">
-						<v-btn color="primary"
-							   @click="loadWorkLogs">
-							{{ $t('common.applyFilters') }}
-						</v-btn>
-						<v-btn class="ms-2"
-							   @click="resetFilters">
-							{{ $t('common.reset') }}
-						</v-btn>
-					</v-col>
-				</v-row>
-			</v-card-text>
-		</v-card>
+			<div class="mt-4 flex justify-end gap-2">
+				<ui-button variant="ghost" @click="resetFilters">
+					{{ $t('common.reset') }}
+				</ui-button>
+				<ui-button variant="primary" @click="loadWorkLogs">
+					{{ $t('common.applyFilters') }}
+				</ui-button>
+			</div>
+		</ui-card>
 
 		<!-- Work Logs Table -->
-		<v-card>
-			<v-data-table-server v-model:items-per-page="filters.per_page"
-								 :headers="headers"
-								 :items="workLogs"
-								 :items-length="totalItems"
-								 item-value="name"
-								 :sort-by="sortBy"
-								 @update:options="loadWorkLogs">
+		<ui-card dense>
+			<ui-data-table
+				v-model:items-per-page="filters.per_page"
+				:headers="headers"
+				:items="workLogs"
+				:server-items-length="totalItems"
+				:sort-by="sortBy"
+				@update:options="loadWorkLogs"
+			>
+				<template v-slot:item.date="{ item }">
+					<span class="tnum">{{ formatDate(item.date) }}</span>
+				</template>
 
-			<template v-slot:item.date="{ item }">
-				{{ formatDate(item.date) }}
-			</template>
+				<template v-slot:item.user.name="{ item }">
+					{{ item.user?.name || $t('common.notAvailable') }}
+				</template>
 
-			<template v-slot:item.user="{ item }">
-				{{ item.user?.name || $t('common.notAvailable') }}
-			</template>
-			
-			<template v-slot:item.start_time="{ item }">
-				{{ formatTime(item.start_time) }}
-			</template>
-			
-			<template v-slot:item.end_time="{ item }">
-				{{ item.end_time ? formatTime(item.end_time) : $t('common.notAvailable') }}
-			</template>
+				<template v-slot:item.start_time="{ item }">
+					<span class="tnum">{{ formatTime(item.start_time) }}</span>
+				</template>
 
-			<template v-slot:item.hours="{ item }">
-				{{ formatNumber(item.hours_worked || 0, 2) }}
-			</template>				<template v-slot:item.hourly_rate="{ item }">
-					{{ formatCurrency(item.user_hourly_rate) }}
+				<template v-slot:item.end_time="{ item }">
+					<span class="tnum">{{ item.end_time ? formatTime(item.end_time) : $t('common.notAvailable') }}</span>
+				</template>
+
+				<template v-slot:item.hours_worked="{ item }">
+					<span class="tnum">{{ formatNumber(item.hours_worked || 0, 2) }}</span>
+				</template>
+
+				<template v-slot:item.user_hourly_rate="{ item }">
+					<span class="tnum">{{ formatCurrency(item.user_hourly_rate) }}</span>
 				</template>
 
 				<template v-slot:item.amount="{ item }">
-					{{ formatCurrency(item.amount) }}
+					<span class="tnum">{{ formatCurrency(item.amount) }}</span>
 				</template>
 
 				<template v-slot:item.billable="{ item }">
-					<v-icon :color="item.billable ? 'success' : 'error'">
-						{{ item.billable ? 'mdi-check' : 'mdi-close' }}
-					</v-icon>
+					<Check v-if="item.billable" class="h-4 w-4 text-sage-400" />
+					<X v-else class="h-4 w-4 text-clay-400" />
 				</template>
+
 				<template v-slot:item.description="{ item }">
 					{{ truncateDescription(item.description) }}
 				</template>
-				<template v-slot:item.actions="{ item }">
-					<v-btn icon
-						   variant="text"
-						   size="small"
-						   color="primary"
-						   @click="openEditDialog(item)">
-						<v-icon>mdi-pencil</v-icon>
-					</v-btn>
-					<v-btn icon
-						   variant="text"
-						   size="small"
-						   color="error"
-						   @click="confirmDelete(item)">
-						<v-icon>mdi-delete</v-icon>
-					</v-btn>
-				</template>
 
-				
-			</v-data-table-server>
-		</v-card>
+				<template v-slot:item.actions="{ item }">
+					<div class="flex gap-1">
+						<ui-button variant="ghost" size="sm" :icon="Pencil" @click="openEditDialog(item)" />
+						<ui-button variant="danger-ghost" size="sm" :icon="Trash2" @click="confirmDelete(item)" />
+					</div>
+				</template>
+			</ui-data-table>
+		</ui-card>
 
 		<!-- Delete Confirmation Dialog -->
-		<v-dialog v-model="deleteDialog"
-				  max-width="500px" persistent>
-			<v-card>
-				<v-card-title>{{ $t('pages.workLogs.deleteWorkLog') }}</v-card-title>
-				<v-card-text>
-					{{ $t('pages.workLogs.deleteConfirmation') }}
-				</v-card-text>
-				<v-card-actions>
-					<v-spacer></v-spacer>
-					<v-btn color="primary"
-						   variant="text"
-						   @click="deleteDialog = false">{{ $t('common.cancel') }}</v-btn>
-					<v-btn color="error"
-						   @click="deleteWorkLogRecord">{{ $t('common.delete') }}</v-btn>
-				</v-card-actions>
-			</v-card>
-		</v-dialog>
+		<ui-dialog v-model="deleteDialog" :title="$t('pages.workLogs.deleteWorkLog')" max-width="500px" persistent>
+			<p class="text-sm text-bone-300">{{ $t('pages.workLogs.deleteConfirmation') }}</p>
+			<template #actions>
+				<ui-button variant="ghost" @click="deleteDialog = false">{{ $t('common.cancel') }}</ui-button>
+				<ui-button variant="danger" @click="deleteWorkLogRecord">{{ $t('common.delete') }}</ui-button>
+			</template>
+		</ui-dialog>
 
 		<!-- Create Work Log Dialog -->
-		<v-dialog v-model="createDialog"
-				  max-width="1000px" persistent>
-			<v-card>
-				<v-card-title>{{ $t('pages.workLogs.newWorkLog') }}</v-card-title>
-				<v-card-text>
-					<work-log-form ref="createForm"
-								   :projects="projects"
-								   @save="saveWorkLogRecord"></work-log-form>
-				</v-card-text>
-				<v-card-actions>
-					<v-spacer></v-spacer>
-					<v-btn color="error"
-						   variant="text"
-						   @click="createDialog = false">{{ $t('common.cancel') }}</v-btn>
-					<v-btn color="primary"
-						   @click="$refs.createForm.submit()">{{ $t('common.save') }}</v-btn>
-				</v-card-actions>
-			</v-card>
-		</v-dialog>
+		<ui-dialog v-model="createDialog" :title="$t('pages.workLogs.newWorkLog')" max-width="1000px" persistent>
+			<work-log-form ref="createForm"
+						   :projects="projects"
+						   @save="saveWorkLogRecord"></work-log-form>
+			<template #actions>
+				<ui-button variant="ghost" @click="createDialog = false">{{ $t('common.cancel') }}</ui-button>
+				<ui-button variant="primary" @click="$refs.createForm.submit()">{{ $t('common.save') }}</ui-button>
+			</template>
+		</ui-dialog>
 
 		<!-- Edit Work Log Dialog -->
-		<v-dialog v-model="editDialog"
-				  max-width="1000px" persistent>
-			<v-card>
-				<v-card-title>
-					<span v-if="currentWorkLog?.wasAutoSaved">{{ $t('pages.workLogs.reviewTimeTracking') }}</span>
-					<span v-else-if="currentWorkLog?.id && !currentWorkLog?.end_time">{{ $t('pages.workLogs.completeTimeTracking') }}</span>
-					<span v-else>{{ $t('pages.workLogs.editWorkLog') }}</span>
-				</v-card-title>
-				<v-card-text>
-					<div v-if="currentWorkLog?.wasAutoSaved" class="mb-4 pa-4 bg-success-lighten-5 rounded">
-						<v-icon color="success" class="mr-2">mdi-check-circle</v-icon>
-						{{ $t('pages.workLogs.autoSavedMessage') }}
-					</div>
-					<work-log-form ref="editForm"
-								   :work-log="currentWorkLog"
-								   :projects="projects"
-								   @save="updateWorkLogRecord"></work-log-form>
-				</v-card-text>
-				<v-card-actions>
-					<v-spacer></v-spacer>
-					<v-btn color="error"
-						   variant="text"
-						   @click="editDialog = false">{{ $t('common.close') }}</v-btn>
-					<v-btn color="primary"
-						   @click="$refs.editForm.submit()">
-						<span v-if="currentWorkLog?.wasAutoSaved">{{ $t('pages.workLogs.updateDetails') }}</span>
-						<span v-else-if="currentWorkLog?.id && !currentWorkLog?.end_time">{{ $t('pages.workLogs.completeTracking') }}</span>
-						<span v-else>{{ $t('common.update') }}</span>
-					</v-btn>
-				</v-card-actions>
-			</v-card>
-		</v-dialog>
+		<ui-dialog
+			v-model="editDialog"
+			:title="currentWorkLog?.wasAutoSaved
+				? $t('pages.workLogs.reviewTimeTracking')
+				: (currentWorkLog?.id && !currentWorkLog?.end_time
+					? $t('pages.workLogs.completeTimeTracking')
+					: $t('pages.workLogs.editWorkLog'))"
+			max-width="1000px"
+			persistent
+		>
+			<ui-alert
+				v-if="currentWorkLog?.wasAutoSaved"
+				type="success"
+				:text="$t('pages.workLogs.autoSavedMessage')"
+				class="mb-4"
+			/>
+			<work-log-form ref="editForm"
+						   :work-log="currentWorkLog"
+						   :projects="projects"
+						   @save="updateWorkLogRecord"></work-log-form>
+			<template #actions>
+				<ui-button variant="ghost" @click="editDialog = false">{{ $t('common.close') }}</ui-button>
+				<ui-button variant="primary" @click="$refs.editForm.submit()">
+					<span v-if="currentWorkLog?.wasAutoSaved">{{ $t('pages.workLogs.updateDetails') }}</span>
+					<span v-else-if="currentWorkLog?.id && !currentWorkLog?.end_time">{{ $t('pages.workLogs.completeTracking') }}</span>
+					<span v-else>{{ $t('common.update') }}</span>
+				</ui-button>
+			</template>
+		</ui-dialog>
 
-	</v-container>
+	</div>
 </template>
 
 <script>
@@ -276,15 +197,18 @@ import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
 import { formatDate, formatTime, formatCurrency, formatNumber } from '../utils/formatters';
 import { useI18n } from 'vue-i18n';
+import { Plus, Search, Filter, Calendar, Pencil, Trash2, Check, X } from 'lucide-vue-next';
 
 export default {
 	name: 'WorkLogsIndex',
 	components: {
-		WorkLogForm
+		WorkLogForm,
+		Check,
+		X
 	},
 	setup() {
 		const { t } = useI18n();
-		return { t };
+		return { t, Plus, Search, Filter, Calendar, Pencil, Trash2 };
 	},
 	data() {
 		return {
@@ -292,8 +216,6 @@ export default {
 			loading: false,
 			page: 1,
 			totalPages: 0,
-			startMenu: false,
-			endMenu: false,
 			deleteDialog: false,
 			createDialog: false,
 			editDialog: false,
@@ -301,7 +223,7 @@ export default {
 			currentWorkLog: null,
 			showFilters: false,
 			totalItems: 0,
-			
+
 			filters: {
 				search: '',
 				start_date: null,
@@ -326,10 +248,10 @@ export default {
 		this.fetchUsers();
 		this.checkForCompletingTracking();
 	},
-	
+
 	computed: {
 		...mapState(store, ['projects', 'users', 'currencySymbol', 'settings']),
-		
+
 		headers() {
 			return [
 				{ title: this.t('pages.workLogs.id'), key: 'id', sortable: true },
@@ -347,7 +269,7 @@ export default {
 			];
 		}
 	},
-	
+
 	// Add navigation guard to handle when already on worklogs page
 	beforeRouteUpdate(to, from, next) {
 		// Check if query parameters related to tracking completion have changed
@@ -357,7 +279,7 @@ export default {
 		}
 		next();
 	},
-	
+
 	// Add watcher for route query changes
 	watch: {
 		'$route.query': {
@@ -369,11 +291,11 @@ export default {
 			immediate: true
 		}
 	},
-	
+
 	methods: {
 		...mapActions(store, [
-			'showSnackbar', 
-			'showLoading', 
+			'showSnackbar',
+			'showLoading',
 			'hideLoading',
 			'fetchProjects',
 			'fetchUsers',
@@ -383,32 +305,32 @@ export default {
 			'updateWorkLog',
 			'deleteWorkLog'
 		]),
-		
+
 		toggleFilters() {
 			this.showFilters = !this.showFilters;
 		},
-		
+
 		checkForCompletingTracking() {
 			// Initial check during component creation
 			const { completeTracking, workLogId, autoSaved } = this.$route.query;
-			
+
 			if (completeTracking && workLogId) {
 				this.handleCompletingTracking({ completeTracking, workLogId, autoSaved });
 			}
 		},
-		
+
 		handleCompletingTracking(queryParams) {
 			const { workLogId, autoSaved } = queryParams;
-			
+
 			// Set global loading state to true
 			this.showLoading();
-			
+
 			// First, fetch the work logs to ensure they're loaded
 			this.loadWorkLogs().then(() => {
 				// Then fetch the specific work log to edit or view
 				this.fetchWorkLogForEditing(workLogId, autoSaved === 'true');
 			});
-			
+
 			// Clean up query params
 			this.$router.replace({
 				query: Object.assign({}, this.$route.query, {
@@ -418,30 +340,30 @@ export default {
 				})
 			});
 		},
-		
+
 		async fetchWorkLogForEditing(workLogId, wasAutoSaved = false) {
 			try {
 				const workLog = await this.getWorkLog(workLogId);
-				
+
 				// If not auto-saved, we need to set the end time
 				if (!wasAutoSaved && !workLog.end_time) {
 					// Set current time as the default end time
 					const now = new Date();
 					workLog.end_time = now.toTimeString().slice(0, 5); // Format: HH:MM
 				}
-				
+
 				// Calculate hours worked if needed
 				if (workLog.start_time && workLog.end_time && !workLog.hours_worked) {
 					const startParts = workLog.start_time.split(':').map(Number);
 					const endParts = workLog.end_time.split(':').map(Number);
 					const startMinutes = startParts[0] * 60 + startParts[1];
 					const endMinutes = endParts[0] * 60 + endParts[1];
-					
+
 					// Handle case where end time is on the next day
-					let minutesWorked = endMinutes >= startMinutes ? 
-						endMinutes - startMinutes : 
+					let minutesWorked = endMinutes >= startMinutes ?
+						endMinutes - startMinutes :
 						endMinutes + (24 * 60) - startMinutes;
-					
+
 					// Convert to hours with 2 decimal places
 					workLog.hours_worked = (minutesWorked / 60).toFixed(2);
 				}
@@ -452,14 +374,14 @@ export default {
 				workLog.billable = workLog.billable ?? true;
 				workLog.description = workLog.description || 'Work in progress...';
 				workLog.hourly_rate = workLog.hourly_rate || workLog.project?.hourly_rate || 0;
-				
+
 				// Store if this worklog was auto-saved
 				workLog.wasAutoSaved = wasAutoSaved;
-				
+
 				// Open the edit dialog with the work log data
 				this.currentWorkLog = workLog;
 				this.editDialog = true;
-				
+
 			} catch (error) {
 				console.error('Error fetching work log for editing:', error);
 				this.showSnackbar('Could not load time tracking session for editing', 'error');
@@ -467,17 +389,17 @@ export default {
 				this.hideLoading();
 			}
 		},
-		
+
 	async loadWorkLogs(options = {}) {
 		this.showLoading();
 
 		try {
 			// Extract sorting from Vuetify table options if provided
 			let params = { ...this.filters, page: this.page };
-			
+
 			if (options.sortBy && options.sortBy.length > 0) {
 				let sortKey = options.sortBy[0].key;
-				
+
 				// Map frontend sort keys to backend sort fields
 				const sortKeyMap = {
 					'project.name': 'project',
@@ -485,7 +407,7 @@ export default {
 					'hours_worked': 'hours',
 					'user_hourly_rate': 'hourly_rate'
 				};
-				
+
 				params.sort_by = sortKeyMap[sortKey] || sortKey;
 				params.sort_dir = options.sortBy[0].order;
 			} else {
@@ -493,15 +415,15 @@ export default {
 				params.sort_by = 'date';
 				params.sort_dir = 'desc';
 			}
-			
+
 			if (options.page) {
 				params.page = options.page;
 			}
-			
+
 			if (options.itemsPerPage) {
 				params.per_page = options.itemsPerPage;
 			}
-			
+
 			// Filter out null values
 			Object.keys(params).forEach(key => {
 				if (params[key] === null) delete params[key];
@@ -578,19 +500,19 @@ export default {
 		formatDate(dateStr) {
 			return formatDate(dateStr, this.settings);
 		},
-		
+
 		formatTime(timeStr) {
 			return formatTime(timeStr);
 		},
-		
+
 		formatCurrency(amount) {
 			return formatCurrency(amount, this.settings);
 		},
-		
+
 		formatNumber(value, decimals = 2) {
 			return formatNumber(value, decimals, this.settings);
 		},
-		
+
 		truncateDescription(description, maxWords = 8) {
 			if (!description) return '';
 			const words = description.trim().split(/\s+/);

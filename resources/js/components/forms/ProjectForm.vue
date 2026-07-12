@@ -1,92 +1,82 @@
 <template>
-	<v-form ref="form"
-			@submit.prevent="submit">
-		<v-row>
-			<v-col cols="12">
-				<v-text-field v-model="formData.name"
-							  :label="$t('forms.project.name')"
-							  prepend-icon="mdi-briefcase"
-							  :rules="[v => !!v || $t('forms.project.nameRequired')]"></v-text-field>
-			</v-col>
+	<ui-form ref="form" @submit="submit">
+		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+			<div class="md:col-span-2">
+				<ui-input
+					v-model="formData.name"
+					:label="$t('forms.project.name')"
+					:icon="Briefcase"
+					:rules="[v => !!v || $t('forms.project.nameRequired')]"
+				/>
+			</div>
 
-			<v-col cols="12"
-				   md="6">
-				<v-select v-model="formData.customer_id"
-						  :items="customers"
-						  item-title="name"
-						  item-value="id"
-						  :label="$t('forms.project.customer')"
-						  prepend-icon="mdi-account"
-						  :rules="[v => !!v || $t('forms.project.customerRequired')]"
-						  @update:model-value="updateHourlyRate"></v-select>
-			</v-col>
+			<ui-select
+				v-model="formData.customer_id"
+				:items="customers"
+				item-title="name"
+				item-value="id"
+				:label="$t('forms.project.customer')"
+				:rules="[v => !!v || $t('forms.project.customerRequired')]"
+				@update:model-value="updateHourlyRate"
+			/>
 
-			<v-col cols="12"
-				   md="6">
-				<v-text-field v-model="formData.hourly_rate"
-							  :label="$t('forms.project.hourlyRate')"
-							  type="number"
-							  prepend-icon="mdi-cash"
-							  :hint="$t('forms.project.hourlyRateHint')"
-							  persistent-hint></v-text-field>
-			</v-col>
+			<ui-input
+				v-model="formData.hourly_rate"
+				:label="$t('forms.project.hourlyRate')"
+				type="number"
+				:icon="Banknote"
+				:hint="$t('forms.project.hourlyRateHint')"
+			/>
 
-			<v-col cols="12"
-				   md="6">
-				<v-menu v-model="dateMenu"
-						:close-on-content-click="false"
-						transition="scale-transition"
-						min-width="auto">
-					<template v-slot:activator="{ props }">
-						<v-text-field :model-value="formattedDate"
-									  :label="$t('forms.project.deadline')"
-									  prepend-icon="mdi-calendar"
-									  readonly
-									  :hint="$t('forms.project.deadlineHint')"
-									  v-bind="props"
-									  clearable
-									  @click:clear="clearDate"></v-text-field>
-					</template>
-					<v-date-picker v-model="pickerDate"
-								   locale="en-de"></v-date-picker>
-				</v-menu>
-			</v-col>
+			<ui-input
+				v-model="formData.deadline"
+				:label="$t('forms.project.deadline')"
+				type="date"
+				:icon="Calendar"
+				:hint="$t('forms.project.deadlineHint')"
+				clearable
+			/>
 
-			<v-col cols="12">
-				<v-textarea v-model="formData.description"
-							:label="$t('forms.project.description')"
-							prepend-icon="mdi-text"></v-textarea>
-			</v-col>
+			<div class="md:col-span-2">
+				<ui-textarea
+					v-model="formData.description"
+					:label="$t('forms.project.description')"
+				/>
+			</div>
 
-		<v-col cols="12">
-			<v-select v-model="formData.users"
-					  :items="freelancers"
-					  item-title="name"
-					  item-value="id"
-					  :label="$t('forms.project.assignedUsers')"
-					  prepend-icon="mdi-account-group"
-					  multiple
-					  chips
-					  :rules="[v => v.length > 0 || $t('forms.project.assignedUsersRequired')]"
-					  @update:model-value="updateUserRates">
-				<template v-slot:item="{ props, item }">
-					<v-list-item v-bind="props">
-						<v-list-item-subtitle>${{ item.raw.hourly_rate }}/{{ $t('forms.project.hourlyRateUnit') }}</v-list-item-subtitle>
-					</v-list-item>
-				</template>
-			</v-select>
-		</v-col>
-		</v-row>
-	</v-form>
+			<div class="md:col-span-2">
+				<ui-autocomplete
+					ref="usersField"
+					:model-value="null"
+					:items="availableFreelancers"
+					item-title="display"
+					item-value="id"
+					:label="$t('forms.project.assignedUsers')"
+					:rules="[() => formData.users.length > 0 || $t('forms.project.assignedUsersRequired')]"
+					@update:model-value="addUser"
+				/>
+				<div v-if="formData.users.length" class="mt-2 flex flex-wrap gap-1.5">
+					<ui-chip v-for="userId in formData.users" :key="userId" color="brass">
+						{{ userName(userId) }}
+						<button type="button" class="-mr-0.5 rounded-full hover:text-bone-100" @click="removeUser(userId)">
+							<X class="h-3 w-3" />
+						</button>
+					</ui-chip>
+				</div>
+			</div>
+		</div>
+	</ui-form>
 </template>
 
 <script>
 import { formatDate } from '../../utils/formatters';
 import { mapState } from 'pinia';
 import { store } from '../../store';
+import { Briefcase, Banknote, Calendar, X } from 'lucide-vue-next';
 
 export default {
 	name: 'ProjectForm',
+	components: { X },
 	props: {
 		project: {
 			type: Object,
@@ -102,21 +92,34 @@ export default {
 		}
 	},
 
+	setup() {
+		return { Briefcase, Banknote, Calendar };
+	},
+
 	computed: {
 		...mapState(store, ['settings']),
-		
+
 		formattedDate() {
 			if (!this.formData.deadline) return '';
 
 			// Display the deadline in the user's preferred format
 			return formatDate(this.formData.deadline, this.settings);
+		},
+
+		// Freelancers not yet assigned, with their rate in the option label
+		// (replaces the old v-select item subtitle)
+		availableFreelancers() {
+			return this.freelancers
+				.filter(f => !this.formData.users.includes(f.id))
+				.map(f => ({
+					...f,
+					display: `${f.name} — $${f.hourly_rate}/${this.$t('forms.project.hourlyRateUnit')}`
+				}));
 		}
 	},
 
 	data() {
 		return {
-			dateMenu: false,
-			pickerDate: null,  // Will be set to a Date object, not a string
 			formData: {
 				name: '',
 				customer_id: null,
@@ -138,54 +141,38 @@ export default {
 			handler() {
 				this.initializeFormData();
 			}
-		},
-		// Watch pickerDate and sync to formData.deadline as ISO string
-		pickerDate(newVal) {
-			if (newVal && newVal instanceof Date && !isNaN(newVal.getTime())) {
-				const year = newVal.getFullYear();
-				const month = String(newVal.getMonth() + 1).padStart(2, '0');
-				const day = String(newVal.getDate()).padStart(2, '0');
-				const isoDate = `${year}-${month}-${day}`;
-				this.formData.deadline = isoDate;
-			}
 		}
 	},
 
 	methods: {
 		initializeFormData() {
 			if (this.project) {
-				this.formData = { 
+				this.formData = {
 					...this.project,
 					users: this.project.users?.map(user => user.id) || []
 				};
 
-				// Initialize the internal date for the date picker with a Date object
-				// Vuetify's v-date-picker requires Date objects, not ISO strings
-				if (this.formData.deadline) {
-					const date = new Date(this.formData.deadline);
-					if (!isNaN(date.getTime())) {
-						this.pickerDate = date;
-					}
-				}
+				// Native date input needs a YYYY-MM-DD string
+				this.formData.deadline = this.normalizeDate(this.formData.deadline);
 			}
 		},
 
 		normalizeDate(dateInput) {
 			if (!dateInput) return null;
-			
+
 			const dateStr = String(dateInput).trim();
-			
+
 			// If already in ISO format (YYYY-MM-DD), return as is
 			if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
 				return dateStr;
 			}
-			
+
 			// Try to parse it as a Date
 			const date = new Date(dateStr);
 			if (isNaN(date.getTime())) {
 				return null;
 			}
-			
+
 			// Convert to ISO format
 			const year = date.getFullYear();
 			const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -193,24 +180,30 @@ export default {
 			return `${year}-${month}-${day}`;
 		},
 
-		convertDateToISO(dateObj) {
-			// Convert Date object to ISO string format (YYYY-MM-DD)
-			if (dateObj instanceof Date && !isNaN(dateObj.getTime())) {
-				const year = dateObj.getFullYear();
-				const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-				const day = String(dateObj.getDate()).padStart(2, '0');
-				return `${year}-${month}-${day}`;
-			}
-			return null;
+		userName(userId) {
+			return this.freelancers.find(f => f.id === userId)?.name ?? userId;
+		},
+
+		addUser(userId) {
+			if (userId == null || this.formData.users.includes(userId)) return;
+			this.formData.users.push(userId);
+			this.$refs.usersField?.validate();
+			this.updateUserRates(this.formData.users);
+		},
+
+		removeUser(userId) {
+			this.formData.users = this.formData.users.filter(id => id !== userId);
+			this.$refs.usersField?.validate();
+			this.updateUserRates(this.formData.users);
 		},
 
 		async submit() {
 			const { valid } = await this.$refs.form.validate();
-			
+
 			if (!valid) {
 				return;
 			}
-			
+
 			// Format the data before emitting
 			const formattedData = {
 				...this.formData,
@@ -237,11 +230,6 @@ export default {
 
 		updateUserRates(selectedUserIds) {
 			// This method can be used to handle any user-specific rate updates if needed
-		},
-
-		clearDate() {
-			this.pickerDate = null;
-			this.formData.deadline = null;
 		}
 	}
 };

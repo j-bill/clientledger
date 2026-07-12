@@ -1,99 +1,97 @@
 <template>
-  <v-dialog v-model="dialog" max-width="500px" persistent>
-    <v-card>
-      <v-card-title class="text-h5 pa-4">
-        <v-icon class="mr-2" color="warning">mdi-email-check</v-icon>
+  <ui-dialog v-model="dialog" max-width="500px" persistent>
+    <template #title>
+      <span class="flex items-center gap-2">
+        <MailCheck class="h-4 w-4 text-ochre-400" />
         {{ $t('pages.emailVerification.title') }}
-      </v-card-title>
-      
-      <v-card-text class="pa-4">
-        <div v-if="!codeSent">
-          <p class="mb-4">
-            {{ $t('pages.emailVerification.description') }}
-          </p>
-          
-          <v-alert v-if="error" type="error" class="mb-3" closable @click:close="error = null">
-            {{ error }}
-          </v-alert>
-        </div>
-        
-        <div v-else>
-          <p class="mb-4">
-            {{ $t('pages.emailVerification.codeSentTo') }} <strong>{{ userEmail }}</strong>.
-            {{ $t('pages.emailVerification.enterCodeBelow') }}
-          </p>
-          
-          <v-text-field
-            v-model="verificationCode"
-            :label="$t('pages.emailVerification.verificationCode')"
-            placeholder="000000"
-            variant="outlined"
-            maxlength="6"
-            :error-messages="error"
-            @keyup.enter="verifyCode"
-            autofocus
-          />
-          
-          <v-alert v-if="success" type="success" class="mb-3">
-            {{ success }}
-          </v-alert>
-          
-          <p class="text-caption text-grey">
-            {{ $t('pages.emailVerification.codeExpiration') }}
-            <a @click="resendCode" class="text-primary cursor-pointer">{{ $t('pages.emailVerification.resendCode') }}</a>
-          </p>
-        </div>
-      </v-card-text>
-      
-      <v-card-actions class="pa-4">
-        <v-spacer />
-        <v-btn
-          v-if="!codeSent"
-          color="grey"
-          variant="text"
-          @click="skipVerification"
-        >
-          {{ $t('pages.emailVerification.skipForNow') }}
-        </v-btn>
-        <v-btn
-          v-if="!codeSent"
-          color="primary"
-          :loading="loading"
-          @click="sendCode"
-        >
-          {{ $t('pages.emailVerification.sendCode') }}
-        </v-btn>
-        
-        <v-btn
-          v-if="codeSent"
-          color="grey"
-          variant="text"
-          @click="skipVerification"
-          :disabled="loading"
-        >
-          {{ $t('pages.emailVerification.skipForNow') }}
-        </v-btn>
-        <v-btn
-          v-if="codeSent"
-          color="primary"
-          :loading="loading"
-          :disabled="verificationCode.length !== 6"
-          @click="verifyCode"
-        >
-          {{ $t('pages.emailVerification.verify') }}
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+      </span>
+    </template>
+
+    <div v-if="!codeSent">
+      <p class="mb-4 text-sm text-bone-300">
+        {{ $t('pages.emailVerification.description') }}
+      </p>
+
+      <ui-alert v-if="error" type="error" class="mb-3" closable @close="error = null">
+        {{ error }}
+      </ui-alert>
+    </div>
+
+    <div v-else>
+      <p class="mb-4 text-sm text-bone-300">
+        {{ $t('pages.emailVerification.codeSentTo') }} <strong class="text-bone-100">{{ userEmail }}</strong>.
+        {{ $t('pages.emailVerification.enterCodeBelow') }}
+      </p>
+
+      <ui-input
+        v-model="verificationCode"
+        :label="$t('pages.emailVerification.verificationCode')"
+        placeholder="000000"
+        maxlength="6"
+        inputmode="numeric"
+        class="text-center font-mono tracking-[0.3em]"
+        @keyup.enter="verifyCode"
+        autofocus
+      />
+      <p v-if="error" class="mt-1 text-xs text-clay-400">{{ error }}</p>
+
+      <ui-alert v-if="success" type="success" class="mt-3">
+        {{ success }}
+      </ui-alert>
+
+      <p class="mt-3 text-xs text-bone-500">
+        {{ $t('pages.emailVerification.codeExpiration') }}
+        <a @click="resendCode" class="cursor-pointer text-brass-400 underline hover:text-brass-300">{{ $t('pages.emailVerification.resendCode') }}</a>
+      </p>
+    </div>
+
+    <template #actions>
+      <ui-button
+        v-if="!codeSent"
+        variant="ghost"
+        @click="skipVerification"
+      >
+        {{ $t('pages.emailVerification.skipForNow') }}
+      </ui-button>
+      <ui-button
+        v-if="!codeSent"
+        variant="primary"
+        :loading="loading"
+        @click="sendCode"
+      >
+        {{ $t('pages.emailVerification.sendCode') }}
+      </ui-button>
+
+      <ui-button
+        v-if="codeSent"
+        variant="ghost"
+        @click="skipVerification"
+        :disabled="loading"
+      >
+        {{ $t('pages.emailVerification.skipForNow') }}
+      </ui-button>
+      <ui-button
+        v-if="codeSent"
+        variant="primary"
+        :loading="loading"
+        :disabled="verificationCode.length !== 6"
+        @click="verifyCode"
+      >
+        {{ $t('pages.emailVerification.verify') }}
+      </ui-button>
+    </template>
+  </ui-dialog>
 </template>
 
 <script>
 import axios from 'axios'
 import { mapActions, mapState } from 'pinia'
 import { store } from '../store'
+import { MailCheck } from 'lucide-vue-next'
 
 export default {
   name: 'EmailVerificationDialog',
+  components: { MailCheck },
   props: {
     modelValue: {
       type: Boolean,
@@ -126,14 +124,14 @@ export default {
   },
   methods: {
     ...mapActions(store, ['showSnackbar', 'updateAuthUser']),
-    
+
     async sendCode() {
       this.loading = true
       this.error = null
-      
+
       try {
         const response = await axios.post('/api/email-verification/send-code')
-        
+
         if (response.data.already_verified) {
           this.success = 'Your email is already verified!'
           setTimeout(() => {
@@ -151,31 +149,31 @@ export default {
         this.loading = false
       }
     },
-    
+
     async resendCode() {
       this.verificationCode = ''
       this.error = null
       await this.sendCode()
     },
-    
+
     async verifyCode() {
       if (this.verificationCode.length !== 6) {
         this.error = 'Please enter a valid 6-digit code'
         return
       }
-      
+
       this.loading = true
       this.error = null
-      
+
       try {
         const response = await axios.post('/api/email-verification/verify-code', {
           code: this.verificationCode
         })
-        
+
         if (response.data.verified) {
           this.success = 'Email verified successfully!'
           this.showSnackbar('Email verified successfully!', 'success')
-          
+
           // Update the user in store to reflect verification
           if (this.user) {
             this.updateAuthUser({
@@ -183,7 +181,7 @@ export default {
               email_verified_at: new Date().toISOString()
             })
           }
-          
+
           setTimeout(() => {
             this.dialog = false
             this.$emit('verified')
@@ -199,12 +197,12 @@ export default {
         this.loading = false
       }
     },
-    
+
     skipVerification() {
       this.dialog = false
       this.$emit('skipped')
     },
-    
+
     reset() {
       this.codeSent = false
       this.verificationCode = ''
@@ -222,10 +220,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.cursor-pointer {
-  cursor: pointer;
-  text-decoration: underline;
-}
-</style>

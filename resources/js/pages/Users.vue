@@ -1,119 +1,85 @@
 <template>
-  <v-container fluid>
-    <h1 class="text-h4 mb-4">{{ $t('pages.users.title') }}</h1>
-    
-    <!-- Search & Actions -->
-    <v-row class="mb-4">
-      <v-col cols="12" sm="6">
-        <v-text-field
-          v-model="search"
-          :label="$t('common.search')"
-          prepend-inner-icon="mdi-magnify"
-          single-line
-          hide-details
-          clearable
-        ></v-text-field>
-      </v-col>
-      <v-col cols="12" sm="6" class="d-flex justify-end">
-        <v-btn color="primary" @click="openCreateDialog" prepend-icon="mdi-plus">
-          {{ $t('pages.users.newUser') }}
-        </v-btn>
-      </v-col>
-    </v-row>
-    
-    <v-card>
-      <v-data-table
+  <div class="mx-auto max-w-[1800px] px-6 py-8 lg:px-10">
+    <!-- Heading + primary action -->
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-2xl font-semibold tracking-tight">{{ $t('pages.users.title') }}</h1>
+      <ui-button variant="primary" :icon="Plus" @click="openCreateDialog">
+        {{ $t('pages.users.newUser') }}
+      </ui-button>
+    </div>
+
+    <!-- Search -->
+    <div class="mb-4 max-w-sm">
+      <ui-input v-model="search" :icon="Search" clearable :placeholder="$t('common.search')" />
+    </div>
+
+    <ui-card dense>
+      <ui-data-table
         :headers="headers"
         :items="users"
         :loading="loading"
-        class="elevation-1"
         :search="search"
         :sort-by="sortBy"
       >
         <template v-slot:item.actions="{ item }">
-          <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)">
-            <v-icon>mdi-pencil</v-icon>
-          </v-btn>
-          <v-btn icon variant="text" size="small" color="warning" @click="confirmResetPassword(item)">
-            <v-icon>mdi-lock-reset</v-icon>
-          </v-btn>
-          <v-btn icon variant="text" size="small" color="error" @click="confirmDelete(item)">
-            <v-icon>mdi-delete</v-icon>
-          </v-btn>
+          <div class="flex justify-end gap-1">
+            <ui-button variant="ghost" size="sm" :icon="Pencil" @click="openEditDialog(item)" />
+            <ui-button variant="brass-ghost" size="sm" :icon="KeyRound" @click="confirmResetPassword(item)" />
+            <ui-button variant="danger-ghost" size="sm" :icon="Trash2" @click="confirmDelete(item)" />
+          </div>
         </template>
         <template v-slot:item.created_at="{ item }">
-          {{ formatDate(item.created_at) }}
+          <span class="tnum">{{ formatDate(item.created_at) }}</span>
         </template>
         <template v-slot:item.updated_at="{ item }">
-          {{ formatDate(item.updated_at) }}
+          <span class="tnum">{{ formatDate(item.updated_at) }}</span>
         </template>
         <template v-slot:item.hourly_rate="{ item }">
-          {{ formatCurrency(item.hourly_rate || 0) }}
+          <span class="tnum">{{ formatCurrency(item.hourly_rate || 0) }}</span>
         </template>
-      </v-data-table>
-    </v-card>
+      </ui-data-table>
+    </ui-card>
 
-    <v-dialog v-model="deleteDialog" max-width="500px" persistent>
-      <v-card>
-        <v-card-title>{{ $t('pages.users.deleteUser') }}</v-card-title>
-        <v-card-text>
-          {{ $t('pages.users.deleteConfirmation') }}
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" variant="text" @click="deleteDialog = false">{{ $t('common.cancel') }}</v-btn>
-          <v-btn color="error" @click="deleteUserRecord">{{ $t('common.delete') }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <ui-dialog v-model="deleteDialog" :title="$t('pages.users.deleteUser')" max-width="500px" persistent>
+      <p class="text-sm text-bone-300">{{ $t('pages.users.deleteConfirmation') }}</p>
+      <template #actions>
+        <ui-button variant="ghost" @click="deleteDialog = false">{{ $t('common.cancel') }}</ui-button>
+        <ui-button variant="danger" @click="deleteUserRecord">{{ $t('common.delete') }}</ui-button>
+      </template>
+    </ui-dialog>
 
     <!-- Reset Password Dialog -->
-    <v-dialog v-model="resetPasswordDialog" max-width="500px" persistent>
-      <v-card>
-        <v-card-title>{{ $t('pages.users.resetPassword') }}</v-card-title>
-        <v-card-text>
-          {{ $t('pages.users.sendResetLink') }} <strong>{{ resetPasswordUser?.email }}</strong>?
-          <br><br>
-          The user will receive an email with instructions to reset their password.
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" variant="text" @click="resetPasswordDialog = false">{{ $t('common.cancel') }}</v-btn>
-          <v-btn color="warning" @click="resetPassword">{{ $t('pages.users.sendResetLink') }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <ui-dialog v-model="resetPasswordDialog" :title="$t('pages.users.resetPassword')" max-width="500px" persistent>
+      <p class="text-sm text-bone-300">
+        {{ $t('pages.users.sendResetLink') }} <strong class="text-bone-100">{{ resetPasswordUser?.email }}</strong>?
+      </p>
+      <p class="mt-3 text-sm text-bone-500">
+        The user will receive an email with instructions to reset their password.
+      </p>
+      <template #actions>
+        <ui-button variant="ghost" @click="resetPasswordDialog = false">{{ $t('common.cancel') }}</ui-button>
+        <ui-button variant="primary" @click="resetPassword">{{ $t('pages.users.sendResetLink') }}</ui-button>
+      </template>
+    </ui-dialog>
 
     <!-- Create User Dialog -->
-    <v-dialog v-model="createDialog" max-width="800px" persistent>
-      <v-card>
-        <v-card-title>{{ $t('pages.users.newUser') }}</v-card-title>
-        <v-card-text>
-          <user-form ref="createForm" @save="saveUserRecord"></user-form>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="error" variant="text" @click="createDialog = false">{{ $t('common.cancel') }}</v-btn>
-          <v-btn color="primary" @click="$refs.createForm.submit()">{{ $t('common.save') }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-    
+    <ui-dialog v-model="createDialog" :title="$t('pages.users.newUser')" max-width="800px" persistent>
+      <user-form ref="createForm" @save="saveUserRecord"></user-form>
+      <template #actions>
+        <ui-button variant="ghost" @click="createDialog = false">{{ $t('common.cancel') }}</ui-button>
+        <ui-button variant="primary" @click="$refs.createForm.submit()">{{ $t('common.save') }}</ui-button>
+      </template>
+    </ui-dialog>
+
     <!-- Edit User Dialog -->
-    <v-dialog v-model="editDialog" max-width="800px" persistent>
-      <v-card>
-        <v-card-title>{{ $t('common.edit') }} {{ $t('users.user') }}</v-card-title>
-        <v-card-text>
-          <user-form ref="editForm" :user="currentUser" @save="updateUserRecord"></user-form>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="error" variant="text" @click="editDialog = false">{{ $t('common.cancel') }}</v-btn>
-          <v-btn color="primary" @click="$refs.editForm.submit()">{{ $t('common.save') }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-  </v-container>
+    <ui-dialog v-model="editDialog" :title="`${$t('common.edit')} ${$t('users.user')}`" max-width="800px" persistent>
+      <user-form ref="editForm" :user="currentUser" @save="updateUserRecord"></user-form>
+      <template #actions>
+        <ui-button variant="ghost" @click="editDialog = false">{{ $t('common.cancel') }}</ui-button>
+        <ui-button variant="primary" @click="$refs.editForm.submit()">{{ $t('common.save') }}</ui-button>
+      </template>
+    </ui-dialog>
+  </div>
 </template>
 
 <script>
@@ -123,6 +89,7 @@ import { store } from '../store';
 import { formatDate, formatCurrency } from '../utils/formatters';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
+import { Plus, Search, Pencil, Trash2, KeyRound } from 'lucide-vue-next';
 
 export default {
   name: 'UsersIndex',
@@ -131,7 +98,7 @@ export default {
   },
   setup() {
     const { t } = useI18n();
-    return { t };
+    return { t, Plus, Search, Pencil, Trash2, KeyRound };
   },
   data() {
     return {
@@ -144,14 +111,14 @@ export default {
       currentUser: null,
       resetPasswordDialog: false,
       resetPasswordUser: null,
-      
+
       sortBy: [{ key: 'id', order: 'desc' }]
     };
   },
-  
+
   computed: {
     ...mapState(store, ['users', 'currencySymbol', 'settings']),
-    
+
     headers() {
       return [
         { title: this.t('pages.users.id'), key: 'id' },
@@ -161,15 +128,15 @@ export default {
         { title: this.t('pages.users.hourlyRate'), key: 'hourly_rate' },
         { title: this.t('pages.users.created'), key: 'created_at' },
         { title: this.t('pages.users.updated'), key: 'updated_at' },
-        { title: this.t('common.actions'), key: 'actions', sortable: false }
+        { title: this.t('common.actions'), key: 'actions', sortable: false, align: 'end' }
       ];
     }
   },
-  
+
   created() {
     this.fetchUsers();
   },
-  
+
   methods: {
     ...mapActions(store, [
       'showSnackbar',
@@ -178,12 +145,12 @@ export default {
       'updateUser',
       'deleteUser'
     ]),
-    
+
     confirmDelete(item) {
       this.itemToDelete = item;
       this.deleteDialog = true;
     },
-    
+
     async deleteUserRecord() {
       try {
         await this.deleteUser(this.itemToDelete.id);
@@ -196,12 +163,12 @@ export default {
     openCreateDialog() {
       this.createDialog = true;
     },
-    
+
     openEditDialog(item) {
       this.currentUser = { ...item };
       this.editDialog = true;
     },
-    
+
     async saveUserRecord(user) {
       try {
         await this.createUser(user);
@@ -210,7 +177,7 @@ export default {
         console.error('Error creating user:', error);
       }
     },
-    
+
     async updateUserRecord(user) {
       try {
         await this.updateUser(user);
@@ -219,12 +186,12 @@ export default {
         console.error('Error updating user:', error);
       }
     },
-    
+
     confirmResetPassword(item) {
       this.resetPasswordUser = item;
       this.resetPasswordDialog = true;
     },
-    
+
     async resetPassword() {
       try {
         await axios.post(`/api/users/${this.resetPasswordUser.id}/reset-password`);
@@ -235,11 +202,11 @@ export default {
         this.showSnackbar(message, 'error');
       }
     },
-    
+
     formatDate(dateStr) {
       return formatDate(dateStr, this.settings);
     },
-    
+
     formatCurrency(amount) {
       return formatCurrency(amount, this.settings);
     }

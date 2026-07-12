@@ -1,21 +1,17 @@
 <template>
-  <v-app>
+  <div class="flex min-h-screen flex-col bg-ink-950 text-bone-100">
     <!-- Include the navigation component -->
     <NavigationBar v-if="shouldShowNavigation" />
 
-    
     <!-- Main content area -->
-    <v-main>
-      <!-- Keep your existing commented code here -->
-      
+    <main class="flex-1">
       <!-- Router view for page content -->
       <router-view></router-view>
 
-    <LoadingOverlay v-if="loading"/>
-
-    </v-main>
+      <LoadingOverlay v-if="loading" />
+    </main>
     <Snackbar />
-  </v-app>
+  </div>
 </template>
 
 <script>
@@ -62,19 +58,19 @@ export default {
         console.log('[App.vue] shouldShowNavigation: false - not authenticated');
         return false;
       }
-      
+
       // Don't show navigation on login or 2FA pages
       if (this.isLoginPage || this.is2FAPage) {
         console.log('[App.vue] shouldShowNavigation: false - on login or 2FA page');
         return false;
       }
-      
+
       // Don't show navigation if user doesn't have 2FA enabled yet
       if (!this.has2FAEnabled) {
         console.log('[App.vue] shouldShowNavigation: false - 2FA not enabled');
         return false;
       }
-      
+
       console.log('[App.vue] shouldShowNavigation: true');
       return true;
     },
@@ -125,4 +121,3 @@ export default {
   },
 };
 </script>
-

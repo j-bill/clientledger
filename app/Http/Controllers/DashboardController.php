@@ -64,18 +64,21 @@ class DashboardController extends Controller
 
         $now = Carbon::now();
         $today = $now->copy()->endOfDay(); // Ensure we include today
-        $thisYearStart = $now->copy()->startOfYear();
         $lastYearStart = $now->copy()->subYear()->startOfYear();
         $lastYearEnd = $lastYearStart->copy()->endOfYear();
         $thisMonthStart = $now->copy()->startOfMonth();
         $lastMonthStart = $now->copy()->subMonthNoOverflow()->startOfMonth();
         $lastMonthEnd = $lastMonthStart->copy()->endOfMonth();
 
+        // Rolling trailing-12-months window used only by the trend *charts*
+        // (distinct from the "This Year" KPI card, which is calendar-year).
+        $rollingYearStart = $now->copy()->subYear()->startOfMonth();
+
         // Extrapolation factors
         $daysInMonth = $now->daysInMonth;
         $currentDay = $now->day;
         $monthlyExtrapolationFactor = ($currentDay > 0 && $currentDay < $daysInMonth) ? $daysInMonth / $currentDay : 1; // Avoid extrapolation on day 1 or last day
-        
+
         // Yearly extrapolation: based on how many months have passed
         $currentMonth = $now->month; // 1-12
         $yearlyExtrapolationFactor = ($currentMonth > 0 && $currentMonth < 12) ? 12 / $currentMonth : 1;
@@ -137,10 +140,10 @@ class DashboardController extends Controller
         $yearlyHours = (clone $workLogQueryBase)
             ->whereYear('date', $now->year)
             ->sum('hours_worked');
-        $yearlyHoursExtrapolated = $currentMonth > 0 && $currentMonth < 12 
+        $yearlyHoursExtrapolated = $currentMonth > 0 && $currentMonth < 12
             ? number_format($yearlyHours * $yearlyExtrapolationFactor, 2, '.', '')
             : $yearlyHours;
-        
+
         $lastYearHours = (clone $workLogQueryBase)
             ->whereBetween('date', [$lastYearStart, $lastYearEnd])
             ->sum('hours_worked');
@@ -164,7 +167,7 @@ class DashboardController extends Controller
         $yearlyBillableHoursExtrapolated = $currentMonth > 0 && $currentMonth < 12
             ? number_format($yearlyBillableHours * $yearlyExtrapolationFactor, 2, '.', '')
             : $yearlyBillableHours;
-        
+
         $lastYearBillableHours = (clone $billableWorkLogQuery)
             ->whereBetween('date', [$lastYearStart, $lastYearEnd])
             ->sum('hours_worked');
@@ -273,7 +276,7 @@ class DashboardController extends Controller
                 ->whereYear('issue_date', $now->year)
                 ->sum('total_amount');
             $thisYearExtrapolated = $thisYearActual * $yearlyExtrapolationFactor;
-            
+
             // LAST YEAR: Paid + Due
             $lastYearPaid = Invoice::where('status', 'paid')
                 ->whereBetween('issue_date', [$lastYearStart, $lastYearEnd])
@@ -293,9 +296,8 @@ class DashboardController extends Controller
                 ->sortDesc();
 
             // --- Admin: Revenue Trend (PAID INVOICES - LAST 12 MONTHS) ---
-            $twelveMonthsAgo = $now->copy()->subYear()->startOfMonth();
             $yearlyRevenueTrend = Invoice::where('status', 'paid')
-                ->where('issue_date', '>=', $twelveMonthsAgo)
+                ->where('issue_date', '>=', $rollingYearStart)
                 ->get()
                 ->groupBy(function ($invoice) {
                     return $invoice->issue_date->format('Y-m');
@@ -311,11 +313,10 @@ class DashboardController extends Controller
             // --- Admin: Hero Trend (ALL INVOICES + UNINVOICED WORK - LAST 12 MONTHS) ---
             // Combine all invoices (paid, sent, draft) with uninvoiced work logs valued at project/customer rates
             $heroTrendData = [];
-            $twelveMonthsAgo = $now->copy()->subYear()->startOfMonth();
             
             // Get all invoices by month for the last 12 months
             $allInvoices = Invoice::whereIn('status', ['paid', 'sent', 'draft'])
-                ->where('issue_date', '>=', $twelveMonthsAgo)
+                ->where('issue_date', '>=', $rollingYearStart)
                 ->selectRaw($this->yearExtract('issue_date') . ', ' . $this->monthExtract('issue_date') . ', SUM(total_amount) as total')
                 ->groupBy('year', 'month')
                 ->orderBy('year')
@@ -330,7 +331,7 @@ class DashboardController extends Controller
                 ->whereDoesntHave('invoices', function ($query) {
                     $query->whereIn('status', ['paid', 'sent', 'draft']);
                 })
-                ->where('date', '>=', $twelveMonthsAgo)
+                ->where('date', '>=', $rollingYearStart)
                 ->selectRaw($this->yearExtract('date') . ', ' . $this->monthExtract('date') . ', SUM(hours_worked * hourly_rate) as total')
                 ->groupBy('year', 'month')
                 ->orderBy('year')
@@ -341,7 +342,7 @@ class DashboardController extends Controller
                 });
 
             // Merge invoices and work logs by month for the last 12 months
-            $startDate = $twelveMonthsAgo->copy();
+            $startDate = $rollingYearStart->copy();
             while ($startDate <= $now) {
                 $monthKey = $startDate->format('Y-m');
                 $invoiceAmount = $allInvoices->get($monthKey)?->total ?? 0;
@@ -434,9 +435,9 @@ class DashboardController extends Controller
                 })
                 ->sortDesc();
 
-            // --- Non-Admin: Monthly Earnings Trend ---
+            // --- Non-Admin: Monthly Earnings Trend (rolling last 12 months) ---
             $monthlyEarningsData = (clone $workLogQueryBase)
-                ->whereYear('date', $now->year)
+                ->where('date', '>=', $rollingYearStart)
                 ->selectRaw($this->yearExtract('date') . ', ' . $this->monthExtract('date') . ', SUM(hours_worked * user_hourly_rate) as total')
                 ->groupBy('year', 'month')
                 ->orderBy('year')
@@ -447,17 +448,19 @@ class DashboardController extends Controller
                     return $item->year . '-' . str_pad($item->month, 2, '0', STR_PAD_LEFT);
                 });
 
-            // Create a collection of all months in the current year up to current month
+            // Create a collection of the trailing 12 months up to the current month
             $yearlyEarningsTrend = collect();
-            for ($month = 1; $month <= $now->month; $month++) {
-                $monthKey = $now->year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT);
+            $trendMonth = $rollingYearStart->copy();
+            while ($trendMonth <= $now) {
+                $monthKey = $trendMonth->format('Y-m');
                 $monthData = $monthlyEarningsData->get($monthKey);
-                $formattedDate = Carbon::createFromDate($now->year, $month, 1)->format('Y-m');
 
                 $yearlyEarningsTrend->push([
-                    'date' => $formattedDate,
+                    'date' => $monthKey,
                     'amount' => number_format($monthData->total ?? 0, 2, '.', '')
                 ]);
+
+                $trendMonth->addMonth();
             }
 
             // --- Non-Admin: Monthly Hours Worked Trend (Own Hours) ---

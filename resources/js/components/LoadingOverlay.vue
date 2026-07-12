@@ -1,39 +1,13 @@
 <template>
-  <v-overlay v-model="showOverlay" opacity="0.3">
-    <div class="centercenter">
-      <v-progress-circular
-        :size="100"
-        :width="10"
-        color="primary"
-        indeterminate
-        :transition="{
-          enter: 'fade-transition',
-          leave: 'fade-transition',
-        }"
-      ></v-progress-circular>
+  <Teleport to="body">
+    <div class="fixed inset-0 z-[9998] flex items-center justify-center bg-ink-950/70 backdrop-blur-[2px]">
+      <ui-spinner :size="44" />
     </div>
-  </v-overlay>
+  </Teleport>
 </template>
 
 <script>
 export default {
   name: "LoadingOverlay",
-  data() {
-    return {
-      showOverlay: true,
-    };
-  },
 };
 </script>
-
-<!-- css -->
-<style scoped>
-.centercenter {
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-</style>

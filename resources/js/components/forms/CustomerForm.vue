@@ -1,140 +1,115 @@
 <template>
-  <v-form ref="form" @submit.prevent="submit">
-    <v-row>
-      <v-col cols="12" md="6">
-        <v-text-field
-          v-model="formData.name"
-          :label="$t('forms.customer.name')"
-          prepend-icon="mdi-account"
-          :rules="[v => !!v || $t('forms.customer.nameRequired')]"
-        ></v-text-field>
-      </v-col>
-      <v-col cols="12" md="6">
-        <v-text-field
-          v-model="formData.contact_person"
-          :label="$t('forms.customer.contactPerson')"
-          prepend-icon="mdi-account"
-        ></v-text-field>
-      </v-col>
-      <v-col cols="12" md="6">
-        <v-text-field
-          v-model="formData.contact_email"
-          :label="$t('forms.customer.contactEmail')"
-          type="email"
-          prepend-icon="mdi-email"
-          :rules="[
-            v => !v || /.+@.+\..+/.test(v) || $t('forms.customer.emailValid')
-          ]"
-        ></v-text-field>
-      </v-col>
-      <v-col cols="12" md="6">
-        <v-text-field
-          v-model="formData.contact_phone"
-          :label="$t('forms.customer.contactPhone')"
-          prepend-icon="mdi-phone"
-        ></v-text-field>
-      </v-col>
-      <v-col cols="12" md="6">
-        <v-text-field
-          v-model="formData.address_line_1"
-          :label="$t('forms.customer.addressLine1')"
-          prepend-icon="mdi-map-marker"
-        ></v-text-field>
-      </v-col>
-      <v-col cols="12" md="6">
-        <v-text-field
-          v-model="formData.address_line_2"
-          :label="$t('forms.customer.addressLine2')"
-          prepend-icon="mdi-map-marker"
-        ></v-text-field>
-      </v-col>
-      <v-col cols="12" md="6">
-        <v-text-field
-          v-model="formData.city"
-          :label="$t('forms.customer.city')"
-          prepend-icon="mdi-city"
-        ></v-text-field>
-      </v-col>
-      <v-col cols="12" md="6">
-        <v-text-field
-          v-model="formData.state"
-          :label="$t('forms.customer.state')"
-          prepend-icon="mdi-city"
-        ></v-text-field>
-      </v-col>
-      <v-col cols="12" md="6">
-        <v-text-field
-          v-model="formData.postcode"
-          :label="$t('forms.customer.postcode')"
-          prepend-icon="mdi-mailbox"
-        ></v-text-field>
-      </v-col>
-      <v-col cols="12" md="6">
-        <v-text-field
-          v-model="formData.country"
-          :label="$t('forms.customer.country')"
-          prepend-icon="mdi-earth"
-        ></v-text-field>
-      </v-col>
-      <v-col cols="12" md="6">
-        <v-text-field
-          v-model="formData.vat_number"
-          :label="$t('forms.customer.vatNumber')"
-          prepend-icon="mdi-numeric"
-        ></v-text-field>
-      </v-col>
-      <v-col cols="12" md="6">
-        <v-text-field
-          v-model="formData.hourly_rate"
-          :label="$t('forms.customer.hourlyRate')"
-          prepend-icon="mdi-cash"
-          type="number"
-        ></v-text-field>
-      </v-col>
-    </v-row>
+  <ui-form ref="form" @submit="submit">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <ui-input
+        v-model="formData.name"
+        :label="$t('forms.customer.name')"
+        :icon="User"
+        :rules="[v => !!v || $t('forms.customer.nameRequired')]"
+      />
+      <ui-input
+        v-model="formData.contact_person"
+        :label="$t('forms.customer.contactPerson')"
+        :icon="User"
+      />
+      <ui-input
+        v-model="formData.contact_email"
+        :label="$t('forms.customer.contactEmail')"
+        type="email"
+        :icon="Mail"
+        :rules="[
+          v => !v || /.+@.+\..+/.test(v) || $t('forms.customer.emailValid')
+        ]"
+      />
+      <ui-input
+        v-model="formData.contact_phone"
+        :label="$t('forms.customer.contactPhone')"
+        :icon="Phone"
+      />
+      <ui-input
+        v-model="formData.address_line_1"
+        :label="$t('forms.customer.addressLine1')"
+        :icon="MapPin"
+      />
+      <ui-input
+        v-model="formData.address_line_2"
+        :label="$t('forms.customer.addressLine2')"
+        :icon="MapPin"
+      />
+      <ui-input
+        v-model="formData.city"
+        :label="$t('forms.customer.city')"
+        :icon="Building2"
+      />
+      <ui-input
+        v-model="formData.state"
+        :label="$t('forms.customer.state')"
+        :icon="Building2"
+      />
+      <ui-input
+        v-model="formData.postcode"
+        :label="$t('forms.customer.postcode')"
+        :icon="Inbox"
+      />
+      <ui-input
+        v-model="formData.country"
+        :label="$t('forms.customer.country')"
+        :icon="Globe"
+      />
+      <ui-input
+        v-model="formData.vat_number"
+        :label="$t('forms.customer.vatNumber')"
+        :icon="Hash"
+      />
+      <ui-input
+        v-model="formData.hourly_rate"
+        :label="$t('forms.customer.hourlyRate')"
+        :icon="Banknote"
+        type="number"
+      />
+    </div>
 
-    <v-divider class="my-4"></v-divider>
+    <hr class="my-5 border-ink-700/60" />
 
-    <div class="text-subtitle-1 font-weight-bold mb-2 d-flex align-center">
-      <v-icon class="mr-2" size="small">mdi-file-document-outline</v-icon>
+    <div class="mb-3 flex items-center gap-2 text-sm font-semibold text-bone-100">
+      <FileText class="h-4 w-4 text-bone-500" />
       {{ $t('forms.customer.invoiceSettings') }}
     </div>
 
-    <v-row>
-      <v-col cols="12">
-        <v-textarea
-          v-model="formData.invoice_default_message"
-          :label="$t('forms.customer.invoiceDefaultMessage')"
-          prepend-icon="mdi-message-text"
-          rows="3"
-          :hint="$t('forms.customer.invoiceDefaultMessageHint')"
-          persistent-hint
-        ></v-textarea>
-      </v-col>
-      <v-col cols="12">
-        <v-textarea
-          v-model="formData.invoice_payment_terms"
-          :label="$t('forms.customer.invoicePaymentTerms')"
-          prepend-icon="mdi-file-document-outline"
-          rows="4"
-          :hint="$t('forms.customer.invoicePaymentTermsHint')"
-          persistent-hint
-        ></v-textarea>
-      </v-col>
-    </v-row>
-  </v-form>
+    <div class="space-y-4">
+      <ui-textarea
+        v-model="formData.invoice_default_message"
+        :label="$t('forms.customer.invoiceDefaultMessage')"
+        rows="3"
+        :hint="$t('forms.customer.invoiceDefaultMessageHint')"
+      />
+      <ui-textarea
+        v-model="formData.invoice_payment_terms"
+        :label="$t('forms.customer.invoicePaymentTerms')"
+        rows="4"
+        :hint="$t('forms.customer.invoicePaymentTermsHint')"
+      />
+    </div>
+  </ui-form>
 </template>
 
 <script>
+import { User, Mail, Phone, MapPin, Building2, Inbox, Globe, Hash, Banknote, FileText } from 'lucide-vue-next';
+
 export default {
   name: 'CustomerForm',
+  components: { FileText },
   props: {
     customer: {
       type: Object,
       default: null
     }
   },
-  
+
+  setup() {
+    return { User, Mail, Phone, MapPin, Building2, Inbox, Globe, Hash, Banknote };
+  },
+
   data() {
     return {
       formData: {
@@ -155,21 +130,21 @@ export default {
       }
     };
   },
-  
+
   created() {
     if (this.customer) {
       this.formData = { ...this.customer };
     }
   },
-  
+
   methods: {
     async submit() {
       const { valid } = await this.$refs.form.validate();
-      
+
       if (!valid) {
         return;
       }
-      
+
       this.$emit('save', this.formData);
     }
   }

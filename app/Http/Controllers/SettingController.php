@@ -13,7 +13,13 @@ class SettingController extends Controller
      */
     public function index()
     {
-        return response()->json(Setting::all());
+        $settings = Setting::all()->map(function (Setting $setting) {
+            $setting->value = $this->maskIfSensitive($setting->key, $setting->value);
+
+            return $setting;
+        });
+
+        return response()->json($settings);
     }
 
     /**
@@ -27,6 +33,7 @@ class SettingController extends Controller
         ]);
 
         $setting = Setting::create($validated);
+        $setting->value = $this->maskIfSensitive($setting->key, $setting->value);
 
         return response()->json($setting, 201);
     }
@@ -36,6 +43,8 @@ class SettingController extends Controller
      */
     public function show(Setting $setting)
     {
+        $setting->value = $this->maskIfSensitive($setting->key, $setting->value);
+
         return response()->json($setting);
     }
 
@@ -50,6 +59,7 @@ class SettingController extends Controller
         ]);
 
         $setting->update($validated);
+        $setting->value = $this->maskIfSensitive($setting->key, $setting->value);
 
         return response()->json($setting);
     }
@@ -70,6 +80,12 @@ class SettingController extends Controller
     public function getBatch()
     {
         $settings = Setting::all()->pluck('value', 'key');
+
+        foreach (Setting::SENSITIVE_KEYS as $key) {
+            if (isset($settings[$key])) {
+                $settings[$key] = $this->maskIfSensitive($key, $settings[$key]);
+            }
+        }
 
         return response()->json($settings);
     }
@@ -115,6 +131,14 @@ class SettingController extends Controller
                 // Ensure value is a string
                 $value = (string) $value;
 
+                // Sensitive fields (e.g. openai_api_key) round-trip to the
+                // browser as a masked preview, never the real value. If the
+                // submitted value still looks like that mask, the field
+                // wasn't actually changed, so leave the stored secret alone.
+                if (in_array($key, Setting::SENSITIVE_KEYS, true) && $this->looksLikeMask($value)) {
+                    continue;
+                }
+
                 Setting::updateOrCreate(
                     ['key' => $key],
                     ['value' => $value]
@@ -124,9 +148,16 @@ class SettingController extends Controller
             // Clear settings cache
             \App\Helpers\SettingsHelper::clearCache();
 
+            $settings = Setting::all()->pluck('value', 'key');
+            foreach (Setting::SENSITIVE_KEYS as $key) {
+                if (isset($settings[$key])) {
+                    $settings[$key] = $this->maskIfSensitive($key, $settings[$key]);
+                }
+            }
+
             return response()->json([
                 'message' => 'Settings saved successfully',
-                'settings' => Setting::all()->pluck('value', 'key'),
+                'settings' => $settings,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -149,5 +180,27 @@ class SettingController extends Controller
         ])->pluck('value', 'key');
 
         return response()->json($publicSettings);
+    }
+
+    /**
+     * Mask a sensitive value down to its last 4 characters (e.g. "••••••••ab12").
+     * Non-sensitive keys and empty values pass through unchanged.
+     */
+    private function maskIfSensitive(string $key, ?string $value): ?string
+    {
+        if (! in_array($key, Setting::SENSITIVE_KEYS, true) || $value === '' || $value === null) {
+            return $value;
+        }
+
+        return str_repeat('•', 8).substr($value, -4);
+    }
+
+    /**
+     * Whether a submitted value is exactly the masked preview we hand back
+     * for sensitive fields, meaning the user didn't type a new secret.
+     */
+    private function looksLikeMask(string $value): bool
+    {
+        return (bool) preg_match('/^•{8}.{0,4}$/u', $value);
     }
 }

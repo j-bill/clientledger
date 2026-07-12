@@ -1,888 +1,576 @@
 <template>
-	<v-container fluid class="settings-container">
-		<!-- Hero Section -->
-		<v-row>
-			<v-col cols="12">
-				<v-card class="settings-hero" elevation="0">
-					<div class="hero-gradient"></div>
-					<v-card-text class="text-center position-relative">
-						<div class="avatar-wrapper">
-							<v-avatar 
-								size="150" 
-								class="settings-avatar elevation-8"
-							>
-								<v-icon size="80" color="white">mdi-cog</v-icon>
-							</v-avatar>
-						</div>
-						<h2 class="text-h4 font-weight-bold mt-6 text-white">{{ $t('pages.settings.systemSettings') }}</h2>
-						<p class="text-subtitle-1 text-white mb-0">{{ $t('pages.settings.configurePreferences') }}</p>
-					</v-card-text>
-				</v-card>
-			</v-col>
-		</v-row>
+	<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+		<!-- Heading -->
+		<div class="mb-6">
+			<h1 class="text-2xl font-semibold tracking-tight">{{ $t('pages.settings.systemSettings') }}</h1>
+			<p class="mt-1 text-sm text-bone-500">{{ $t('pages.settings.configurePreferences') }}</p>
+		</div>
 
 		<!-- Non-Admin View -->
-		<v-row v-if="!isAdmin">
-			<v-col cols="12">
-				<v-card elevation="2">
-					<v-card-text>
-						<v-alert type="info" variant="tonal">
-							{{ $t('pages.settings.settingsManagedByAdmin') }}
-						</v-alert>
-					</v-card-text>
-				</v-card>
-			</v-col>
-		</v-row>
+		<ui-alert v-if="!isAdmin" type="info" :text="$t('pages.settings.settingsManagedByAdmin')" />
 
 		<!-- Admin Settings Tabs -->
-		<v-row v-else class="mt-2">
-			<v-col cols="12">
-				<v-card elevation="2">
-					<v-tabs v-model="tab" bg-color="primary" dark>
-						<v-tab value="company">
-							<v-icon start>mdi-domain</v-icon>
-							{{ $t('pages.settings.company') }}
-						</v-tab>
-						<v-tab value="localization">
-							<v-icon start>mdi-earth</v-icon>
-							{{ $t('pages.settings.localization') }}
-						</v-tab>
-						<v-tab value="financial">
-							<v-icon start>mdi-currency-usd</v-icon>
-							{{ $t('pages.settings.financialInvoices') }}
-						</v-tab>
-						<v-tab value="datetime">
-							<v-icon start>mdi-calendar-clock</v-icon>
-							{{ $t('pages.settings.dateTime') }}
-						</v-tab>
-						<v-tab value="email">
-							<v-icon start>mdi-email</v-icon>
-							{{ $t('pages.settings.email') }}
-						</v-tab>
-						<v-tab value="legal">
-							<v-icon start>mdi-gavel</v-icon>
-							{{ $t('pages.settings.legal') }}
-						</v-tab>
-						<v-tab value="ai">
-							<v-icon start>mdi-robot</v-icon>
-							{{ $t('pages.settings.ai') }}
-						</v-tab>
-						<v-tab value="sounds">
-							<v-icon start>mdi-volume-high</v-icon>
-							{{ $t('pages.settings.sounds') }}
-						</v-tab>
-					</v-tabs>
+		<ui-card v-else dense>
+			<ui-tabs v-model="tab" :tabs="tabItems" />
 
-					<v-card-text class="pa-8">
-						<v-window v-model="tab">
-							<!-- Company Settings Tab -->
-							<v-window-item value="company">
-								<v-form ref="companyForm">
-									<div class="text-h6 mb-4 d-flex align-center">
-										<v-icon class="mr-2" color="primary">mdi-office-building</v-icon>
-										{{ $t('pages.settings.companyInformation') }}
+			<div class="p-6">
+				<!-- Company Settings Tab -->
+				<div v-if="tab === 'company'">
+					<ui-form ref="companyForm">
+						<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+							<Building2 class="h-4 w-4 text-bone-500" />
+							{{ $t('pages.settings.companyInformation') }}
+						</div>
+
+						<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+							<ui-input
+								v-model="settings.company_name"
+								:label="$t('pages.settings.companyName')"
+								:icon="Building2"
+							/>
+							<ui-input
+								v-model="settings.company_email"
+								:label="$t('pages.settings.companyEmail')"
+								:icon="Mail"
+								type="email"
+							/>
+							<ui-input
+								v-model="settings.company_phone"
+								:label="$t('pages.settings.companyPhone')"
+								:icon="Phone"
+							/>
+							<ui-input
+								v-model="settings.company_website"
+								:label="$t('pages.settings.websiteUrl')"
+								:icon="Globe"
+								type="url"
+							/>
+							<ui-input
+								v-model="settings.company_vat_id"
+								:label="$t('pages.settings.vatId')"
+								:icon="Hash"
+							/>
+						</div>
+
+						<hr class="my-6 border-ink-700/60" />
+
+						<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+							<MapPin class="h-4 w-4 text-bone-500" />
+							{{ $t('pages.settings.companyAddress') }}
+						</div>
+
+						<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+							<ui-input
+								v-model="settings.company_address_street"
+								:label="$t('pages.settings.street')"
+								:icon="MapPin"
+								wrapper-class="md:col-span-2"
+							/>
+							<ui-input
+								v-model="settings.company_address_number"
+								:label="$t('pages.settings.number')"
+							/>
+							<ui-input
+								v-model="settings.company_address_zipcode"
+								:label="$t('pages.settings.zipCode')"
+							/>
+							<ui-input
+								v-model="settings.company_address_city"
+								:label="$t('pages.settings.city')"
+								:icon="Building2"
+								wrapper-class="md:col-span-2"
+							/>
+						</div>
+
+						<hr class="my-6 border-ink-700/60" />
+
+						<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+							<Landmark class="h-4 w-4 text-bone-500" />
+							{{ $t('pages.settings.bankInformation') }}
+						</div>
+
+						<ui-textarea
+							v-model="settings.company_bank_info"
+							:label="$t('pages.settings.bankInfo')"
+							rows="4"
+							:hint="$t('pages.settings.bankInfoHint')"
+						/>
+
+						<hr class="my-6 border-ink-700/60" />
+
+						<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+							<Image class="h-4 w-4 text-bone-500" />
+							{{ $t('pages.settings.companyLogo') }}
+						</div>
+
+						<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+							<div>
+								<div
+									class="cursor-pointer rounded-lg border-2 border-dashed border-ink-700 p-6 text-center transition-colors hover:border-ink-600 hover:bg-ink-850"
+									@click="triggerLogoInput"
+								>
+									<div v-if="settings.company_logo" class="flex items-center justify-center">
+										<img :src="settings.company_logo" alt="" class="max-h-[120px] max-w-[200px] object-contain" />
 									</div>
-
-									<v-row>
-										<v-col cols="12" md="6">
-											<v-text-field
-												v-model="settings.company_name"
-												:label="$t('pages.settings.companyName')"
-												variant="outlined"
-												prepend-inner-icon="mdi-domain"
-												density="comfortable"
-											></v-text-field>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-text-field
-												v-model="settings.company_email"
-												:label="$t('pages.settings.companyEmail')"
-												variant="outlined"
-												prepend-inner-icon="mdi-email"
-												density="comfortable"
-												type="email"
-											></v-text-field>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-text-field
-												v-model="settings.company_phone"
-												:label="$t('pages.settings.companyPhone')"
-												variant="outlined"
-												prepend-inner-icon="mdi-phone"
-												density="comfortable"
-											></v-text-field>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-text-field
-												v-model="settings.company_website"
-												:label="$t('pages.settings.websiteUrl')"
-												variant="outlined"
-												prepend-inner-icon="mdi-web"
-												density="comfortable"
-												type="url"
-											></v-text-field>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-text-field
-												v-model="settings.company_vat_id"
-												:label="$t('pages.settings.vatId')"
-												variant="outlined"
-												prepend-inner-icon="mdi-identifier"
-												density="comfortable"
-											></v-text-field>
-										</v-col>
-									</v-row>
-
-									<v-divider class="my-6"></v-divider>
-
-									<div class="text-h6 mb-4 d-flex align-center">
-										<v-icon class="mr-2" color="primary">mdi-map-marker</v-icon>
-										{{ $t('pages.settings.companyAddress') }}
+									<div v-else class="flex flex-col items-center justify-center">
+										<ImagePlus class="h-12 w-12 text-bone-700" />
+										<p class="mt-2 text-sm text-bone-500">{{ $t('pages.settings.clickToUpload') }}</p>
 									</div>
-
-									<v-row>
-										<v-col cols="12" md="8">
-											<v-text-field
-												v-model="settings.company_address_street"
-												:label="$t('pages.settings.street')"
-												variant="outlined"
-												prepend-inner-icon="mdi-road"
-												density="comfortable"
-											></v-text-field>
-										</v-col>
-
-										<v-col cols="12" md="4">
-											<v-text-field
-												v-model="settings.company_address_number"
-												:label="$t('pages.settings.number')"
-												variant="outlined"
-												density="comfortable"
-											></v-text-field>
-										</v-col>
-
-										<v-col cols="12" md="4">
-											<v-text-field
-												v-model="settings.company_address_zipcode"
-												:label="$t('pages.settings.zipCode')"
-												variant="outlined"
-												density="comfortable"
-											></v-text-field>
-										</v-col>
-
-										<v-col cols="12" md="8">
-											<v-text-field
-												v-model="settings.company_address_city"
-												:label="$t('pages.settings.city')"
-												variant="outlined"
-												prepend-inner-icon="mdi-city"
-												density="comfortable"
-											></v-text-field>
-										</v-col>
-									</v-row>
-
-									<v-divider class="my-6"></v-divider>
-
-									<div class="text-h6 mb-4 d-flex align-center">
-										<v-icon class="mr-2" color="primary">mdi-bank</v-icon>
-										{{ $t('pages.settings.bankInformation') }}
-									</div>
-
-									<v-row>
-										<v-col cols="12">
-											<v-textarea
-												v-model="settings.company_bank_info"
-												:label="$t('pages.settings.bankInfo')"
-												variant="outlined"
-												prepend-inner-icon="mdi-bank"
-												density="comfortable"
-												rows="4"
-												:hint="$t('pages.settings.bankInfoHint')"
-												persistent-hint
-											></v-textarea>
-										</v-col>
-									</v-row>
-
-									<v-divider class="my-6"></v-divider>
-
-									<div class="text-h6 mb-4 d-flex align-center">
-										<v-icon class="mr-2" color="primary">mdi-image</v-icon>
-										{{ $t('pages.settings.companyLogo') }}
-									</div>
-
-									<v-row>
-										<v-col cols="12" md="6">
-											<div class="logo-upload-area" @click="triggerLogoInput">
-												<div v-if="settings.company_logo" class="logo-preview mb-4">
-													<v-img :src="settings.company_logo" max-height="120" max-width="200" contain></v-img>
-												</div>
-												<div v-else class="upload-placeholder">
-													<v-icon size="60" color="grey">mdi-image-plus</v-icon>
-													<p class="text-body-2 text-medium-emphasis mt-2">{{ $t('pages.settings.clickToUpload') }}</p>
-												</div>
-												<input 
-													ref="logoInput" 
-													type="file" 
-													accept="image/*" 
-													style="display: none" 
-													@change="onLogoSelected"
-												/>
-											</div>
-											<p class="text-caption text-medium-emphasis mt-2">
-												{{ $t('pages.settings.logoRecommendation') }}
-												<v-btn 
-													v-if="settings.company_logo" 
-													size="small" 
-													color="error" 
-													variant="text" 
-													@click.stop="removeLogo"
-												>
-													{{ $t('pages.settings.removeLogo') }}
-												</v-btn>
-											</p>
-										</v-col>
-									</v-row>
-								</v-form>
-							</v-window-item>
-
-							<!-- Localization Settings Tab -->
-							<v-window-item value="localization">
-								<v-form ref="localizationForm">
-									<div class="text-h6 mb-4 d-flex align-center">
-										<v-icon class="mr-2" color="primary">mdi-language</v-icon>
-										{{ $t('pages.settings.languageLocalization') }}
-									</div>
-
-									<v-row>
-										<v-col cols="12" md="6">
-											<v-select
-												v-model="settings.language"
-												:items="languageOptionsComputed"
-												:label="$t('pages.settings.applicationLanguage')"
-												variant="outlined"
-												prepend-inner-icon="mdi-earth"
-												density="comfortable"
-												:hint="$t('pages.settings.languageHint')"
-												persistent-hint
-											></v-select>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-card variant="tonal" color="info">
-												<v-card-text>
-													<div class="text-subtitle-2 mb-2">{{ $t('pages.settings.currentLanguage') }}:</div>
-													<div class="text-h6">{{ getLanguageName(settings.language) }}</div>
-												</v-card-text>
-											</v-card>
-										</v-col>
-									</v-row>
-
-									<v-divider class="my-6"></v-divider>
-
-									<v-alert type="info" variant="tonal">
-										<strong>{{ $t('pages.settings.note') }}:</strong> {{ $t('pages.settings.languageChangeAffects') }}
-										<ul>
-											<li>{{ $t('pages.settings.languageChangeInvoices') }}</li>
-											<li>{{ $t('pages.settings.languageChangeEmails') }}</li>
-											<li>{{ $t('pages.settings.languageChangeFormats') }}</li>
-										</ul>
-									</v-alert>
-								</v-form>
-							</v-window-item>
-
-							<!-- Financial & Invoice Settings Tab -->
-							<v-window-item value="financial">
-								<v-form ref="financialForm">
-									<div class="text-h6 mb-4 d-flex align-center">
-										<v-icon class="mr-2" color="primary">mdi-currency-usd</v-icon>
-										{{ $t('pages.settings.currencyTax') }}
-									</div>
-
-									<v-row>
-										<v-col cols="12" md="6">
-											<v-select
-												v-model="settings.currency_symbol"
-												:items="currencyOptions"
-												:label="$t('pages.settings.currency')"
-												variant="outlined"
-												prepend-inner-icon="mdi-currency-usd"
-												density="comfortable"
-												item-title="title"
-												item-value="value"
-												@update:model-value="updateCurrencyCode"
-											></v-select>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-text-field
-												v-model="settings.tax_rate"
-												:label="$t('pages.settings.taxRate')"
-												variant="outlined"
-												prepend-inner-icon="mdi-percent"
-												density="comfortable"
-												type="number"
-												step="0.01"
-												:hint="$t('pages.settings.taxRateHint')"
-												persistent-hint
-											></v-text-field>
-										</v-col>
-									</v-row>
-
-									<v-divider class="my-6"></v-divider>
-
-									<div class="text-h6 mb-4 d-flex align-center">
-										<v-icon class="mr-2" color="primary">mdi-file-document</v-icon>
-										{{ $t('pages.settings.invoiceConfiguration') }}
-									</div>
-
-									<v-row>
-										<v-col cols="12" md="6">
-											<v-text-field
-												v-model="settings.invoice_prefix"
-												:label="$t('pages.settings.invoicePrefix')"
-												variant="outlined"
-												prepend-inner-icon="mdi-format-text"
-												density="comfortable"
-												:hint="$t('pages.settings.invoicePrefixHint')"
-												persistent-hint
-											></v-text-field>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-select
-												v-model="settings.invoice_number_format"
-												:items="invoiceNumberFormats"
-												:label="$t('pages.settings.invoiceNumberFormat')"
-												variant="outlined"
-												prepend-inner-icon="mdi-format-list-numbered"
-												density="comfortable"
-												item-title="title"
-												item-value="value"
-											></v-select>
-										</v-col>
-
-									<v-col cols="12" md="6">
-										<v-switch
-											v-model="settings.invoice_number_random"
-											:label="$t('pages.settings.randomInvoiceNumbers')"
-											color="primary"
-											:hint="$t('pages.settings.randomInvoiceNumbersHint')"
-											persistent-hint
-										></v-switch>
-									</v-col>
-
-									<v-col cols="12" md="6">
-										<v-text-field
-											v-model="settings.invoice_number_random_length"
-											:label="$t('pages.settings.randomNumberLength')"
-											variant="outlined"
-											prepend-inner-icon="mdi-numeric"
-											density="comfortable"
-											type="number"
-											min="4"
-											max="20"
-											:disabled="!settings.invoice_number_random"
-											:hint="$t('pages.settings.randomNumberLengthHint')"
-											persistent-hint
-										></v-text-field>
-									</v-col>
-
-									<v-col cols="12" md="6">
-											<v-text-field
-												v-model="settings.invoice_number_start"
-												:label="$t('pages.settings.startingInvoiceNumber')"
-												variant="outlined"
-												prepend-inner-icon="mdi-numeric"
-												density="comfortable"
-												type="number"
-												:disabled="settings.invoice_number_random"
-												:hint="$t('pages.settings.startingInvoiceNumberHint')"
-												persistent-hint
-											></v-text-field>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-select
-												v-model="settings.invoice_default_status"
-												:items="invoiceStatuses"
-												:label="$t('pages.settings.defaultInvoiceStatus')"
-												variant="outlined"
-												prepend-inner-icon="mdi-tag"
-												density="comfortable"
-												item-title="title"
-												item-value="value"
-											></v-select>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-switch
-												v-model="settings.invoice_auto_send"
-												:label="$t('pages.settings.autoSendInvoices')"
-												color="primary"
-												:hint="$t('pages.settings.autoSendInvoicesHint')"
-												persistent-hint
-											></v-switch>
-										</v-col>
-									</v-row>
-
-									<v-divider class="my-6"></v-divider>
-
-									<div class="text-h6 mb-4 d-flex align-center">
-										<v-icon class="mr-2" color="primary">mdi-text-box</v-icon>
-										{{ $t('pages.settings.invoiceContent') }}
-									</div>
-
-									<v-row>
-										<v-col cols="12">
-											<v-textarea
-												v-model="settings.invoice_default_message"
-												:label="$t('pages.settings.defaultInvoiceMessage')"
-												variant="outlined"
-												prepend-inner-icon="mdi-message-text"
-												density="comfortable"
-												rows="3"
-												:hint="$t('pages.settings.defaultInvoiceMessageHint')"
-												persistent-hint
-											></v-textarea>
-										</v-col>
-
-										<v-col cols="12">
-											<v-textarea
-												v-model="settings.invoice_payment_terms"
-												:label="$t('pages.settings.paymentTerms')"
-												variant="outlined"
-												prepend-inner-icon="mdi-file-document-outline"
-												density="comfortable"
-												rows="4"
-												:hint="$t('pages.settings.paymentTermsHint')"
-												persistent-hint
-											></v-textarea>
-										</v-col>
-									</v-row>
-
-									<v-divider class="my-6"></v-divider>
-
-									<div class="text-h6 mb-4 d-flex align-center">
-										<v-icon class="mr-2" color="primary">mdi-page-layout-footer</v-icon>
-										{{ $t('pages.settings.invoiceFooterLayout') }}
-									</div>
-
-									<v-row>
-										<v-col cols="12" md="4">
-											<v-select
-												v-model="settings.invoice_footer_col1"
-												:items="footerColumnOptions"
-												:label="$t('pages.settings.leftColumn')"
-												variant="outlined"
-												density="comfortable"
-												item-title="title"
-												item-value="value"
-											></v-select>
-										</v-col>
-
-										<v-col cols="12" md="4">
-											<v-select
-												v-model="settings.invoice_footer_col2"
-												:items="footerColumnOptions"
-												:label="$t('pages.settings.centerColumn')"
-												variant="outlined"
-												density="comfortable"
-												item-title="title"
-												item-value="value"
-											></v-select>
-										</v-col>
-
-										<v-col cols="12" md="4">
-											<v-select
-												v-model="settings.invoice_footer_col3"
-												:items="footerColumnOptions"
-												:label="$t('pages.settings.rightColumn')"
-												variant="outlined"
-												density="comfortable"
-												item-title="title"
-												item-value="value"
-											></v-select>
-										</v-col>
-									</v-row>
-								</v-form>
-							</v-window-item>
-
-							<!-- Date & Time Settings Tab -->
-							<v-window-item value="datetime">
-								<v-form ref="datetimeForm">
-									<div class="text-h6 mb-4 d-flex align-center">
-										<v-icon class="mr-2" color="primary">mdi-calendar</v-icon>
-										{{ $t('pages.settings.dateTimeFormats') }}
-									</div>
-
-									<v-row>
-										<v-col cols="12" md="6">
-											<v-select
-												v-model="settings.date_format"
-												:items="dateFormats"
-												:label="$t('pages.settings.dateFormat')"
-												variant="outlined"
-												prepend-inner-icon="mdi-calendar"
-												density="comfortable"
-												item-title="title"
-												item-value="value"
-											></v-select>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-card variant="tonal" color="info">
-												<v-card-text>
-													<div class="text-subtitle-2 mb-2">{{ $t('pages.settings.preview') }}:</div>
-													<div class="text-h6">{{ formatPreviewDate(new Date()) }}</div>
-												</v-card-text>
-											</v-card>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-select
-												v-model="settings.time_format"
-												:items="timeFormats"
-												:label="$t('pages.settings.timeFormat')"
-												variant="outlined"
-												prepend-inner-icon="mdi-clock"
-												density="comfortable"
-												item-title="title"
-												item-value="value"
-											></v-select>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-card variant="tonal" color="info">
-												<v-card-text>
-													<div class="text-subtitle-2 mb-2">{{ $t('pages.settings.preview') }}:</div>
-													<div class="text-h6">{{ formatPreviewTime(new Date()) }}</div>
-												</v-card-text>
-											</v-card>
-										</v-col>
-									</v-row>
-
-									<v-divider class="my-6"></v-divider>
-
-									<div class="text-h6 mb-4 d-flex align-center">
-										<v-icon class="mr-2" color="primary">mdi-numeric</v-icon>
-										{{ $t('pages.settings.numberFormats') }}
-									</div>
-
-									<v-row>
-										<v-col cols="12" md="6">
-											<v-select
-												v-model="settings.number_format"
-												:items="numberFormats"
-												:label="$t('pages.settings.numberFormat')"
-												variant="outlined"
-												prepend-inner-icon="mdi-numeric"
-												density="comfortable"
-												item-title="title"
-												item-value="value"
-												:hint="$t('pages.settings.numberFormatHint')"
-												persistent-hint
-											></v-select>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-card variant="tonal" color="info">
-												<v-card-text>
-													<div class="text-subtitle-2 mb-2">{{ $t('pages.settings.preview') }}:</div>
-													<div class="text-h6">{{ formatPreviewNumber(1234567.89) }}</div>
-												</v-card-text>
-											</v-card>
-										</v-col>
-									</v-row>
-								</v-form>
-							</v-window-item>
-
-							<!-- Email Settings Tab -->
-							<v-window-item value="email">
-								<v-form ref="emailForm">
-									<v-alert type="warning" variant="tonal" class="mb-4">
-										<strong>{{ $t('pages.settings.important') }}:</strong> {{ $t('pages.settings.emailSettingsWarning') }}
-									</v-alert>
-
-									<div class="text-h6 mb-4 d-flex align-center">
-										<v-icon class="mr-2" color="primary">mdi-email-settings</v-icon>
-										{{ $t('pages.settings.smtpConfiguration') }}
-									</div>
-
-									<v-row>
-										<v-col cols="12" md="6">
-											<v-text-field
-												v-model="settings.mail_host"
-												:label="$t('pages.settings.smtpHost')"
-												variant="outlined"
-												prepend-inner-icon="mdi-server"
-												density="comfortable"
-												:hint="$t('pages.settings.smtpHostHint')"
-												persistent-hint
-											></v-text-field>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-text-field
-												v-model="settings.mail_port"
-												:label="$t('pages.settings.smtpPort')"
-												variant="outlined"
-												prepend-inner-icon="mdi-network"
-												density="comfortable"
-												type="number"
-												:hint="$t('pages.settings.smtpPortHint')"
-												persistent-hint
-											></v-text-field>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-text-field
-												v-model="settings.mail_username"
-												:label="$t('pages.settings.smtpUsername')"
-												variant="outlined"
-												prepend-inner-icon="mdi-account"
-												density="comfortable"
-											></v-text-field>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-text-field
-												v-model="settings.mail_password"
-												:label="$t('pages.settings.smtpPassword')"
-												variant="outlined"
-												prepend-inner-icon="mdi-lock"
-												:type="showMailPassword ? 'text' : 'password'"
-												:append-inner-icon="showMailPassword ? 'mdi-eye-off' : 'mdi-eye'"
-												@click:append-inner="showMailPassword = !showMailPassword"
-												density="comfortable"
-											></v-text-field>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-select
-												v-model="settings.mail_encryption"
-												:items="mailEncryptions"
-												:label="$t('pages.settings.encryption')"
-												variant="outlined"
-												prepend-inner-icon="mdi-shield-lock"
-												density="comfortable"
-												item-title="title"
-												item-value="value"
-											></v-select>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-text-field
-												v-model="settings.mail_from_address"
-												:label="$t('pages.settings.fromEmailAddress')"
-												variant="outlined"
-												prepend-inner-icon="mdi-email"
-												density="comfortable"
-												type="email"
-											></v-text-field>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-text-field
-												v-model="settings.mail_from_name"
-												:label="$t('pages.settings.fromName')"
-												variant="outlined"
-												prepend-inner-icon="mdi-account-circle"
-												density="comfortable"
-											></v-text-field>
-										</v-col>
-									</v-row>
-								</v-form>
-							</v-window-item>
-
-							<!-- Legal Settings Tab -->
-							<v-window-item value="legal">
-								<v-form ref="legalForm">
-									<v-alert type="info" variant="tonal" class="mb-4">
-										<strong>{{ $t('pages.settings.legalInformation') }}:</strong> {{ $t('pages.settings.legalInformationHint') }}
-									</v-alert>
-
-									<div class="text-h6 mb-4 d-flex align-center">
-										<v-icon class="mr-2" color="primary">mdi-shield-account</v-icon>
-										{{ $t('pages.settings.privacyNotice') }}
-									</div>
-
-									<v-row>
-										<v-col cols="12">
-											<v-textarea
-												v-model="settings.privacy_notice"
-												:label="$t('pages.settings.privacyNoticeHtml')"
-												variant="outlined"
-												prepend-inner-icon="mdi-file-document-edit"
-												density="comfortable"
-												rows="10"
-												:hint="$t('pages.settings.htmlFormattingHint')"
-												persistent-hint
-											></v-textarea>
-										</v-col>
-									</v-row>
-
-									<v-divider class="my-6"></v-divider>
-
-									<div class="text-h6 mb-4 d-flex align-center">
-										<v-icon class="mr-2" color="primary">mdi-gavel</v-icon>
-										{{ $t('pages.settings.imprint') }}
-									</div>
-
-									<v-row>
-										<v-col cols="12">
-											<v-textarea
-												v-model="settings.imprint"
-												:label="$t('pages.settings.imprintHtml')"
-												variant="outlined"
-												prepend-inner-icon="mdi-file-document-edit"
-												density="comfortable"
-												rows="10"
-												:hint="$t('pages.settings.htmlFormattingHint')"
-												persistent-hint
-											></v-textarea>
-										</v-col>
-									</v-row>
-								</v-form>
-							</v-window-item>
-
-							<!-- AI Settings Tab -->
-							<v-window-item value="ai">
-								<v-form ref="aiForm">
-									<div class="text-h6 mb-4 d-flex align-center">
-										<v-icon class="mr-2" color="primary">mdi-robot</v-icon>
-										{{ $t('pages.settings.aiConfiguration') }}
-									</div>
-
-									<v-row>
-										<v-col cols="12">
-											<v-switch
-												v-model="settings.ai_worklog_enabled"
-												:label="$t('pages.settings.aiWorklogEnabled')"
-												color="primary"
-												hide-details
-											></v-switch>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-text-field
-												v-model="settings.openai_api_key"
-												:label="$t('pages.settings.openaiApiKey')"
-												variant="outlined"
-												prepend-inner-icon="mdi-key"
-												:type="showOpenAiKey ? 'text' : 'password'"
-												:append-inner-icon="showOpenAiKey ? 'mdi-eye-off' : 'mdi-eye'"
-												@click:append-inner="showOpenAiKey = !showOpenAiKey"
-												density="comfortable"
-											></v-text-field>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-text-field
-												v-model="settings.openai_model"
-												:label="$t('pages.settings.openaiModel')"
-												variant="outlined"
-												prepend-inner-icon="mdi-brain"
-												density="comfortable"
-												:hint="$t('pages.settings.openaiModelHint')"
-												persistent-hint
-											></v-text-field>
-										</v-col>
-
-										<v-col cols="12">
-											<v-textarea
-												v-model="settings.ai_worklog_prompt"
-												:label="$t('pages.settings.aiWorklogPrompt')"
-												variant="outlined"
-												prepend-inner-icon="mdi-message-text"
-												density="comfortable"
-												rows="5"
-												:hint="$t('pages.settings.aiWorklogPromptHint')"
-												persistent-hint
-											></v-textarea>
-										</v-col>
-									</v-row>
-								</v-form>
-							</v-window-item>
-
-							<!-- Sound Settings Tab -->
-							<v-window-item value="sounds">
-								<v-form ref="soundsForm">
-									<div class="text-h6 mb-4 d-flex align-center">
-										<v-icon class="mr-2" color="primary">mdi-volume-high</v-icon>
-										{{ $t('pages.settings.soundConfiguration') }}
-									</div>
-
-									<v-row>
-										<v-col cols="12">
-											<v-switch
-												v-model="settings.worklog_sound_enabled"
-												:label="$t('pages.settings.worklogSoundEnabled')"
-												color="primary"
-												:hint="$t('pages.settings.worklogSoundEnabledHint')"
-												persistent-hint
-											></v-switch>
-										</v-col>
-
-										<v-col cols="12" md="6">
-											<v-select
-												v-model="settings.worklog_sound"
-												:items="worklogSoundOptions"
-												:label="$t('pages.settings.worklogSound')"
-												variant="outlined"
-												prepend-inner-icon="mdi-music-note"
-												density="comfortable"
-												item-title="title"
-												item-value="value"
-												:disabled="!settings.worklog_sound_enabled"
-											></v-select>
-										</v-col>
-
-										<v-col cols="12" md="6" class="d-flex align-start">
-											<v-btn
-												color="primary"
-												variant="tonal"
-												height="48"
-												:disabled="!settings.worklog_sound_enabled"
-												@click="previewSound"
-											>
-												<v-icon start>mdi-play</v-icon>
-												{{ $t('pages.settings.previewSound') }}
-											</v-btn>
-										</v-col>
-									</v-row>
-								</v-form>
-							</v-window-item>
-						</v-window>
-					</v-card-text>
-
-					<v-divider></v-divider>
-
-					<v-card-actions class="pa-4">
-						<v-spacer></v-spacer>
-						<v-btn
-							variant="text"
-							@click="resetSettings"
-							:disabled="loading"
-						>
-							{{ $t('common.reset') }}
-						</v-btn>
-						<v-btn
-							color="primary"
-							@click="saveSettings"
-							:loading="loading"
-							size="large"
-						>
-							<v-icon start>mdi-content-save</v-icon>
-							{{ $t('pages.settings.saveAllSettings') }}
-						</v-btn>
-					</v-card-actions>
-				</v-card>
-			</v-col>
-		</v-row>
-	</v-container>
+									<input
+										ref="logoInput"
+										type="file"
+										accept="image/*"
+										class="hidden"
+										@change="onLogoSelected"
+									/>
+								</div>
+								<p class="mt-2 flex flex-wrap items-center gap-2 text-xs text-bone-500">
+									{{ $t('pages.settings.logoRecommendation') }}
+									<ui-button
+										v-if="settings.company_logo"
+										variant="danger-ghost"
+										size="sm"
+										@click="removeLogo"
+									>
+										{{ $t('pages.settings.removeLogo') }}
+									</ui-button>
+								</p>
+							</div>
+						</div>
+					</ui-form>
+				</div>
+
+				<!-- Localization Settings Tab -->
+				<div v-if="tab === 'localization'">
+					<ui-form ref="localizationForm">
+						<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+							<Languages class="h-4 w-4 text-bone-500" />
+							{{ $t('pages.settings.languageLocalization') }}
+						</div>
+
+						<ui-select
+							v-model="settings.language"
+							:items="languageOptionsComputed"
+							:label="$t('pages.settings.applicationLanguage')"
+							:hint="$t('pages.settings.languageHint')"
+							class="max-w-sm"
+						/>
+
+						<hr class="my-6 border-ink-700/60" />
+
+						<ui-alert type="info">
+							<strong>{{ $t('pages.settings.note') }}:</strong> {{ $t('pages.settings.languageChangeAffects') }}
+							<ul class="mt-1 list-disc pl-5">
+								<li>{{ $t('pages.settings.languageChangeInvoices') }}</li>
+								<li>{{ $t('pages.settings.languageChangeEmails') }}</li>
+								<li>{{ $t('pages.settings.languageChangeFormats') }}</li>
+							</ul>
+						</ui-alert>
+					</ui-form>
+				</div>
+
+				<!-- Financial & Invoice Settings Tab -->
+				<div v-if="tab === 'financial'">
+					<ui-form ref="financialForm">
+						<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+							<Banknote class="h-4 w-4 text-bone-500" />
+							{{ $t('pages.settings.currencyTax') }}
+						</div>
+
+						<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+							<ui-select
+								v-model="settings.currency_symbol"
+								:items="currencyOptions"
+								:label="$t('pages.settings.currency')"
+								item-title="title"
+								item-value="value"
+								@update:model-value="updateCurrencyCode"
+							/>
+							<ui-input
+								v-model="settings.tax_rate"
+								:label="$t('pages.settings.taxRate')"
+								:icon="Percent"
+								type="number"
+								step="0.01"
+								:hint="$t('pages.settings.taxRateHint')"
+							/>
+						</div>
+
+						<hr class="my-6 border-ink-700/60" />
+
+						<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+							<FileText class="h-4 w-4 text-bone-500" />
+							{{ $t('pages.settings.invoiceConfiguration') }}
+						</div>
+
+						<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+							<ui-input
+								v-model="settings.invoice_prefix"
+								:label="$t('pages.settings.invoicePrefix')"
+								:icon="Type"
+								:hint="$t('pages.settings.invoicePrefixHint')"
+							/>
+							<ui-select
+								v-model="settings.invoice_number_format"
+								:items="invoiceNumberFormats"
+								:label="$t('pages.settings.invoiceNumberFormat')"
+								item-title="title"
+								item-value="value"
+							/>
+							<ui-switch
+								v-model="settings.invoice_number_random"
+								:label="$t('pages.settings.randomInvoiceNumbers')"
+								:hint="$t('pages.settings.randomInvoiceNumbersHint')"
+							/>
+							<ui-input
+								v-model="settings.invoice_number_random_length"
+								:label="$t('pages.settings.randomNumberLength')"
+								:icon="Hash"
+								type="number"
+								min="4"
+								max="20"
+								:disabled="!settings.invoice_number_random"
+								:hint="$t('pages.settings.randomNumberLengthHint')"
+							/>
+							<ui-input
+								v-model="settings.invoice_number_start"
+								:label="$t('pages.settings.startingInvoiceNumber')"
+								:icon="Hash"
+								type="number"
+								:disabled="settings.invoice_number_random"
+								:hint="$t('pages.settings.startingInvoiceNumberHint')"
+							/>
+							<ui-select
+								v-model="settings.invoice_default_status"
+								:items="invoiceStatuses"
+								:label="$t('pages.settings.defaultInvoiceStatus')"
+								item-title="title"
+								item-value="value"
+							/>
+							<ui-switch
+								v-model="settings.invoice_auto_send"
+								:label="$t('pages.settings.autoSendInvoices')"
+								:hint="$t('pages.settings.autoSendInvoicesHint')"
+							/>
+						</div>
+
+						<hr class="my-6 border-ink-700/60" />
+
+						<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+							<MessageSquareText class="h-4 w-4 text-bone-500" />
+							{{ $t('pages.settings.invoiceContent') }}
+						</div>
+
+						<div class="space-y-4">
+							<ui-textarea
+								v-model="settings.invoice_default_message"
+								:label="$t('pages.settings.defaultInvoiceMessage')"
+								rows="3"
+								:hint="$t('pages.settings.defaultInvoiceMessageHint')"
+							/>
+							<ui-textarea
+								v-model="settings.invoice_payment_terms"
+								:label="$t('pages.settings.paymentTerms')"
+								rows="4"
+								:hint="$t('pages.settings.paymentTermsHint')"
+							/>
+						</div>
+
+						<hr class="my-6 border-ink-700/60" />
+
+						<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+							<LayoutTemplate class="h-4 w-4 text-bone-500" />
+							{{ $t('pages.settings.invoiceFooterLayout') }}
+						</div>
+
+						<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+							<ui-select
+								v-model="settings.invoice_footer_col1"
+								:items="footerColumnOptions"
+								:label="$t('pages.settings.leftColumn')"
+								item-title="title"
+								item-value="value"
+							/>
+							<ui-select
+								v-model="settings.invoice_footer_col2"
+								:items="footerColumnOptions"
+								:label="$t('pages.settings.centerColumn')"
+								item-title="title"
+								item-value="value"
+							/>
+							<ui-select
+								v-model="settings.invoice_footer_col3"
+								:items="footerColumnOptions"
+								:label="$t('pages.settings.rightColumn')"
+								item-title="title"
+								item-value="value"
+							/>
+						</div>
+					</ui-form>
+				</div>
+
+				<!-- Date & Time Settings Tab -->
+				<div v-if="tab === 'datetime'">
+					<ui-form ref="datetimeForm">
+						<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+							<Calendar class="h-4 w-4 text-bone-500" />
+							{{ $t('pages.settings.dateTimeFormats') }}
+						</div>
+
+						<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+							<div>
+								<ui-select
+									v-model="settings.date_format"
+									:items="dateFormats"
+									:label="$t('pages.settings.dateFormat')"
+									item-title="title"
+									item-value="value"
+								/>
+								<p class="mt-1.5 text-xs text-bone-500">
+									{{ $t('pages.settings.preview') }}: <span class="tnum text-bone-300">{{ formatPreviewDate(new Date()) }}</span>
+								</p>
+							</div>
+							<div>
+								<ui-select
+									v-model="settings.time_format"
+									:items="timeFormats"
+									:label="$t('pages.settings.timeFormat')"
+									item-title="title"
+									item-value="value"
+								/>
+								<p class="mt-1.5 text-xs text-bone-500">
+									{{ $t('pages.settings.preview') }}: <span class="tnum text-bone-300">{{ formatPreviewTime(new Date()) }}</span>
+								</p>
+							</div>
+						</div>
+
+						<hr class="my-6 border-ink-700/60" />
+
+						<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+							<Hash class="h-4 w-4 text-bone-500" />
+							{{ $t('pages.settings.numberFormats') }}
+						</div>
+
+						<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+							<div>
+								<ui-select
+									v-model="settings.number_format"
+									:items="numberFormats"
+									:label="$t('pages.settings.numberFormat')"
+									item-title="title"
+									item-value="value"
+									:hint="$t('pages.settings.numberFormatHint')"
+								/>
+								<p class="mt-1.5 text-xs text-bone-500">
+									{{ $t('pages.settings.preview') }}: <span class="tnum text-bone-300">{{ formatPreviewNumber(1234567.89) }}</span>
+								</p>
+							</div>
+						</div>
+					</ui-form>
+				</div>
+
+				<!-- Email Settings Tab -->
+				<div v-if="tab === 'email'">
+					<ui-form ref="emailForm">
+						<ui-alert type="warning" class="mb-4">
+							<strong>{{ $t('pages.settings.important') }}:</strong> {{ $t('pages.settings.emailSettingsWarning') }}
+						</ui-alert>
+
+						<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+							<Mail class="h-4 w-4 text-bone-500" />
+							{{ $t('pages.settings.smtpConfiguration') }}
+						</div>
+
+						<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+							<ui-input
+								v-model="settings.mail_host"
+								:label="$t('pages.settings.smtpHost')"
+								:icon="Server"
+								:hint="$t('pages.settings.smtpHostHint')"
+							/>
+							<ui-input
+								v-model="settings.mail_port"
+								:label="$t('pages.settings.smtpPort')"
+								:icon="Network"
+								type="number"
+								:hint="$t('pages.settings.smtpPortHint')"
+							/>
+							<ui-input
+								v-model="settings.mail_username"
+								:label="$t('pages.settings.smtpUsername')"
+								:icon="User"
+							/>
+							<div class="flex items-end gap-2">
+								<ui-input
+									v-model="settings.mail_password"
+									:label="$t('pages.settings.smtpPassword')"
+									:icon="Lock"
+									:type="showMailPassword ? 'text' : 'password'"
+									wrapper-class="flex-1"
+								/>
+								<ui-button
+									variant="ghost"
+									:icon="showMailPassword ? EyeOff : Eye"
+									@click="showMailPassword = !showMailPassword"
+								/>
+							</div>
+							<ui-select
+								v-model="settings.mail_encryption"
+								:items="mailEncryptions"
+								:label="$t('pages.settings.encryption')"
+								item-title="title"
+								item-value="value"
+							/>
+							<ui-input
+								v-model="settings.mail_from_address"
+								:label="$t('pages.settings.fromEmailAddress')"
+								:icon="Mail"
+								type="email"
+							/>
+							<ui-input
+								v-model="settings.mail_from_name"
+								:label="$t('pages.settings.fromName')"
+								:icon="User"
+							/>
+						</div>
+					</ui-form>
+				</div>
+
+				<!-- Legal Settings Tab -->
+				<div v-if="tab === 'legal'">
+					<ui-form ref="legalForm">
+						<ui-alert type="info" class="mb-4">
+							<strong>{{ $t('pages.settings.legalInformation') }}:</strong> {{ $t('pages.settings.legalInformationHint') }}
+						</ui-alert>
+
+						<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+							<Shield class="h-4 w-4 text-bone-500" />
+							{{ $t('pages.settings.privacyNotice') }}
+						</div>
+
+						<ui-textarea
+							v-model="settings.privacy_notice"
+							:label="$t('pages.settings.privacyNoticeHtml')"
+							rows="10"
+							:hint="$t('pages.settings.htmlFormattingHint')"
+						/>
+
+						<hr class="my-6 border-ink-700/60" />
+
+						<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+							<Gavel class="h-4 w-4 text-bone-500" />
+							{{ $t('pages.settings.imprint') }}
+						</div>
+
+						<ui-textarea
+							v-model="settings.imprint"
+							:label="$t('pages.settings.imprintHtml')"
+							rows="10"
+							:hint="$t('pages.settings.htmlFormattingHint')"
+						/>
+					</ui-form>
+				</div>
+
+				<!-- AI Settings Tab -->
+				<div v-if="tab === 'ai'">
+					<ui-form ref="aiForm">
+						<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+							<Bot class="h-4 w-4 text-bone-500" />
+							{{ $t('pages.settings.aiConfiguration') }}
+						</div>
+
+						<div class="space-y-4">
+							<ui-switch
+								v-model="settings.ai_worklog_enabled"
+								:label="$t('pages.settings.aiWorklogEnabled')"
+							/>
+
+							<div class="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
+								<div>
+									<ui-input
+										v-model="openaiApiKeyInput"
+										:label="$t('pages.settings.openaiApiKey')"
+										:icon="Key"
+										type="password"
+										autocomplete="new-password"
+										:placeholder="settings.openai_api_key ? settings.openai_api_key : $t('pages.settings.openaiApiKeyPlaceholder')"
+									/>
+									<p class="mt-1.5 text-xs text-bone-500">
+										<template v-if="settings.openai_api_key">
+											{{ $t('pages.settings.openaiApiKeyCurrent') }}: <span class="tnum text-bone-300">{{ settings.openai_api_key }}</span> — {{ $t('pages.settings.openaiApiKeyReplaceHint') }}
+										</template>
+										<template v-else>{{ $t('pages.settings.openaiApiKeyHint') }}</template>
+									</p>
+								</div>
+								<ui-input
+									v-model="settings.openai_model"
+									:label="$t('pages.settings.openaiModel')"
+									:icon="Brain"
+									:hint="$t('pages.settings.openaiModelHint')"
+								/>
+							</div>
+
+							<ui-textarea
+								v-model="settings.ai_worklog_prompt"
+								:label="$t('pages.settings.aiWorklogPrompt')"
+								rows="5"
+								:hint="$t('pages.settings.aiWorklogPromptHint')"
+							/>
+						</div>
+					</ui-form>
+				</div>
+
+				<!-- Sound Settings Tab -->
+				<div v-if="tab === 'sounds'">
+					<ui-form ref="soundsForm">
+						<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+							<Volume2 class="h-4 w-4 text-bone-500" />
+							{{ $t('pages.settings.soundConfiguration') }}
+						</div>
+
+						<div class="space-y-4">
+							<ui-switch
+								v-model="settings.worklog_sound_enabled"
+								:label="$t('pages.settings.worklogSoundEnabled')"
+								:hint="$t('pages.settings.worklogSoundEnabledHint')"
+							/>
+
+							<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+								<ui-select
+									v-model="settings.worklog_sound"
+									:items="worklogSoundOptions"
+									:label="$t('pages.settings.worklogSound')"
+									item-title="title"
+									item-value="value"
+									:disabled="!settings.worklog_sound_enabled"
+								/>
+								<div class="flex items-end">
+									<ui-button
+										variant="outline"
+										:icon="Play"
+										:disabled="!settings.worklog_sound_enabled"
+										@click="previewSound"
+									>
+										{{ $t('pages.settings.previewSound') }}
+									</ui-button>
+								</div>
+							</div>
+						</div>
+					</ui-form>
+				</div>
+			</div>
+
+			<!-- Actions -->
+			<div class="flex items-center justify-end gap-2 border-t border-ink-700/60 px-6 py-4">
+				<ui-button variant="ghost" :disabled="loading" @click="resetSettings">
+					{{ $t('common.reset') }}
+				</ui-button>
+				<ui-button variant="primary" :icon="Save" :loading="loading" @click="saveSettings">
+					{{ $t('pages.settings.saveAllSettings') }}
+				</ui-button>
+			</div>
+		</ui-card>
+	</div>
 </template>
 
 <script>
@@ -892,20 +580,35 @@ import { formatNumber, formatDate, formatTime } from '../utils/formatters'
 import { useLanguage } from '../composables/useLanguage'
 import { useI18n } from 'vue-i18n'
 import axios from 'axios'
+import {
+	Building2, Globe, Banknote, CalendarClock, Mail, Gavel, Bot, Volume2,
+	Phone, Hash, MapPin, Landmark, Image, ImagePlus, Languages, Percent,
+	Type, FileText, MessageSquareText, LayoutTemplate, Calendar, Server,
+	Network, User, Lock, Eye, EyeOff, Shield, Key, Brain, Play, Save
+} from 'lucide-vue-next'
 
 export default {
 	name: 'Settings',
+	components: {
+		Building2, MapPin, Landmark, Image, ImagePlus, Languages, Banknote,
+		FileText, MessageSquareText, LayoutTemplate, Calendar, Hash, Mail,
+		Shield, Gavel, Bot, Volume2
+	},
 	setup() {
 		const { setLanguage } = useLanguage()
 		const { t } = useI18n()
-		return { setLanguage, t }
+		return {
+			setLanguage, t,
+			Building2, Mail, Phone, Globe, Hash, MapPin, Percent, Type,
+			Server, Network, User, Lock, Eye, EyeOff, Key, Brain, Play, Save
+		}
 	},
 	data() {
 		return {
 			loading: false,
 			tab: 'company',
 			showMailPassword: false,
-			showOpenAiKey: false,
+			openaiApiKeyInput: '',
 			settings: {
 				// Company Information
 				company_name: '',
@@ -919,10 +622,10 @@ export default {
 				company_vat_id: '',
 				company_website: '',
 				company_bank_info: '',
-				
+
 				// Localization
 				language: 'en',
-				
+
 				// Financial & Invoice
 				currency_symbol: '$',
 				currency_code: 'USD',
@@ -939,12 +642,12 @@ export default {
 				invoice_footer_col1: 'company_info',
 				invoice_footer_col2: 'bank_info',
 				invoice_footer_col3: 'page_info',
-				
+
 				// Date & Time
 				date_format: 'DD/MM/YYYY',
 				time_format: '24h',
 				number_format: 'en-US',
-				
+
 				// Email
 				mail_host: '',
 				mail_port: '587',
@@ -953,7 +656,7 @@ export default {
 				mail_encryption: 'tls',
 				mail_from_address: '',
 				mail_from_name: '',
-				
+
 				// Legal
 				privacy_notice: '',
 				imprint: '',
@@ -969,7 +672,7 @@ export default {
 				worklog_sound: 'cash-register'
 			},
 			originalSettings: {},
-			
+
 			// Dropdown options - language only in data (static)
 			languageOptions: []
 		}
@@ -978,6 +681,18 @@ export default {
 		...mapGetters(store, ['getUser']),
 		isAdmin() {
 			return this.getUser?.role === 'admin'
+		},
+		tabItems() {
+			return [
+				{ value: 'company', label: this.t('pages.settings.company'), icon: Building2 },
+				{ value: 'localization', label: this.t('pages.settings.localization'), icon: Globe },
+				{ value: 'financial', label: this.t('pages.settings.financialInvoices'), icon: Banknote },
+				{ value: 'datetime', label: this.t('pages.settings.dateTime'), icon: CalendarClock },
+				{ value: 'email', label: this.t('pages.settings.email'), icon: Mail },
+				{ value: 'legal', label: this.t('pages.settings.legal'), icon: Gavel },
+				{ value: 'ai', label: this.t('pages.settings.ai'), icon: Bot },
+				{ value: 'sounds', label: this.t('pages.settings.sounds'), icon: Volume2 }
+			]
 		},
 		languageOptionsComputed() {
 			return [
@@ -1079,12 +794,12 @@ export default {
 	},
 	methods: {
 		...mapActions(store, ['showSnackbar', 'fetchSettings']),
-		
+
 		async fetchLocalSettings() {
 			try {
 				this.loading = true
 				const response = await axios.get('/api/settings/batch')
-				
+
 				// Merge fetched settings with defaults
 				if (response.data && typeof response.data === 'object') {
 					Object.keys(this.settings).forEach(key => {
@@ -1098,7 +813,7 @@ export default {
 						}
 					})
 				}
-				
+
 				// Store original settings for reset
 				this.originalSettings = { ...this.settings }
 			} catch (error) {
@@ -1112,30 +827,45 @@ export default {
 				this.loading = false
 			}
 		},
-		
+
 		async saveSettings() {
 			if (!this.isAdmin) return
-			
+
 			try {
 				this.loading = true
-				
+
 				// Store the language before saving
 				const newLanguage = this.settings.language
 				const oldLanguage = this.originalSettings.language
-				
-				await axios.post('/api/settings/batch', this.settings)
-				
+
+				// The API key field only ever shows a masked preview, never
+				// the real value, so only send it when the user actually
+				// typed a replacement; otherwise leave the stored key alone.
+				const payload = { ...this.settings }
+				if (this.openaiApiKeyInput) {
+					payload.openai_api_key = this.openaiApiKeyInput
+				} else {
+					delete payload.openai_api_key
+				}
+
+				const response = await axios.post('/api/settings/batch', payload)
+
+				if (response.data?.settings?.openai_api_key !== undefined) {
+					this.settings.openai_api_key = response.data.settings.openai_api_key
+				}
+				this.openaiApiKeyInput = ''
+
 				this.showSnackbar(this.t('notifications.settingsSaved'), 'success')
-				
+
 				// Update original settings
 				this.originalSettings = { ...this.settings }
-				
+
 				// Apply language change if it was updated
 				if (newLanguage !== oldLanguage) {
 					this.setLanguage(newLanguage)
 					console.log(`Language changed from ${oldLanguage} to ${newLanguage}`)
 				}
-				
+
 				// Fetch settings fresh from the backend to update the store
 				await this.fetchSettings()
 			} catch (error) {
@@ -1145,15 +875,16 @@ export default {
 				this.loading = false
 			}
 		},
-		
+
 		resetSettings() {
 			this.settings = { ...this.originalSettings }
+			this.openaiApiKeyInput = ''
 		},
-		
+
 		triggerLogoInput() {
 			this.$refs.logoInput.click()
 		},
-		
+
 		onLogoSelected(event) {
 			const file = event.target.files[0]
 			if (!file) return
@@ -1177,33 +908,33 @@ export default {
 			}
 			reader.readAsDataURL(file)
 		},
-		
+
 		removeLogo() {
 			this.settings.company_logo = ''
 			if (this.$refs.logoInput) {
 				this.$refs.logoInput.value = ''
 			}
 		},
-		
+
 		updateCurrencyCode(value) {
 			const currency = this.currencyOptions.find(c => c.value === value)
 			if (currency) {
 				this.settings.currency_code = currency.code
 			}
 		},
-		
+
 		formatPreviewNumber(value) {
 			return formatNumber(value, 2, this.settings)
 		},
-		
+
 		formatPreviewDate(date) {
 			return formatDate(date, this.settings)
 		},
-		
+
 		formatPreviewTime(date) {
 			return formatTime(date, this.settings)
 		},
-		
+
 		previewSound() {
 			const audio = new Audio(`/sounds/${this.settings.worklog_sound || 'cash-register'}.mp3`)
 			audio.play().catch(() => {
@@ -1218,68 +949,3 @@ export default {
 	}
 }
 </script>
-
-<style scoped>
-.settings-container {
-	max-width: 1400px;
-	margin: 0 auto;
-}
-
-.settings-hero {
-	position: relative;
-	overflow: hidden;
-	border-radius: 16px !important;
-}
-
-.hero-gradient {
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-	opacity: 0.95;
-}
-
-.position-relative {
-	position: relative;
-}
-
-.avatar-wrapper {
-	position: relative;
-	display: inline-block;
-	margin-top: 20px;
-}
-
-.settings-avatar {
-	border: 5px solid white;
-	background: rgba(255, 255, 255, 0.2);
-}
-
-.logo-upload-area {
-	border: 2px dashed #ccc;
-	border-radius: 8px;
-	padding: 24px;
-	text-align: center;
-	cursor: pointer;
-	transition: all 0.3s ease;
-}
-
-.logo-upload-area:hover {
-	border-color: #3b82f6;
-	background-color: rgba(59, 130, 246, 0.05);
-}
-
-.logo-preview {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-}
-
-.upload-placeholder {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-}
-</style>

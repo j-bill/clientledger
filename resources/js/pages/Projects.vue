@@ -1,166 +1,130 @@
 <template>
-  <v-container fluid>
-    <h1 class="text-h4 mb-4">{{ $t('pages.projects.title') }}</h1>
-    
-    <!-- Search & Actions -->
-    <v-row class="mb-4">
-      <v-col cols="12" sm="6">
-        <v-text-field
-          v-model="search"
-          :label="$t('common.search')"
-          prepend-inner-icon="mdi-magnify"
-          single-line
-          hide-details
-          clearable
-        ></v-text-field>
-      </v-col>
-      <v-col cols="12" sm="6" class="d-flex justify-end">
-        <v-btn color="secondary" @click="toggleFilters" class="mr-2">
-          <v-icon>mdi-filter</v-icon>
-        </v-btn>
-        <v-btn v-if="isAdmin" color="primary" data-test="btn-new-project" @click="openCreateDialog" prepend-icon="mdi-plus">
+  <div class="mx-auto max-w-[1800px] px-6 py-8 lg:px-10">
+    <!-- Heading + primary actions -->
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-2xl font-semibold tracking-tight">{{ $t('pages.projects.title') }}</h1>
+      <div class="flex flex-wrap items-center gap-2">
+        <ui-button variant="outline" :icon="Filter" @click="toggleFilters" />
+        <ui-button v-if="isAdmin" variant="primary" data-test="btn-new-project" :icon="Plus" @click="openCreateDialog">
           {{ $t('pages.projects.newProject') }}
-        </v-btn>
-      </v-col>
-    </v-row>
-    
+        </ui-button>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="mb-4 max-w-sm">
+      <ui-input v-model="search" :icon="Search" clearable :placeholder="$t('common.search')" />
+    </div>
+
     <!-- Filters -->
-    <v-card v-if="showFilters" class="mb-4">
-      <v-card-title>{{ $t('common.filters') }}</v-card-title>
-      <v-card-text>
-        <v-row>
-          <v-col cols="12" sm="6" md="4">
-            <v-autocomplete
-              v-model="filters.customers"
-              :items="customers"
-              item-title="name"
-              item-value="id"
-              :label="$t('pages.projects.customers')"
-              multiple
-              chips
-              closable-chips
-              clearable
-              prepend-icon="mdi-account"
-              :search-input.sync="customerSearch"
-              @update:search="searchCustomers"
-              @update:modelValue="applyFilters"
-            ></v-autocomplete>
-          </v-col>
-          <v-col cols="12" sm="6" md="4">
-            <v-autocomplete
-              v-model="filters.freelancers"
-              :items="freelancers"
-              item-title="name"
-              item-value="id"
-              :label="$t('pages.projects.freelancers')"
-              multiple
-              chips
-              closable-chips
-              clearable
-              prepend-icon="mdi-account"
-              :search-input.sync="freelancerSearch"
-              @update:search="searchFreelancers"
-              @update:modelValue="applyFilters"
-            ></v-autocomplete>
-          </v-col>
-          <v-col cols="12" class="text-right">
-            <v-btn class="ms-2" @click="resetFilters">
-              {{ $t('common.reset') }}
-            </v-btn>
-          </v-col>
-        </v-row>
-      </v-card-text>
-    </v-card>
-    
+    <ui-card v-if="showFilters" :title="$t('common.filters')" class="mb-4">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <ui-autocomplete
+            :model-value="null"
+            :items="availableFilterCustomers"
+            item-title="name"
+            item-value="id"
+            :label="$t('pages.projects.customers')"
+            @update:model-value="addCustomerFilter"
+          />
+          <div v-if="filters.customers.length" class="mt-2 flex flex-wrap gap-1.5">
+            <ui-chip v-for="id in filters.customers" :key="id" color="brass">
+              {{ customerName(id) }}
+              <button type="button" class="-mr-0.5 rounded-full hover:text-bone-100" @click="removeCustomerFilter(id)">
+                <X class="h-3 w-3" />
+              </button>
+            </ui-chip>
+          </div>
+        </div>
+        <div>
+          <ui-autocomplete
+            :model-value="null"
+            :items="availableFilterFreelancers"
+            item-title="name"
+            item-value="id"
+            :label="$t('pages.projects.freelancers')"
+            @update:model-value="addFreelancerFilter"
+          />
+          <div v-if="filters.freelancers.length" class="mt-2 flex flex-wrap gap-1.5">
+            <ui-chip v-for="id in filters.freelancers" :key="id" color="brass">
+              {{ freelancerName(id) }}
+              <button type="button" class="-mr-0.5 rounded-full hover:text-bone-100" @click="removeFreelancerFilter(id)">
+                <X class="h-3 w-3" />
+              </button>
+            </ui-chip>
+          </div>
+        </div>
+        <div class="flex justify-end sm:col-span-2">
+          <ui-button variant="ghost" @click="resetFilters">
+            {{ $t('common.reset') }}
+          </ui-button>
+        </div>
+      </div>
+    </ui-card>
+
     <!-- Projects Table -->
-    <v-card>
-      <v-data-table
+    <ui-card dense>
+      <ui-data-table
         :headers="headers"
-        :items="projects"
+        :items="filteredProjects"
         :loading="loading"
-        class="elevation-1"
-        :search="search"
-        :custom-filter="customSearch"
         :sort-by="sortBy"
       >
         <template v-slot:item.deadline="{ item }">
-          {{ item.deadline ? formatDate(item.deadline) : $t('pages.projects.na') }}
+          <span class="tnum">{{ item.deadline ? formatDate(item.deadline) : $t('pages.projects.na') }}</span>
         </template>
         <template v-slot:item.hourly_rate="{ item }">
-          <span v-if="isAdmin">{{ formatCurrency(item.hourly_rate || 0) }}</span>
+          <span v-if="isAdmin" class="tnum">{{ formatCurrency(item.hourly_rate || 0) }}</span>
           <span v-else>-</span>
         </template>
         <template v-slot:item.users="{ item }">
-          <v-chip-group>
-            <v-chip
+          <div class="flex flex-wrap gap-1">
+            <ui-chip
               v-for="user in item.users"
               :key="user.id"
-              size="small"
-              color="primary"
-              variant="outlined"
+              color="brass"
             >
               {{ user.name }}
-            </v-chip>
-          </v-chip-group>
+            </ui-chip>
+          </div>
         </template>
         <template v-slot:item.actions="{ item }">
-          <template v-if="isAdmin">
-            <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)">
-              <v-icon>mdi-pencil</v-icon>
-            </v-btn>
-            <v-btn icon variant="text" size="small" color="error" @click="confirmDelete(item)">
-              <v-icon>mdi-delete</v-icon>
-            </v-btn>
-          </template>
+          <div v-if="isAdmin" class="flex justify-end gap-1">
+            <ui-button variant="ghost" size="sm" :icon="Pencil" @click="openEditDialog(item)" />
+            <ui-button variant="danger-ghost" size="sm" :icon="Trash2" @click="confirmDelete(item)" />
+          </div>
         </template>
-      </v-data-table>
-    </v-card>
-    
+      </ui-data-table>
+    </ui-card>
+
     <!-- Delete Confirmation Dialog -->
-    <v-dialog v-model="deleteDialog" max-width="500px" persistent>
-      <v-card>
-        <v-card-title>{{ $t('pages.projects.deleteProject') }}</v-card-title>
-        <v-card-text>
-          {{ $t('pages.projects.deleteConfirmation') }}
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" variant="text" @click="deleteDialog = false">{{ $t('common.cancel') }}</v-btn>
-          <v-btn color="error" @click="deleteProjectRecord">{{ $t('common.delete') }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-    
+    <ui-dialog v-model="deleteDialog" :title="$t('pages.projects.deleteProject')" max-width="500px" persistent>
+      <p class="text-sm text-bone-300">{{ $t('pages.projects.deleteConfirmation') }}</p>
+      <template #actions>
+        <ui-button variant="ghost" @click="deleteDialog = false">{{ $t('common.cancel') }}</ui-button>
+        <ui-button variant="danger" @click="deleteProjectRecord">{{ $t('common.delete') }}</ui-button>
+      </template>
+    </ui-dialog>
+
     <!-- Create Project Dialog -->
-    <v-dialog v-model="createDialog" max-width="800px" persistent>
-      <v-card>
-        <v-card-title>{{ $t('pages.projects.newProject') }}</v-card-title>
-        <v-card-text>
-          <project-form ref="createForm" :customers="customers" :freelancers="freelancers" @save="saveProject"></project-form>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="error" variant="text" @click="createDialog = false">{{ $t('common.cancel') }}</v-btn>
-          <v-btn color="primary" @click="$refs.createForm.submit()">{{ $t('common.save') }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-    
+    <ui-dialog v-model="createDialog" :title="$t('pages.projects.newProject')" max-width="800px" persistent>
+      <project-form ref="createForm" :customers="customers" :freelancers="freelancers" @save="saveProject"></project-form>
+      <template #actions>
+        <ui-button variant="ghost" @click="createDialog = false">{{ $t('common.cancel') }}</ui-button>
+        <ui-button variant="primary" @click="$refs.createForm.submit()">{{ $t('common.save') }}</ui-button>
+      </template>
+    </ui-dialog>
+
     <!-- Edit Project Dialog -->
-    <v-dialog v-model="editDialog" max-width="800px" persistent>
-      <v-card>
-        <v-card-title>{{ $t('pages.projects.editProject') }}</v-card-title>
-        <v-card-text>
-          <project-form ref="editForm" :project="currentProject" :customers="customers" :freelancers="freelancers" @save="handleUpdateProject"></project-form>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="error" variant="text" @click="editDialog = false">{{ $t('common.cancel') }}</v-btn>
-          <v-btn color="primary" @click="$refs.editForm.submit()">{{ $t('pages.projects.update') }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-  </v-container>
+    <ui-dialog v-model="editDialog" :title="$t('pages.projects.editProject')" max-width="800px" persistent>
+      <project-form ref="editForm" :project="currentProject" :customers="customers" :freelancers="freelancers" @save="handleUpdateProject"></project-form>
+      <template #actions>
+        <ui-button variant="ghost" @click="editDialog = false">{{ $t('common.cancel') }}</ui-button>
+        <ui-button variant="primary" @click="$refs.editForm.submit()">{{ $t('pages.projects.update') }}</ui-button>
+      </template>
+    </ui-dialog>
+  </div>
 </template>
 
 <script>
@@ -169,15 +133,17 @@ import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
 import { formatDate, formatCurrency } from '../utils/formatters';
 import { useI18n } from 'vue-i18n';
+import { Plus, Search, Filter, Pencil, Trash2, X } from 'lucide-vue-next';
 
 export default {
   name: 'ProjectsIndex',
   components: {
-    ProjectForm
+    ProjectForm,
+    X
   },
   setup() {
     const { t } = useI18n();
-    return { t };
+    return { t, Plus, Search, Filter, Pencil, Trash2 };
   },
   data() {
     return {
@@ -195,14 +161,14 @@ export default {
       },
       customerSearch: '',
       freelancerSearch: '',
-      
+
       sortBy: [{ key: 'id', order: 'desc' }]
     };
   },
-  
+
   computed: {
     ...mapState(store, ['projects', 'customers', 'users', 'user', 'currencySymbol', 'settings']),
-    
+
     headers() {
       return [
         { title: 'ID', key: 'id' },
@@ -214,35 +180,50 @@ export default {
         { title: this.t('common.actions'), key: 'actions', sortable: false }
       ];
     },
-    
+
     isAdmin() {
       return this.user?.role === 'admin';
     },
-    
+
     freelancers() {
       // Return all users (including admins) for project assignment
       return this.users;
+    },
+
+    // Client-side search preserving the old Vuetify custom-filter behavior
+    // (matches project name, customer name, assigned users and description)
+    filteredProjects() {
+      if (!this.search) return this.projects;
+      return this.projects.filter((p) => this.customSearch(null, this.search, { raw: p }));
+    },
+
+    availableFilterCustomers() {
+      return this.customers.filter((c) => !this.filters.customers.includes(c.id));
+    },
+
+    availableFilterFreelancers() {
+      return this.freelancers.filter((f) => !this.filters.freelancers.includes(f.id));
     }
   },
-  
+
   created() {
     this.loadData();
   },
-  
+
   methods: {
     ...mapActions(store, [
       'showSnackbar',
       'fetchProjects',
-      'fetchCustomers', 
+      'fetchCustomers',
       'fetchUsers',
       'createProject',
       'updateProject',
       'deleteProject'
     ]),
-    
+
     async loadData() {
       this.loading = true;
-      
+
       try {
         await Promise.all([
           this.fetchProjects(),
@@ -255,47 +236,77 @@ export default {
         this.loading = false;
       }
     },
-    
+
     customSearch(value, query, item) {
       if (!query) return true;
-      
+
       const searchLower = query.toString().toLowerCase();
-      
+
       // Search in project name
       if (item.raw.name && item.raw.name.toLowerCase().includes(searchLower)) {
         return true;
       }
-      
+
       // Search in customer name
       if (item.raw.customer && item.raw.customer.name && item.raw.customer.name.toLowerCase().includes(searchLower)) {
         return true;
       }
-      
+
       // Search in assigned users
       if (item.raw.users && item.raw.users.length > 0) {
-        const userMatch = item.raw.users.some(user => 
+        const userMatch = item.raw.users.some(user =>
           user.name && user.name.toLowerCase().includes(searchLower)
         );
         if (userMatch) return true;
       }
-      
+
       // Search in description
       if (item.raw.description && item.raw.description.toLowerCase().includes(searchLower)) {
         return true;
       }
-      
+
       return false;
     },
-    
+
+    customerName(id) {
+      return this.customers.find((c) => c.id === id)?.name ?? id;
+    },
+
+    freelancerName(id) {
+      return this.freelancers.find((f) => f.id === id)?.name ?? id;
+    },
+
+    addCustomerFilter(id) {
+      if (id == null || this.filters.customers.includes(id)) return;
+      this.filters.customers.push(id);
+      this.applyFilters();
+    },
+
+    removeCustomerFilter(id) {
+      this.filters.customers = this.filters.customers.filter((v) => v !== id);
+      this.applyFilters();
+    },
+
+    addFreelancerFilter(id) {
+      if (id == null || this.filters.freelancers.includes(id)) return;
+      this.filters.freelancers.push(id);
+      this.applyFilters();
+    },
+
+    removeFreelancerFilter(id) {
+      this.filters.freelancers = this.filters.freelancers.filter((v) => v !== id);
+      this.applyFilters();
+    },
+
     openCreateDialog() {
       this.createDialog = true;
     },
-    
+
     openEditDialog(item) {
       this.currentProject = { ...item };
       this.editDialog = true;
     },
-    
+
     async saveProject(project) {
       try {
         await this.createProject(project);
@@ -304,7 +315,7 @@ export default {
         console.error('Error creating project:', error);
       }
     },
-    
+
     async handleUpdateProject(project) {
       try {
         await this.updateProject(project);
@@ -313,12 +324,12 @@ export default {
         console.error('Error updating project:', error);
       }
     },
-    
+
     confirmDelete(item) {
       this.itemToDelete = item;
       this.deleteDialog = true;
     },
-    
+
     async deleteProjectRecord() {
       try {
         await this.deleteProject(this.itemToDelete.id);
@@ -327,11 +338,11 @@ export default {
         console.error('Error deleting project:', error);
       }
     },
-    
+
     formatDate(dateStr) {
       return formatDate(dateStr, this.settings);
     },
-    
+
     formatCurrency(amount) {
       return formatCurrency(amount, this.settings);
     },
@@ -346,7 +357,7 @@ export default {
         this.showSnackbar('Error loading user information', 'error');
       }
     },
-    
+
     toggleFilters() {
       this.showFilters = !this.showFilters;
     },

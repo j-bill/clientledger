@@ -3,7 +3,7 @@ import {
   loginAsAdmin,
   openInvoices,
   selectFirstOption,
-  pickTodayInOpenDatePicker,
+  todayISO,
 } from './helpers';
 
 test.describe('Invoices e2e', () => {
@@ -15,16 +15,14 @@ test.describe('Invoices e2e', () => {
 
     // Create a new invoice
     await page.locator('[data-test="btn-new"]').click();
-    await expect(page.locator('.v-dialog').getByText('New Invoice')).toBeVisible();
+    await expect(page.locator('[role="dialog"]').getByText('New Invoice')).toBeVisible();
 
     await selectFirstOption(page, 'invoice-customer');
 
-    // Issue date defaults to today; the date fields are readonly picker
-    // activators, so set the due date through the picker.
-    await page.locator('[data-test="invoice-due-date"] input').click();
-    await pickTodayInOpenDatePicker(page);
+    // Native date input: data-test sits on the <input> itself, fill ISO
+    await page.locator('[data-test="invoice-due-date"]').fill(todayISO());
 
-    await page.locator('[data-test="invoice-total"] input').fill('1234');
+    await page.locator('[data-test="invoice-total"]').fill('1234');
     await page.locator('[data-test="btn-save-create"]').click();
 
     await expect(page.getByText('Invoice created successfully')).toBeVisible();
@@ -36,7 +34,7 @@ test.describe('Invoices e2e', () => {
     await selectFirstOption(page, 'gen-customer');
 
     // Work logs load into a checkbox list; pick the first one if any exist
-    const workLogList = page.locator('.v-dialog .v-list-item').first();
+    const workLogList = page.locator('[role="dialog"] li:has(input[type="checkbox"])').first();
     const noLogsAlert = page.getByText('No unbilled work logs found');
     await expect(workLogList.or(noLogsAlert)).toBeVisible();
 

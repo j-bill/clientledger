@@ -1,398 +1,293 @@
 <template>
-  <v-container fluid>
-    <h1 class="text-h4 mb-4">{{ $t('invoices.title') }}</h1>
-    
-    <!-- Search & Actions -->
-    <v-row class="mb-4">
-      <v-col cols="12" sm="6">
-        <v-text-field
-          v-model="search"
-          :label="$t('common.search')"
-          prepend-inner-icon="mdi-magnify"
-          single-line
-          hide-details
-          clearable
-        ></v-text-field>
-      </v-col>
-      <v-col cols="12" sm="6" class="d-flex justify-end">
-        <v-btn color="secondary" @click="toggleFilters" class="mr-2">
-          <v-icon>mdi-filter</v-icon>
-        </v-btn>
-        <v-btn color="secondary" data-test="btn-generate" prepend-icon="mdi-file-plus" @click="openGenerateDialog" class="mr-2">
+  <div class="mx-auto max-w-[1800px] px-6 py-8 lg:px-10">
+    <!-- Heading + primary actions -->
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-2xl font-semibold tracking-tight">{{ $t('invoices.title') }}</h1>
+      <div class="flex flex-wrap items-center gap-2">
+        <ui-button variant="ghost" :icon="Filter" @click="toggleFilters" />
+        <ui-button variant="ghost" data-test="btn-generate" :icon="FilePlus" @click="openGenerateDialog">
           {{ $t('invoices.generateFromWorkLogs') }}
-        </v-btn>
-        <v-btn color="primary" data-test="btn-new" prepend-icon="mdi-plus" @click="openCreateDialog">
+        </ui-button>
+        <ui-button variant="primary" data-test="btn-new" :icon="Plus" @click="openCreateDialog">
           {{ $t('invoices.newInvoice') }}
-        </v-btn>
-      </v-col>
-    </v-row>
-    
+        </ui-button>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="mb-4 max-w-sm">
+      <ui-input v-model="search" :icon="Search" clearable :placeholder="$t('common.search')" />
+    </div>
+
     <!-- Filters -->
-    <v-card v-if="showFilters" class="mb-4">
-      <v-card-title>{{ $t('common.filters') }}</v-card-title>
-      <v-card-text>
-        <v-row>
-          <v-col cols="12" md="4">
-            <v-select
-              v-model="selectedCustomerId"
-              :items="customers"
-              item-title="name"
-              item-value="id"
-              :label="$t('customers.customer')"
-              prepend-inner-icon="mdi-account"
-              clearable
-              @update:model-value="applyFilters"
-            ></v-select>
-          </v-col>
-          <v-col cols="12" md="4">
-            <v-select
-              v-model="selectedStatus"
-              :items="statuses"
-              :label="$t('invoices.status')"
-              prepend-inner-icon="mdi-flag"
-              clearable
-              @update:model-value="applyFilters"
-            ></v-select>
-          </v-col>
-          <v-col cols="12" class="text-right">
-            <v-btn @click="resetFilters">{{ $t('common.reset') }}</v-btn>
-          </v-col>
-        </v-row>
-      </v-card-text>
-    </v-card>
-    
-    <v-card>
-      <v-data-table
+    <ui-card v-if="showFilters" :title="$t('common.filters')" class="mb-4">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <ui-select
+          v-model="selectedCustomerId"
+          :items="customers"
+          item-title="name"
+          item-value="id"
+          :label="$t('customers.customer')"
+          clearable
+          @update:model-value="applyFilters"
+        />
+        <ui-select
+          v-model="selectedStatus"
+          :items="statuses"
+          :label="$t('invoices.status')"
+          clearable
+          @update:model-value="applyFilters"
+        />
+      </div>
+      <div class="mt-4 flex justify-end">
+        <ui-button variant="ghost" @click="resetFilters">{{ $t('common.reset') }}</ui-button>
+      </div>
+    </ui-card>
+
+    <ui-card dense>
+      <ui-data-table
         :headers="headers"
         :items="invoices"
         :loading="loading"
-        class="elevation-1"
         :search="search"
         :sort-by="sortBy"
         :row-props="getRowProps"
       >
         <template v-slot:item.invoice_number="{ item }">
-          {{ item.invoice_number || '-' }}
+          <span class="tnum">{{ item.invoice_number || '-' }}</span>
         </template>
         <template v-slot:item.issue_date="{ item }">
-          {{ formatDate(item.issue_date) }}
+          <span class="tnum">{{ formatDate(item.issue_date) }}</span>
         </template>
         <template v-slot:item.due_date="{ item }">
-          {{ formatDate(item.due_date) }}
+          <span class="tnum">{{ formatDate(item.due_date) }}</span>
         </template>
         <template v-slot:item.status="{ item }">
-          <v-chip
-            :color="getStatusColor(item.status)"
-            size="small"
-          >
-            {{ item.status }}
-          </v-chip>
+          <ui-chip :color="getStatusColor(item.status)" :text="item.status" />
         </template>
         <template v-slot:item.total_amount="{ item }">
-          {{ formatCurrency(item.total_amount) }}
+          <span class="tnum">{{ formatCurrency(item.total_amount) }}</span>
         </template>
         <template v-slot:item.actions="{ item }">
-          <v-btn icon variant="text" size="small" color="info" @click="viewPdf(item)" :disabled="!item.pdf_path" :title="item.pdf_path ? $t('invoices.viewPdf') : $t('common.notAvailable')">
-            <v-icon>mdi-file</v-icon>
-          </v-btn>
-          <v-btn icon variant="text" size="small" color="success" @click="downloadPdf(item)" :disabled="!item.pdf_path" :title="item.pdf_path ? $t('invoices.downloadPdf') : $t('common.notAvailable')">
-            <v-icon>mdi-download</v-icon>
-          </v-btn>
-          <v-btn icon variant="text" size="small" color="warning" @click="generatePdfDialog(item)" :disabled="!!item.pdf_path" :title="item.pdf_path ? $t('common.warning') : $t('invoices.generatePdf')">
-            <v-icon>mdi-file-plus</v-icon>
-          </v-btn>
-          <v-btn icon variant="text" size="small" color="secondary" @click="openUploadDialog(item)" :disabled="!!item.pdf_path" :title="item.pdf_path ? $t('common.warning') : $t('invoices.uploadPdf')">
-            <v-icon>mdi-upload</v-icon>
-          </v-btn>
-          <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)" :title="$t('common.edit')">
-            <v-icon>mdi-pencil</v-icon>
-          </v-btn>
-          <v-btn icon variant="text" size="small" color="error" @click="confirmDelete(item)" :title="$t('common.delete')">
-            <v-icon>mdi-delete</v-icon>
-          </v-btn>
+          <div class="flex justify-end gap-1">
+            <ui-button variant="ghost" size="sm" :icon="FileText" :disabled="!item.pdf_path" :title="item.pdf_path ? $t('invoices.viewPdf') : $t('common.notAvailable')" @click="viewPdf(item)" />
+            <ui-button variant="ghost" size="sm" :icon="Download" :disabled="!item.pdf_path" :title="item.pdf_path ? $t('invoices.downloadPdf') : $t('common.notAvailable')" @click="downloadPdf(item)" />
+            <ui-button variant="ghost" size="sm" :icon="FilePlus" :disabled="!!item.pdf_path" :title="item.pdf_path ? $t('common.warning') : $t('invoices.generatePdf')" @click="generatePdfDialog(item)" />
+            <ui-button variant="ghost" size="sm" :icon="Upload" :disabled="!!item.pdf_path" :title="item.pdf_path ? $t('common.warning') : $t('invoices.uploadPdf')" @click="openUploadDialog(item)" />
+            <ui-button variant="ghost" size="sm" :icon="Pencil" :title="$t('common.edit')" @click="openEditDialog(item)" />
+            <ui-button variant="danger-ghost" size="sm" :icon="Trash2" :title="$t('common.delete')" @click="confirmDelete(item)" />
+          </div>
         </template>
-      </v-data-table>
-    </v-card>
+      </ui-data-table>
+    </ui-card>
 
     <!-- Create Invoice Dialog -->
-    <v-dialog v-model="createDialog" max-width="800px" persistent>
-      <v-card>
-        <v-card-title>{{ $t('invoices.newInvoice') }}</v-card-title>
-        <v-card-text>
-          <invoice-form ref="createForm" @save="handleInvoiceSave"></invoice-form>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="error" data-test="btn-cancel-create" variant="text" @click="createDialog = false">{{ $t('common.cancel') }}</v-btn>
-          <v-btn color="primary" data-test="btn-save-create" @click="$refs.createForm.submit()">{{ $t('common.save') }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <ui-dialog v-model="createDialog" :title="$t('invoices.newInvoice')" max-width="800px" persistent>
+      <invoice-form ref="createForm" @save="handleInvoiceSave"></invoice-form>
+      <template #actions>
+        <ui-button variant="ghost" data-test="btn-cancel-create" @click="createDialog = false">{{ $t('common.cancel') }}</ui-button>
+        <ui-button variant="primary" data-test="btn-save-create" @click="$refs.createForm.submit()">{{ $t('common.save') }}</ui-button>
+      </template>
+    </ui-dialog>
 
     <!-- Generate from Work Logs Dialog -->
-    <v-dialog v-model="generateDialog" max-width="1200px" persistent>
-      <v-card>
-        <v-card-title>Generate Invoice from Work Logs</v-card-title>
-        <v-card-text>
-          <!-- Customer Selection -->
-          <v-row class="mb-4">
-            <v-col cols="12">
-              <v-autocomplete
-                v-model="generateForm.customer_id"
-                data-test="gen-customer"
-                :items="customers"
-                item-title="name"
-                item-value="id"
-                label="Customer"
-                prepend-icon="mdi-account"
-                @update:model-value="onGenerateCustomerChange"
-                :rules="[v => !!v || 'Customer is required']"
-              />
-            </v-col>
-          </v-row>
+    <ui-dialog v-model="generateDialog" title="Generate Invoice from Work Logs" max-width="1200px" persistent>
+      <!-- Customer Selection -->
+      <div class="mb-4">
+        <ui-autocomplete
+          v-model="generateForm.customer_id"
+          data-test="gen-customer"
+          :items="customers"
+          item-title="name"
+          item-value="id"
+          label="Customer"
+          :rules="[v => !!v || 'Customer is required']"
+          @update:model-value="onGenerateCustomerChange"
+        />
+      </div>
 
-          <!-- Filters Section -->
-          <v-card v-if="generateForm.customer_id" class="mb-4" variant="outlined">
-            <v-card-title class="text-h6">Filter Work Logs</v-card-title>
-            <v-card-text>
-              <v-row>
-                <v-col cols="12" md="4">
-                  <v-select
-                    v-model="workLogFilters.project_id"
-                    :items="customerProjects"
-                    item-title="name"
-                    item-value="id"
-                    label="Project"
-                    prepend-icon="mdi-folder"
-                    clearable
-                    @update:model-value="loadFilteredWorkLogs"
-                  />
-                </v-col>
-                <v-col cols="12" md="4">
-                  <v-text-field
-                    v-model="workLogFilters.start_date"
-                    type="date"
-                    label="Start Date"
-                    prepend-icon="mdi-calendar"
-                    clearable
-                    @update:model-value="loadFilteredWorkLogs"
-                  />
-                </v-col>
-                <v-col cols="12" md="4">
-                  <v-text-field
-                    v-model="workLogFilters.end_date"
-                    type="date"
-                    label="End Date"
-                    prepend-icon="mdi-calendar"
-                    clearable
-                    @update:model-value="loadFilteredWorkLogs"
-                  />
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col cols="12" class="text-right">
-                  <v-btn color="secondary" @click="resetWorkLogFilters" class="mr-2">
-                    <v-icon>mdi-filter-off</v-icon>
-                    Reset Filters
-                  </v-btn>
-                </v-col>
-              </v-row>
-            </v-card-text>
-          </v-card>
+      <!-- Filters Section -->
+      <ui-card v-if="generateForm.customer_id" title="Filter Work Logs" class="mb-4" flat>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <ui-select
+            v-model="workLogFilters.project_id"
+            :items="customerProjects"
+            item-title="name"
+            item-value="id"
+            label="Project"
+            clearable
+            @update:model-value="loadFilteredWorkLogs"
+          />
+          <ui-input
+            v-model="workLogFilters.start_date"
+            type="date"
+            label="Start Date"
+            clearable
+            @update:model-value="loadFilteredWorkLogs"
+          />
+          <ui-input
+            v-model="workLogFilters.end_date"
+            type="date"
+            label="End Date"
+            clearable
+            @update:model-value="loadFilteredWorkLogs"
+          />
+        </div>
+        <div class="mt-4 flex justify-end">
+          <ui-button variant="ghost" :icon="FilterX" @click="resetWorkLogFilters">
+            Reset Filters
+          </ui-button>
+        </div>
+      </ui-card>
 
-          <!-- Work Logs Selection -->
-          <v-card v-if="generateForm.customer_id" variant="outlined" class="mb-4">
-            <v-card-title class="d-flex justify-space-between align-center">
-              <span class="text-h6">Available Work Logs ({{ filteredWorkLogs.length }})</span>
-              <div>
-                <v-btn 
-                  color="primary" 
-                  variant="text" 
-                  size="small" 
-                  @click="selectAllWorkLogs"
-                  :disabled="filteredWorkLogs.length === 0"
-                  class="mr-2"
-                >
-                  Select All
-                </v-btn>
-                <v-btn 
-                  color="secondary" 
-                  variant="text" 
-                  size="small" 
-                  @click="clearWorkLogSelection"
-                  :disabled="generateForm.work_log_ids.length === 0"
-                >
-                  Clear Selection
-                </v-btn>
-              </div>
-            </v-card-title>
-            <v-card-text>
-              <v-alert v-if="filteredWorkLogs.length === 0" type="info" variant="tonal">
-                No unbilled work logs found for the selected criteria.
-              </v-alert>
-              <v-list v-else>
-                <v-list-item
-                  v-for="log in filteredWorkLogs"
-                  :key="log.id"
-                  @click="toggleWorkLog(log.id)"
-                  :class="{ 'bg-blue-lighten-5': generateForm.work_log_ids.includes(log.id) }"
-                >
-                  <template v-slot:prepend>
-                    <v-checkbox
-                      :model-value="generateForm.work_log_ids.includes(log.id)"
-                      @update:model-value="toggleWorkLog(log.id)"
-                      color="primary"
-                    />
-                  </template>
-                  <v-list-item-title>
-                    {{ formatDate(log.date) }} - {{ log.project?.name || 'Unknown Project' }}
-                  </v-list-item-title>
-                  <v-list-item-subtitle>
-                    {{ log.user?.name || 'Unknown User' }} • 
-                    {{ formatNumber(log.hours_worked || 0, 2) }}h • 
-                    {{ formatCurrency(log.billing_rate * (log.hours_worked || 0)) }}
-                    <br>
-                    <span class="text-caption">{{ log.description || 'No description' }}</span>
-                  </v-list-item-subtitle>
-                  <template v-slot:append>
-                    <v-chip size="small" color="primary" variant="outlined">
-                      {{ formatCurrency(log.billing_rate * (log.hours_worked || 0)) }}
-                    </v-chip>
-                  </template>
-                </v-list-item>
-              </v-list>
-            </v-card-text>
-          </v-card>
-
-          <!-- Invoice Details -->
-          <v-row v-if="generateForm.customer_id">
-            <v-col cols="12" md="6">
-              <v-text-field
-                v-model="generateForm.due_date"
-                data-test="gen-due-date"
-                type="date"
-                label="Due Date"
-                prepend-icon="mdi-calendar"
-                :rules="[v => !!v || 'Due date is required']"
-              />
-            </v-col>
-            <v-col cols="12" md="6">
-              <v-select
-                v-model="generateForm.status"
-                data-test="gen-status"
-                :items="['draft','sent','paid','overdue','cancelled']"
-                label="Status"
-                prepend-icon="mdi-flag"
-                :rules="[v => !!v || 'Status is required']"
-              />
-            </v-col>
-          </v-row>
-
-          <!-- Selected Work Logs Summary -->
-          <v-card v-if="generateForm.work_log_ids.length > 0" class="mt-4" color="primary" variant="tonal">
-            <v-card-text>
-              <div class="d-flex justify-space-between align-center mb-3">
-                <div>
-                  <strong>{{ generateForm.work_log_ids.length }}</strong> work log{{ generateForm.work_log_ids.length !== 1 ? 's' : '' }} selected
-                </div>
-                <div>
-                  <strong>Subtotal: {{ currencySymbol }}{{ calculateSelectedTotal() }}</strong>
-                </div>
-              </div>
-              <v-divider class="my-2"></v-divider>
-              <div class="text-caption text-grey">
-                Tax Rate ({{ settings.tax_rate }}%): {{ currencySymbol }}{{ (calculateSelectedTotal() * (settings.tax_rate / 100)).toFixed(2) }}
-              </div>
-              <div class="text-h6 mt-2">
-                Total: {{ currencySymbol }}{{ (calculateSelectedTotal() * (1 + (settings.tax_rate / 100))).toFixed(2) }}
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="error" data-test="btn-cancel-generate" variant="text" @click="generateDialog = false">Cancel</v-btn>
-          <v-btn 
-            color="primary" 
-            data-test="btn-generate-confirm" 
-            :disabled="!generateForm.customer_id || generateForm.work_log_ids.length === 0 || !generateForm.due_date || !generateForm.status" 
-            @click="generateInvoice"
+      <!-- Work Logs Selection -->
+      <ui-card v-if="generateForm.customer_id" class="mb-4" flat>
+        <template #title>Available Work Logs ({{ filteredWorkLogs.length }})</template>
+        <template #actions>
+          <ui-button
+            variant="brass-ghost"
+            size="sm"
+            :disabled="filteredWorkLogs.length === 0"
+            @click="selectAllWorkLogs"
           >
-            Generate Invoice ({{ currencySymbol }}{{ (calculateSelectedTotal() * (1 + (settings.tax_rate / 100))).toFixed(2) }})
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+            Select All
+          </ui-button>
+          <ui-button
+            variant="ghost"
+            size="sm"
+            :disabled="generateForm.work_log_ids.length === 0"
+            @click="clearWorkLogSelection"
+          >
+            Clear Selection
+          </ui-button>
+        </template>
+        <ui-alert v-if="filteredWorkLogs.length === 0" type="info">
+          No unbilled work logs found for the selected criteria.
+        </ui-alert>
+        <ul v-else class="divide-y divide-ink-700/60">
+          <li
+            v-for="log in filteredWorkLogs"
+            :key="log.id"
+            class="flex cursor-pointer items-start gap-3 px-2 py-3 hover:bg-ink-850"
+            :class="{ 'bg-slate-900/40': generateForm.work_log_ids.includes(log.id) }"
+            @click="toggleWorkLog(log.id)"
+          >
+            <div class="pt-0.5" @click.stop>
+              <ui-checkbox
+                :model-value="generateForm.work_log_ids.includes(log.id)"
+                @update:model-value="toggleWorkLog(log.id)"
+              />
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm text-bone-100">
+                <span class="tnum">{{ formatDate(log.date) }}</span> - {{ log.project?.name || 'Unknown Project' }}
+              </div>
+              <div class="mt-0.5 text-xs text-bone-500">
+                {{ log.user?.name || 'Unknown User' }} &bull;
+                <span class="tnum">{{ formatNumber(log.hours_worked || 0, 2) }}h</span> &bull;
+                <span class="tnum">{{ formatCurrency(log.billing_rate * (log.hours_worked || 0)) }}</span>
+                <br>
+                <span>{{ log.description || 'No description' }}</span>
+              </div>
+            </div>
+            <ui-chip color="brass" :text="formatCurrency(log.billing_rate * (log.hours_worked || 0))" />
+          </li>
+        </ul>
+      </ui-card>
+
+      <!-- Invoice Details -->
+      <div v-if="generateForm.customer_id" class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <ui-input
+          v-model="generateForm.due_date"
+          data-test="gen-due-date"
+          type="date"
+          label="Due Date"
+          :rules="[v => !!v || 'Due date is required']"
+        />
+        <ui-select
+          v-model="generateForm.status"
+          data-test="gen-status"
+          :items="['draft','sent','paid','overdue','cancelled']"
+          label="Status"
+          :rules="[v => !!v || 'Status is required']"
+        />
+      </div>
+
+      <!-- Selected Work Logs Summary -->
+      <div v-if="generateForm.work_log_ids.length > 0" class="mt-4 rounded-lg border border-brass-500/40 bg-brass-900/30 p-4">
+        <div class="mb-3 flex items-center justify-between text-sm text-bone-100">
+          <div>
+            <strong class="tnum">{{ generateForm.work_log_ids.length }}</strong> work log{{ generateForm.work_log_ids.length !== 1 ? 's' : '' }} selected
+          </div>
+          <div>
+            <strong>Subtotal: <span class="tnum">{{ currencySymbol }}{{ calculateSelectedTotal() }}</span></strong>
+          </div>
+        </div>
+        <hr class="my-2 border-ink-700/60" />
+        <div class="text-xs text-bone-500">
+          Tax Rate ({{ settings.tax_rate }}%): <span class="tnum">{{ currencySymbol }}{{ (calculateSelectedTotal() * (settings.tax_rate / 100)).toFixed(2) }}</span>
+        </div>
+        <div class="mt-2 text-lg font-semibold text-bone-100">
+          Total: <span class="tnum">{{ currencySymbol }}{{ (calculateSelectedTotal() * (1 + (settings.tax_rate / 100))).toFixed(2) }}</span>
+        </div>
+      </div>
+
+      <template #actions>
+        <ui-button variant="ghost" data-test="btn-cancel-generate" @click="generateDialog = false">Cancel</ui-button>
+        <ui-button
+          variant="primary"
+          data-test="btn-generate-confirm"
+          :disabled="!generateForm.customer_id || generateForm.work_log_ids.length === 0 || !generateForm.due_date || !generateForm.status"
+          @click="generateInvoice"
+        >
+          Generate Invoice (<span class="tnum">{{ currencySymbol }}{{ (calculateSelectedTotal() * (1 + (settings.tax_rate / 100))).toFixed(2) }}</span>)
+        </ui-button>
+      </template>
+    </ui-dialog>
 
     <!-- Edit Invoice Dialog -->
-    <v-dialog v-model="editDialog" max-width="800px" persistent>
-      <v-card>
-        <v-card-title>Edit Invoice</v-card-title>
-        <v-card-text>
-          <invoice-form ref="editForm" :invoice="currentInvoice" @save="handleInvoiceSave"></invoice-form>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="error" variant="text" @click="editDialog = false">Cancel</v-btn>
-          <v-btn color="primary" @click="$refs.editForm.submit()">Save</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <ui-dialog v-model="editDialog" title="Edit Invoice" max-width="800px" persistent>
+      <invoice-form ref="editForm" :invoice="currentInvoice" @save="handleInvoiceSave"></invoice-form>
+      <template #actions>
+        <ui-button variant="ghost" @click="editDialog = false">Cancel</ui-button>
+        <ui-button variant="primary" @click="$refs.editForm.submit()">Save</ui-button>
+      </template>
+    </ui-dialog>
 
     <!-- Upload PDF Dialog -->
-    <v-dialog v-model="uploadDialog" max-width="600px" persistent>
-      <v-card>
-        <v-card-title>Upload Invoice PDF</v-card-title>
-        <v-card-text>
-          <v-alert type="info" variant="tonal" class="mb-4">
-            Upload an existing invoice PDF. This is useful when migrating from another system.
-            Once uploaded, the PDF cannot be changed or regenerated.
-          </v-alert>
-          <v-file-input
-            v-model="pdfFile"
-            label="Select PDF file"
-            accept="application/pdf"
-            prepend-icon="mdi-file-pdf-box"
-            show-size
-            :rules="[v => !!v || 'PDF file is required', v => !v || v.type === 'application/pdf' || 'File must be a PDF']"
-          ></v-file-input>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="error" variant="text" @click="uploadDialog = false">Cancel</v-btn>
-          <v-btn color="primary" @click="uploadPdf" :loading="uploading" :disabled="!pdfFile">Upload</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <ui-dialog v-model="uploadDialog" title="Upload Invoice PDF" max-width="600px" persistent>
+      <ui-alert type="info" class="mb-4">
+        Upload an existing invoice PDF. This is useful when migrating from another system.
+        Once uploaded, the PDF cannot be changed or regenerated.
+      </ui-alert>
+      <ui-file-input
+        v-model="pdfFile"
+        label="Select PDF file"
+        accept="application/pdf"
+        :rules="[v => !!v || 'PDF file is required', v => !v || v.type === 'application/pdf' || 'File must be a PDF']"
+      />
+      <template #actions>
+        <ui-button variant="ghost" @click="uploadDialog = false">Cancel</ui-button>
+        <ui-button variant="primary" :loading="uploading" :disabled="!pdfFile" @click="uploadPdf">Upload</ui-button>
+      </template>
+    </ui-dialog>
 
-    <v-dialog v-model="generatePdfConfirmDialog" max-width="500px" persistent>
-      <v-card>
-        <v-card-title>{{ $t('invoices.generatePdf') }}</v-card-title>
-        <v-card-text>
-          {{ $t('invoices.generatePdfConfirm') }}
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" variant="text" @click="generatePdfConfirmDialog = false">{{ $t('common.cancel') }}</v-btn>
-          <v-btn color="warning" @click="generatePdfNow" :loading="generatingPdf">{{ $t('invoices.generatePdf') }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <ui-dialog v-model="generatePdfConfirmDialog" :title="$t('invoices.generatePdf')" max-width="500px" persistent>
+      <p class="text-sm text-bone-300">{{ $t('invoices.generatePdfConfirm') }}</p>
+      <template #actions>
+        <ui-button variant="ghost" @click="generatePdfConfirmDialog = false">{{ $t('common.cancel') }}</ui-button>
+        <ui-button variant="primary" :loading="generatingPdf" @click="generatePdfNow">{{ $t('invoices.generatePdf') }}</ui-button>
+      </template>
+    </ui-dialog>
 
-    <v-dialog v-model="deleteDialog" max-width="500px" persistent>
-      <v-card>
-        <v-card-title>Delete Invoice</v-card-title>
-        <v-card-text>
-          Are you sure you want to delete this invoice? This action cannot be undone.
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" variant="text" @click="deleteDialog = false">Cancel</v-btn>
-          <v-btn color="error" @click="deleteInvoice">Delete</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-  </v-container>
+    <ui-dialog v-model="deleteDialog" title="Delete Invoice" max-width="500px" persistent>
+      <p class="text-sm text-bone-300">Are you sure you want to delete this invoice? This action cannot be undone.</p>
+      <template #actions>
+        <ui-button variant="ghost" @click="deleteDialog = false">Cancel</ui-button>
+        <ui-button variant="danger" @click="deleteInvoice">Delete</ui-button>
+      </template>
+    </ui-dialog>
+  </div>
 </template>
 
 <script>
@@ -401,10 +296,14 @@ import { store } from '../store';
 import axios from 'axios';
 import InvoiceForm from '../components/forms/InvoiceForm.vue';
 import { formatDate, formatNumber, formatCurrency } from '../utils/formatters';
+import { Plus, Search, Filter, FilterX, FilePlus, FileText, Download, Upload, Pencil, Trash2 } from 'lucide-vue-next';
 
 export default {
   name: 'InvoicesIndex',
   components: { InvoiceForm },
+  setup() {
+    return { Plus, Search, Filter, FilterX, FilePlus, FileText, Download, Upload, Pencil, Trash2 };
+  },
   data() {
     return {
       invoices: [],
@@ -443,10 +342,10 @@ export default {
       sortBy: [{ key: 'id', order: 'desc' }]
     };
   },
-  
+
   computed: {
     ...mapState(store, ['currencySymbol', 'settings']),
-    
+
     headers() {
       return [
         { title: 'ID', key: 'id' },
@@ -459,16 +358,16 @@ export default {
         { title: this.$t('common.actions'), key: 'actions', sortable: false }
       ];
     },
-    
+
     statuses() {
       return ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled'];
     }
   },
-  
+
   created() {
     this.fetchInvoices();
   },
-  
+
   methods: {
     ...mapActions(store, ['showSnackbar']),
     formatDate,
@@ -479,7 +378,7 @@ export default {
         // Sort by ID descending (newest first)
         this.allInvoices = data.sort((a, b) => b.id - a.id);
         this.applyFilters();
-        
+
         // Fetch customers for filter dropdown
         if (this.customers.length === 0) {
           const customersResponse = await axios.get('/api/customers');
@@ -492,43 +391,43 @@ export default {
         this.loading = false;
       }
     },
-    
+
     toggleFilters() {
       this.showFilters = !this.showFilters;
     },
-    
+
     resetFilters() {
       this.selectedCustomerId = null;
       this.selectedStatus = null;
       this.applyFilters();
     },
-    
+
     applyFilters() {
       let filtered = [...this.allInvoices];
-      
+
       // Filter by customer
       if (this.selectedCustomerId) {
         filtered = filtered.filter(invoice => invoice.customer_id === this.selectedCustomerId);
       }
-      
+
       // Filter by status
       if (this.selectedStatus) {
-        filtered = filtered.filter(invoice => 
+        filtered = filtered.filter(invoice =>
           invoice.status.toLowerCase() === this.selectedStatus.toLowerCase()
         );
       }
-      
+
       // Sort by ID descending (newest first)
       filtered.sort((a, b) => b.id - a.id);
-      
+
       this.invoices = filtered;
     },
-    
+
     confirmDelete(item) {
       this.itemToDelete = item;
       this.deleteDialog = true;
     },
-    
+
     async deleteInvoice() {
       try {
         await axios.delete(`/api/invoices/${this.itemToDelete.id}`);
@@ -541,28 +440,28 @@ export default {
         this.showSnackbar(message, 'error');
       }
     },
-    
+
     formatDate(dateStr) {
       return formatDate(dateStr, this.settings);
     },
-    
+
     formatCurrency(amount) {
       return formatCurrency(amount, this.settings);
     },
-    
+
     formatNumber(value, decimals = 2) {
       return formatNumber(value, decimals, this.settings);
     },
-    
+
     getStatusColor(status) {
       const colors = {
         'paid': 'success',
         'sent': 'info',
-        'draft': 'grey',
+        'draft': 'neutral',
         'overdue': 'error',
         'cancelled': 'warning'
       };
-      return colors[status.toLowerCase()] || 'grey';
+      return colors[status.toLowerCase()] || 'neutral';
     },
     openCreateDialog() {
       // Clear any stale selection from a previous edit/upload, otherwise
@@ -632,9 +531,9 @@ export default {
       this.filteredWorkLogs = [];
       this.customerProjects = [];
       this.resetWorkLogFilters();
-      
+
       this.generateDialog = true;
-      
+
       try {
         const { data } = await axios.get('/api/customers');
         this.customers = data;
@@ -649,53 +548,53 @@ export default {
       this.customerProjects = [];
       this.generateForm.work_log_ids = [];
       this.resetWorkLogFilters();
-      
+
       if (!this.generateForm.customer_id) return;
-      
+
       try {
         // Load customer projects
         const projectsResponse = await axios.get('/api/invoices/customer-projects', {
           params: { customer_id: this.generateForm.customer_id }
         });
         this.customerProjects = projectsResponse.data || [];
-        
+
         // Load work logs
         await this.loadFilteredWorkLogs();
       } catch (e) {
         this.showSnackbar('Failed to load customer data', 'error');
       }
     },
-    
+
     async loadFilteredWorkLogs() {
       if (!this.generateForm.customer_id) return;
-      
+
       try {
         const params = {
           customer_id: this.generateForm.customer_id,
           ...this.workLogFilters
         };
-        
+
         // Remove null/empty values
         Object.keys(params).forEach(key => {
           if (params[key] === null || params[key] === '') {
             delete params[key];
           }
         });
-        
+
         const { data } = await axios.get('/api/invoices/unbilled-worklogs', { params });
         this.filteredWorkLogs = data || [];
         this.unbilledLogs = this.filteredWorkLogs;
-        
+
         // Remove any selected work logs that are no longer in the filtered results
         const filteredIds = this.filteredWorkLogs.map(log => log.id);
-        this.generateForm.work_log_ids = this.generateForm.work_log_ids.filter(id => 
+        this.generateForm.work_log_ids = this.generateForm.work_log_ids.filter(id =>
           filteredIds.includes(id)
         );
       } catch (e) {
         this.showSnackbar('Failed to load work logs', 'error');
       }
     },
-    
+
     resetWorkLogFilters() {
       this.workLogFilters = {
         project_id: null,
@@ -704,7 +603,7 @@ export default {
       };
       this.loadFilteredWorkLogs();
     },
-    
+
     toggleWorkLog(logId) {
       const index = this.generateForm.work_log_ids.indexOf(logId);
       if (index > -1) {
@@ -713,17 +612,17 @@ export default {
         this.generateForm.work_log_ids.push(logId);
       }
     },
-    
+
     selectAllWorkLogs() {
       this.generateForm.work_log_ids = this.filteredWorkLogs.map(log => log.id);
     },
-    
+
     clearWorkLogSelection() {
       this.generateForm.work_log_ids = [];
     },
-    
+
     calculateSelectedTotal() {
-      const selectedLogs = this.filteredWorkLogs.filter(log => 
+      const selectedLogs = this.filteredWorkLogs.filter(log =>
         this.generateForm.work_log_ids.includes(log.id)
       );
       const total = selectedLogs.reduce((sum, log) => {
@@ -744,7 +643,7 @@ export default {
         this.showSnackbar(message, 'error');
       }
     },
-    
+
     async viewPdf(invoice) {
       try {
         window.open(`/api/invoices/${invoice.id}/pdf`, '_blank');
@@ -752,7 +651,7 @@ export default {
         this.showSnackbar('Failed to view PDF', 'error');
       }
     },
-    
+
     async downloadPdf(invoice) {
       try {
         const link = document.createElement('a');
@@ -776,13 +675,13 @@ export default {
       this.generatingPdf = true;
       try {
         const { data } = await axios.post(`/api/invoices/${this.currentInvoice.id}/generate-pdf`);
-        
+
         // Update the invoice in the list with the new pdf_path
         const idx = this.allInvoices.findIndex(i => i.id === this.currentInvoice.id);
         if (idx !== -1) {
           this.allInvoices[idx].pdf_path = data.pdf_path;
         }
-        
+
         this.applyFilters();
         this.generatePdfConfirmDialog = false;
         this.showSnackbar(this.$t('invoices.generatePdfSuccess'), 'success');
@@ -793,28 +692,28 @@ export default {
         this.generatingPdf = false;
       }
     },
-    
+
     isOverdue(invoice) {
       if (!invoice.due_date || invoice.status.toLowerCase() === 'paid') {
         return false;
       }
-      
+
       const status = invoice.status.toLowerCase();
       if (status !== 'sent') {
         return false;
       }
-      
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const dueDate = new Date(invoice.due_date);
       dueDate.setHours(0, 0, 0, 0);
-      
+
       return dueDate < today;
     },
-    
+
     getRowProps({ item }) {
       return {
-        style: this.isOverdue(item) ? 'background-color: rgba(255, 0, 0, 0.1);' : ''
+        class: this.isOverdue(item) ? 'bg-clay-900/40' : ''
       };
     }
   }

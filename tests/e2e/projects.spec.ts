@@ -16,7 +16,7 @@ test.describe('Projects e2e', () => {
   test('create a project via dialog and see it in the table', async ({ page }) => {
     await page.locator('[data-test="btn-new-project"]').click();
 
-    const dialog = page.locator('.v-dialog');
+    const dialog = page.locator('[role="dialog"]');
     await expect(dialog).toBeVisible();
 
     const uniqueName = `E2E Project ${Date.now()}`;

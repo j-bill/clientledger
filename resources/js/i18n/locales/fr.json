@@ -36,7 +36,9 @@
     "due": "Dû",
     "back": "Retour",
     "important": "Important",
-    "created": "Créé"
+    "created": "Créé",
+    "noData": "Aucun enregistrement",
+    "rowsPerPage": "Lignes"
   },
   "invoices": {
     "title": "Factures",
@@ -390,7 +392,7 @@
       "thisMonthRevenue": "Revenu Ce Mois",
       "thisMonthEarnings": "Revenus Ce Mois",
       "extrapolatedEstimate": "Estimation extrapolée",
-      "thisYear": "12 Derniers Mois",
+      "thisYear": "Cette Année",
       "thisMonth": "Ce Mois",
       "estimated": "Estimé",
       "hours": "Heures",
@@ -418,7 +420,8 @@
         "nonBillable": "Non Facturable",
         "actual": "Réel",
         "projection": "Projection"
-      }
+      },
+      "lastTwelveMonths": "12 Derniers Mois"
     },
     "profile": {
       "yourName": "Votre Nom",
@@ -528,7 +531,13 @@
       "regenerateCodesConfirmation": "Êtes-vous sûr de vouloir régénérer vos codes de récupération?",
       "regenerateCodesDescription": "Cela rendra invalides tous vos codes de récupération existants et générera un nouvel ensemble. Assurez-vous de sauvegarder les nouveaux codes dans un endroit sûr.",
       "regenerateCodes": "Régénérer les Codes",
-      "activeProjects": "Projets Actifs"
+      "activeProjects": "Projets Actifs",
+      "applicationName": "Application",
+      "applicationNameValue": "Clientledger — suivi du temps et facturation pour freelances",
+      "securityTitle": "Sécurité",
+      "securityDescription": "Votre compte est protégé par l’authentification à deux facteurs et les appareils de confiance.",
+      "accessTitle": "Accès aux données",
+      "accessDescription": "Vos données ne sont accessibles qu’à vous et aux administrateurs de cette installation."
     },
     "settings": {
       "systemSettings": "Paramètres Système",
@@ -710,7 +719,11 @@
       "worklogSoundEnabledHint": "Un son court est joué lorsque vous arrêtez le suivi du temps",
       "worklogSound": "Son",
       "previewSound": "Écouter",
-      "soundPlaybackFailed": "Impossible de lire le son"
+      "soundPlaybackFailed": "Impossible de lire le son",
+      "openaiApiKeyPlaceholder": "Saisissez votre clé API OpenAI",
+      "openaiApiKeyCurrent": "Clé actuelle",
+      "openaiApiKeyReplaceHint": "saisissez une nouvelle clé ci-dessus pour la remplacer",
+      "openaiApiKeyHint": "Stockée de façon chiffrée. Plus jamais affichée après l’enregistrement."
     },
     "errorPages": {
       "accessDenied": "Accès refusé",
@@ -775,4 +788,3 @@
     }
   }
 }
-

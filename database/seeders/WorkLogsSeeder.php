@@ -52,85 +52,114 @@ class WorkLogsSeeder extends Seeder
     public function run(): void
     {
         $faker = \Faker\Factory::create();
-
-        // Create work logs for the past 12 months with progressive increase
         $now = Carbon::now();
-        $startDate = $now->copy()->subMonths(12)->startOfMonth();
-        $currentDate = $startDate->copy();
 
         $projects = Project::with('users')->get();
-        $monthCounter = 0;
         $taskCategories = array_keys($this->taskDescriptions);
 
-        while ($currentDate <= $now) {
-            // EXTREME GROWTH MODEL - Much more pronounced and aggressive
-            // Month 1: 6/week, Month 2: 10/week, Month 3: 16/week, Month 4+: 25-40/week
-            if ($monthCounter === 0) {
-                $workLogsPerWeek = 6;
-            } elseif ($monthCounter === 1) {
-                $workLogsPerWeek = 10;
-            } elseif ($monthCounter === 2) {
-                $workLogsPerWeek = 16;
-            } elseif ($monthCounter === 3) {
-                $workLogsPerWeek = 22;
-            } else {
-                // Exponential growth: 25 at month 4, 35 at month 5, etc.
-                $workLogsPerWeek = intval(20 * pow(1.25, $monthCounter - 3));
-                $workLogsPerWeek = min($workLogsPerWeek, 60); // Cap at 60 per week
-            }
-            
-            $weekStart = $currentDate->copy()->startOfWeek();
-            $weekEnd = $currentDate->copy()->endOfWeek();
-            
-            for ($i = 0; $i < $workLogsPerWeek; $i++) {
-                $date = $weekStart->copy()->addDays(rand(0, 6));
-                
-                // Hours also increase over time - more ambitious hours in later months
-                if ($monthCounter < 3) {
-                    $hours = rand(3, 10);
-                } elseif ($monthCounter < 6) {
-                    $hours = rand(5, 12);
-                } else {
-                    $hours = rand(6, 14); // Maximum engagement in later months
-                }
-                
+        // 13 real calendar-month buckets: the 12 completed months InvoicesSeeder
+        // will bill, plus the current (partial) month. Oldest first.
+        $monthOffsets = range(12, 0);
+
+        // Compounding target for total *billable dollar volume* per month, so
+        // the revenue trend chart climbs steadily rather than zig-zagging.
+        $baseMonthlyRevenue = 5000;
+        $growthRate = 1.15;
+
+        $previousMonthActual = 0;
+
+        foreach ($monthOffsets as $index => $monthsAgo) {
+            $monthStart = $now->copy()->subMonths($monthsAgo)->startOfMonth();
+            $isCurrentMonth = $monthStart->isSameMonth($now);
+            $monthEnd = $isCurrentMonth ? $now->copy() : $monthStart->copy()->endOfMonth();
+
+            $target = $baseMonthlyRevenue * pow($growthRate, $index);
+            // Hard floor: never budget less than a real step up from last month.
+            $target = max($target, $previousMonthActual * 1.08);
+
+            $logsThisMonth = (int) round(20 + $index * 5); // busier every month
+            $billableFraction = 0.9;
+
+            $createdLogs = [];
+            $daySpan = max($monthStart->diffInDays($monthEnd), 1);
+
+            for ($n = 0; $n < $logsThisMonth; $n++) {
                 $project = $projects->random();
-                
-                // Get a random freelancer assigned to this project
                 $freelancer = $project->users()->inRandomOrder()->first();
-                
-                if ($freelancer) {
-                    // 90% chance of being billable
-                    $isBillable = rand(1, 100) <= 90;
-                    
-                    // Vary start times for realism
-                    $startHour = rand(8, 11);
-                    $endHour = $startHour + $hours;
-                    
-                    // Get a detailed description from the task pool
-                    $category = $taskCategories[array_rand($taskCategories)];
-                    $descriptions = $this->taskDescriptions[$category];
-                    $description = $descriptions[array_rand($descriptions)];
-                    
-                    WorkLog::create([
-                        'project_id' => $project->id,
-                        'user_id' => $freelancer->id,
-                        'date' => $date,
-                        'start_time' => sprintf('%02d:00', $startHour),
-                        'end_time' => sprintf('%02d:00', $endHour),
-                        'hours_worked' => $hours,
-                        'description' => $description,
-                        'billable' => $isBillable,
-                        'hourly_rate' => $project->hourly_rate,
-                        'user_hourly_rate' => $freelancer->pivot->hourly_rate
-                    ]);
+                if (! $freelancer) {
+                    continue;
                 }
+
+                $dayOffset = $logsThisMonth > 1
+                    ? intval(($n / ($logsThisMonth - 1)) * $daySpan)
+                    : 0;
+                $date = $monthStart->copy()->addDays($dayOffset);
+
+                $isBillable = $faker->boolean($billableFraction * 100);
+
+                // Hours derived from this log's share of the month's dollar
+                // target, so the aggregate lands near target regardless of
+                // which (differently-rated) project got picked.
+                $perLogTarget = $target / ($logsThisMonth * $billableFraction);
+                $hours = ($perLogTarget / max($project->hourly_rate, 1)) * $faker->randomFloat(2, 0.85, 1.15);
+                $hours = max(1, min(round($hours * 2) / 2, 10));
+
+                $startHour = rand(8, 11);
+
+                $category = $taskCategories[array_rand($taskCategories)];
+                $descriptions = $this->taskDescriptions[$category];
+                $description = $descriptions[array_rand($descriptions)];
+
+                $createdLogs[] = WorkLog::create([
+                    'project_id' => $project->id,
+                    'user_id' => $freelancer->id,
+                    'date' => $date,
+                    'start_time' => sprintf('%02d:00', $startHour),
+                    'end_time' => sprintf('%02d:00', $startHour + $hours),
+                    'hours_worked' => $hours,
+                    'description' => $description,
+                    'billable' => $isBillable,
+                    'hourly_rate' => $project->hourly_rate,
+                    'user_hourly_rate' => $freelancer->pivot->hourly_rate,
+                ]);
             }
-            
-            $currentDate->addWeek();
-            if ($currentDate->dayOfWeek === 0) { // When we cross into a new month
-                $monthCounter++;
+
+            // Guarantee this month's billable dollar total is safely above
+            // last month's, topping up with extra logs if variance fell short.
+            // Looped (not a single log) because a large shortfall can exceed
+            // what one hours-capped log can cover.
+            $actual = collect($createdLogs)
+                ->filter(fn ($log) => $log->billable)
+                ->sum(fn ($log) => $log->hours_worked * $log->hourly_rate);
+
+            $minRequired = $previousMonthActual * 1.05;
+            $topUpProject = $projects->sortByDesc('hourly_rate')
+                ->first(fn ($p) => $p->users()->exists());
+
+            $safety = 0;
+            while ($previousMonthActual > 0 && $actual < $minRequired && $topUpProject && $safety < 50) {
+                $freelancer = $topUpProject->users()->inRandomOrder()->first();
+                $hours = min(12, max(1, ceil(($minRequired - $actual) / $topUpProject->hourly_rate)));
+                $startHour = rand(8, 11);
+
+                WorkLog::create([
+                    'project_id' => $topUpProject->id,
+                    'user_id' => $freelancer->id,
+                    'date' => $monthEnd->copy(),
+                    'start_time' => sprintf('%02d:00', $startHour),
+                    'end_time' => sprintf('%02d:00', $startHour + $hours),
+                    'hours_worked' => $hours,
+                    'description' => $this->taskDescriptions[$taskCategories[array_rand($taskCategories)]][0],
+                    'billable' => true,
+                    'hourly_rate' => $topUpProject->hourly_rate,
+                    'user_hourly_rate' => $freelancer->pivot->hourly_rate,
+                ]);
+
+                $actual += $hours * $topUpProject->hourly_rate;
+                $safety++;
             }
+
+            $previousMonthActual = $actual;
         }
     }
 }

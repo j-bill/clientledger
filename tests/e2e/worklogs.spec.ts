@@ -16,13 +16,11 @@ test.describe('Work logs e2e', () => {
   test('new work log dialog opens with expected fields and can be cancelled', async ({ page }) => {
     await page.locator('[data-test="btn-new-worklog"]').click();
 
-    const dialog = page.locator('.v-dialog');
+    const dialog = page.locator('[role="dialog"]');
     await expect(dialog).toBeVisible();
 
-    // Prefilled fields (like Date) float their label and hide the inline
-    // variant, so assert the labels exist rather than are visible.
     for (const label of ['Customer', 'Project', 'Date', 'Description']) {
-      await expect(dialog.locator('.v-label', { hasText: label }).first()).toBeAttached();
+      await expect(dialog.locator('label', { hasText: label }).first()).toBeAttached();
     }
 
     await dialog.getByRole('button', { name: 'Cancel' }).click();

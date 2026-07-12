@@ -36,7 +36,9 @@
     "back": "Back",
     "important": "Important",
     "due": "Due",
-    "created": "Created"
+    "created": "Created",
+    "noData": "No records",
+    "rowsPerPage": "Rows"
   },
   "invoices": {
     "title": "Invoices",
@@ -391,7 +393,7 @@
       "thisMonthRevenue": "This Month Revenue",
       "thisMonthEarnings": "This Month Earnings",
       "extrapolatedEstimate": "Extrapolated estimate",
-      "thisYear": "Last 12 Months",
+      "thisYear": "This Year",
       "thisMonth": "This Month",
       "estimated": "Estimated",
       "hours": "Hours",
@@ -419,7 +421,8 @@
         "nonBillable": "Non-Billable",
         "actual": "Actual",
         "projection": "Projection"
-      }
+      },
+      "lastTwelveMonths": "Last 12 Months"
     },
     "profile": {
       "yourName": "Your Name",
@@ -529,7 +532,13 @@
       "regenerateCodesConfirmation": "Are you sure you want to regenerate your recovery codes?",
       "regenerateCodesDescription": "This will invalidate all your existing recovery codes and generate a new set. Make sure to save the new codes in a secure location.",
       "regenerateCodes": "Regenerate Codes",
-      "activeProjects": "Active Projects"
+      "activeProjects": "Active Projects",
+      "applicationName": "Application",
+      "applicationNameValue": "Clientledger — freelance time tracking and invoicing",
+      "securityTitle": "Security",
+      "securityDescription": "Your account is protected with two-factor authentication and trusted devices.",
+      "accessTitle": "Data access",
+      "accessDescription": "Your data is only accessible to you and administrators of this installation."
     },
     "settings": {
       "systemSettings": "System Settings",
@@ -711,7 +720,11 @@
       "worklogSoundEnabledHint": "A short sound plays when you stop time tracking",
       "worklogSound": "Sound",
       "previewSound": "Preview",
-      "soundPlaybackFailed": "Could not play sound"
+      "soundPlaybackFailed": "Could not play sound",
+      "openaiApiKeyPlaceholder": "Enter your OpenAI API key",
+      "openaiApiKeyCurrent": "Current key",
+      "openaiApiKeyReplaceHint": "enter a new key above to replace it",
+      "openaiApiKeyHint": "Stored encrypted. Never displayed again after saving."
     },
     "errorPages": {
       "accessDenied": "Access Denied",
@@ -794,4 +807,3 @@
     "endDate": "End Date"
   }
 }
-

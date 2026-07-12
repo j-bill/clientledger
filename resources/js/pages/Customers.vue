@@ -1,93 +1,64 @@
 <template>
-  <v-container fluid>
-    <h1 class="text-h4 mb-4">{{ $t('customers.title') }}</h1>
-    
-    <!-- Search & Actions -->
-    <v-row class="mb-4">
-      <v-col cols="12" sm="6">
-        <v-text-field
-          v-model="search"
-          :label="$t('common.search')"
-          prepend-inner-icon="mdi-magnify"
-          single-line
-          hide-details
-          clearable
-        ></v-text-field>
-      </v-col>
-      <v-col cols="12" sm="6" class="d-flex justify-end">
-        <v-btn color="primary" @click="openCreateDialog" prepend-icon="mdi-plus">
-          {{ $t('customers.newCustomer') }}
-        </v-btn>
-      </v-col>
-    </v-row>
-    
-    <v-card>
-      <v-data-table
+  <div class="mx-auto max-w-[1800px] px-6 py-8 lg:px-10">
+    <!-- Heading + primary action -->
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-2xl font-semibold tracking-tight">{{ $t('customers.title') }}</h1>
+      <ui-button variant="primary" :icon="Plus" @click="openCreateDialog">
+        {{ $t('customers.newCustomer') }}
+      </ui-button>
+    </div>
+
+    <!-- Search -->
+    <div class="mb-4 max-w-sm">
+      <ui-input v-model="search" :icon="Search" clearable :placeholder="$t('common.search')" />
+    </div>
+
+    <ui-card dense>
+      <ui-data-table
         :headers="headers"
         :items="customers"
         :loading="loading"
-        class="elevation-1"
         :search="search"
         :sort-by="sortBy"
       >
         <template v-slot:item.hourly_rate="{ item }">
-          {{ formatCurrency(item.hourly_rate || 0) }}
+          <span class="tnum">{{ formatCurrency(item.hourly_rate || 0) }}</span>
         </template>
         <template v-slot:item.actions="{ item }">
-          <v-btn icon variant="text" size="small" color="primary" @click="openEditDialog(item)">
-            <v-icon>mdi-pencil</v-icon>
-          </v-btn>
-          <v-btn icon variant="text" size="small" color="error" @click="confirmDelete(item)">
-            <v-icon>mdi-delete</v-icon>
-          </v-btn>
+          <div class="flex justify-end gap-1">
+            <ui-button variant="ghost" size="sm" :icon="Pencil" @click="openEditDialog(item)" />
+            <ui-button variant="danger-ghost" size="sm" :icon="Trash2" @click="confirmDelete(item)" />
+          </div>
         </template>
-      </v-data-table>
-    </v-card>
+      </ui-data-table>
+    </ui-card>
 
-    <v-dialog v-model="deleteDialog" max-width="500px" persistent>
-      <v-card>
-        <v-card-title>{{ $t('common.delete') }} {{ $t('customers.customer') }}</v-card-title>
-        <v-card-text>
-          {{ $t('common.deleteConfirmation') }}
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" variant="text" @click="deleteDialog = false">{{ $t('common.cancel') }}</v-btn>
-          <v-btn color="error" @click="deleteCustomerRecord">{{ $t('common.delete') }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-    
+    <ui-dialog v-model="deleteDialog" :title="`${$t('common.delete')} ${$t('customers.customer')}`" max-width="500px" persistent>
+      <p class="text-sm text-bone-300">{{ $t('common.deleteConfirmation') }}</p>
+      <template #actions>
+        <ui-button variant="ghost" @click="deleteDialog = false">{{ $t('common.cancel') }}</ui-button>
+        <ui-button variant="danger" @click="deleteCustomerRecord">{{ $t('common.delete') }}</ui-button>
+      </template>
+    </ui-dialog>
+
     <!-- Create Customer Dialog -->
-    <v-dialog v-model="createDialog" max-width="800px" persistent>
-      <v-card>
-        <v-card-title>{{ $t('customers.newCustomer') }}</v-card-title>
-        <v-card-text>
-          <customer-form ref="createForm" @save="saveCustomerRecord"></customer-form>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="error" variant="text" @click="createDialog = false">{{ $t('common.cancel') }}</v-btn>
-          <v-btn color="primary" @click="$refs.createForm.submit()">{{ $t('common.save') }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-    
+    <ui-dialog v-model="createDialog" :title="$t('customers.newCustomer')" max-width="800px" persistent>
+      <customer-form ref="createForm" @save="saveCustomerRecord"></customer-form>
+      <template #actions>
+        <ui-button variant="ghost" @click="createDialog = false">{{ $t('common.cancel') }}</ui-button>
+        <ui-button variant="primary" @click="$refs.createForm.submit()">{{ $t('common.save') }}</ui-button>
+      </template>
+    </ui-dialog>
+
     <!-- Edit Customer Dialog -->
-    <v-dialog v-model="editDialog" max-width="800px" persistent>
-      <v-card>
-        <v-card-title>{{ $t('common.edit') }} {{ $t('customers.customer') }}</v-card-title>
-        <v-card-text>
-          <customer-form ref="editForm" :customer="currentCustomer" @save="updateCustomerRecord"></customer-form>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="error" variant="text" @click="editDialog = false">{{ $t('common.cancel') }}</v-btn>
-          <v-btn color="primary" @click="$refs.editForm.submit()">{{ $t('common.save') }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-  </v-container>
+    <ui-dialog v-model="editDialog" :title="`${$t('common.edit')} ${$t('customers.customer')}`" max-width="800px" persistent>
+      <customer-form ref="editForm" :customer="currentCustomer" @save="updateCustomerRecord"></customer-form>
+      <template #actions>
+        <ui-button variant="ghost" @click="editDialog = false">{{ $t('common.cancel') }}</ui-button>
+        <ui-button variant="primary" @click="$refs.editForm.submit()">{{ $t('common.save') }}</ui-button>
+      </template>
+    </ui-dialog>
+  </div>
 </template>
 
 <script>
@@ -96,6 +67,7 @@ import { mapActions, mapState } from 'pinia';
 import { store } from '../store';
 import { formatCurrency } from '../utils/formatters';
 import { useI18n } from 'vue-i18n';
+import { Plus, Search, Pencil, Trash2 } from 'lucide-vue-next';
 
 export default {
   name: 'CustomersIndex',
@@ -104,7 +76,7 @@ export default {
   },
   setup() {
     const { t } = useI18n();
-    return { t };
+    return { t, Plus, Search, Pencil, Trash2 };
   },
   data() {
     return {
@@ -115,11 +87,11 @@ export default {
       editDialog: false,
       itemToDelete: null,
       currentCustomer: null,
-      
+
       sortBy: [{ key: 'id', order: 'desc' }]
     };
   },
-  
+
   computed: {
     ...mapState(store, ['customers', 'settings', 'currencySymbol']),
     headers() {
@@ -130,16 +102,16 @@ export default {
         { title: this.t('customers.phone'), key: 'contact_phone' },
         { title: this.t('customers.city'), key: 'city' },
         { title: this.t('customers.country'), key: 'country' },
-        { title: this.t('invoices.rateUnit'), key: 'hourly_rate' },
-        { title: this.t('common.actions'), key: 'actions', sortable: false }
+        { title: this.t('invoices.rateUnit'), key: 'hourly_rate', align: 'end' },
+        { title: this.t('common.actions'), key: 'actions', sortable: false, align: 'end' }
       ];
     }
   },
-  
+
   created() {
     this.fetchCustomers();
   },
-  
+
   methods: {
     ...mapActions(store, [
       'showSnackbar',
@@ -148,12 +120,12 @@ export default {
       'updateCustomer',
       'deleteCustomer',
     ]),
-    
+
     confirmDelete(item) {
       this.itemToDelete = item;
       this.deleteDialog = true;
     },
-    
+
     async deleteCustomerRecord() {
       try {
         await this.deleteCustomer(this.itemToDelete.id);
@@ -162,16 +134,16 @@ export default {
         console.error('Error deleting customer:', error);
       }
     },
-    
+
     openCreateDialog() {
       this.createDialog = true;
     },
-    
+
     openEditDialog(item) {
       this.currentCustomer = { ...item };
       this.editDialog = true;
     },
-    
+
     async saveCustomerRecord(customer) {
       try {
         await this.createCustomer(customer);
@@ -180,7 +152,7 @@ export default {
         console.error('Error creating customer:', error);
       }
     },
-    
+
     async updateCustomerRecord(customer) {
       try {
         await this.updateCustomer(customer);
@@ -189,7 +161,7 @@ export default {
         console.error('Error updating customer:', error);
       }
     },
-    
+
     formatCurrency(amount) {
       return formatCurrency(amount, this.settings);
     }

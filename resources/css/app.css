@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Spline+Sans+Mono:wght@400;500;600&display=swap');
+
+@import 'tailwindcss';
+
+@theme {
+    /* Ink — warm graphite scale */
+    --color-ink-950: #141412;
+    --color-ink-900: #1a1a17;
+    --color-ink-850: #1f1f1b;
+    --color-ink-800: #26261f;
+    --color-ink-700: #34342c;
+    --color-ink-600: #4a4a3f;
+
+    /* Text — bone scale */
+    --color-bone-100: #edebe2;
+    --color-bone-300: #c9c7bb;
+    --color-bone-500: #a3a093;
+    --color-bone-700: #6e6c60;
+
+    /* Brass — the single accent */
+    --color-brass-300: #d8bd6d;
+    --color-brass-400: #c9a94f;
+    --color-brass-500: #b6953d;
+    --color-brass-600: #94782f;
+    --color-brass-900: #2e2717;
+
+    /* States — muted, never neon */
+    --color-sage-400: #8fb59a;
+    --color-sage-500: #6f9a7e;
+    --color-sage-900: #1d2a21;
+    --color-clay-400: #d98a75;
+    --color-clay-500: #c4674f;
+    --color-clay-900: #33201a;
+    --color-ochre-400: #d2a458;
+    --color-ochre-900: #2f2514;
+    --color-slate-400: #93a8bd;
+    --color-slate-900: #1e252d;
+
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'Spline Sans Mono', ui-monospace, monospace;
+
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 10px;
+}
+
+@layer base {
+    html {
+        @apply bg-ink-950 text-bone-100 antialiased;
+        font-feature-settings: 'ss01';
+        color-scheme: dark;
+    }
+
+    body {
+        @apply font-sans text-[15px] leading-relaxed;
+    }
+
+    h1, h2, h3, h4 {
+        @apply text-bone-100 tracking-tight;
+        text-wrap: balance;
+    }
+
+    ::selection {
+        background: var(--color-brass-900);
+        color: var(--color-brass-300);
+    }
+
+    /* Numbers in tables and stats: always tabular */
+    .tnum {
+        @apply font-mono tabular-nums;
+        font-size: 0.92em;
+    }
+
+    :focus-visible {
+        outline: 1.5px solid var(--color-brass-400);
+        outline-offset: 2px;
+    }
+
+    /* Native date/time picker indicators, dark */
+    input[type='date']::-webkit-calendar-picker-indicator,
+    input[type='time']::-webkit-calendar-picker-indicator {
+        filter: invert(0.8) sepia(0.2);
+        cursor: pointer;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+}
+
+@layer components {
+    /* Ledger rule — the hairline that structures every table and list */
+    .ledger-rule {
+        border-bottom: 1px solid color-mix(in srgb, var(--color-ink-700) 60%, transparent);
+    }
+
+    .scrollbar-thin {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-ink-700) transparent;
+    }
+}

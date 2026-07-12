@@ -11,7 +11,7 @@ test.describe('Customers e2e', () => {
 
     await page.getByRole('button', { name: 'New Customer' }).click();
 
-    const dialog = page.locator('.v-dialog');
+    const dialog = page.locator('[role="dialog"]');
     await expect(dialog).toBeVisible();
 
     const uniqueName = `E2E Customer ${Date.now()}`;

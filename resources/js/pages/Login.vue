@@ -1,75 +1,77 @@
 <template>
-	<div class="login-container">
-		<form @submit.prevent="handleLogin"
-			  class="login-form">
-			<!-- Company Logo -->
-			<div class="logo-container mb-4" v-if="companyLogo">
-				<img :src="companyLogo" alt="Company Logo" class="company-logo" />
+	<div class="flex min-h-screen items-center justify-center px-4">
+		<div class="w-full max-w-sm">
+			<!-- Wordmark -->
+			<div class="mb-6 flex items-center justify-center gap-2">
+				<span class="flex h-7 w-7 items-center justify-center rounded-md bg-brass-500 font-mono text-[13px] font-semibold text-ink-950">CL</span>
+				<span class="text-[15px] font-semibold tracking-tight text-bone-100">
+					Client<span class="text-brass-400">ledger</span>
+				</span>
 			</div>
-			<h2 class="pb-4">{{ $t('pages.login.login') }}</h2>
-			<div class="form-group">
-				<v-text-field v-model="form.email"
+
+			<form @submit.prevent="handleLogin"
+				  class="rounded-lg border border-ink-700 bg-ink-900 p-6">
+				<!-- Company Logo -->
+				<div class="mb-4 flex items-center justify-center" v-if="companyLogo">
+					<img :src="companyLogo" alt="Company Logo" class="max-h-20 max-w-[200px] object-contain" />
+				</div>
+				<h2 class="mb-5 text-xl font-semibold tracking-tight text-bone-100">{{ $t('pages.login.login') }}</h2>
+				<div class="space-y-4">
+					<ui-input v-model="form.email"
 							  data-test="login-email"
 							  type="email"
-							  variant="outlined"
+							  :icon="Mail"
 							  :label="$t('pages.login.email')"
 							  required />
-			</div>
-			<div class="form-group">
-				<v-text-field v-model="form.password"
+					<ui-input v-model="form.password"
 							  data-test="login-password"
 							  type="password"
-							  variant="outlined"
+							  :icon="Lock"
 							  :label="$t('pages.login.password')"
 							  required />
-			</div>
-
-			<!-- Demo Account Info (only shown on demo site) -->
-			<v-alert v-if="isDemoSite" 
-					 type="info" 
-					 variant="elevated" 
-					 class="mb-4"
-					 icon="mdi-information-outline">
-				<div class="demo-info">
-					<div class="text-subtitle-2 mb-2">
-						<strong>Demo Admin Account</strong>
-					</div>
-					<div class="demo-credentials mb-3">
-						<div class="credential-item">
-							<span class="credential-label">Email:</span>
-							<code class="credential-value">admin@admin.de</code>
-						</div>
-						<div class="credential-item">
-							<span class="credential-label">Password:</span>
-							<code class="credential-value">adminadmin</code>
-						</div>
-					</div>
-					<v-divider class="my-2"></v-divider>
-					<div class="text-caption">
-						<strong>2FA Code:</strong> Use <code class="demo-2fa-code">000000</code> for testing
-					</div>
 				</div>
-			</v-alert>
 
-			<v-btn type="submit"
-				   data-test="btn-login"
-				   block
-				   :loading="loading"
-				   color="primary">
-				{{ $t('pages.login.login') }}
-			</v-btn>
+				<!-- Demo Account Info (only shown on demo site) -->
+				<ui-alert v-if="isDemoSite"
+						  type="info"
+						  class="mt-4"
+						  title="Demo Admin Account">
+					<div class="space-y-1.5 text-xs">
+						<div class="flex items-center gap-2">
+							<span class="min-w-[70px] font-medium">Email:</span>
+							<code class="rounded border border-ink-700 bg-ink-950/60 px-1.5 py-0.5 font-mono">admin@admin.de</code>
+						</div>
+						<div class="flex items-center gap-2">
+							<span class="min-w-[70px] font-medium">Password:</span>
+							<code class="rounded border border-ink-700 bg-ink-950/60 px-1.5 py-0.5 font-mono">adminadmin</code>
+						</div>
+					</div>
+					<hr class="my-2 border-ink-700/60" />
+					<div class="text-xs">
+						<strong>2FA Code:</strong> Use <code class="mx-1 rounded border border-ink-700 bg-ink-950/60 px-1.5 py-0.5 font-mono font-bold">000000</code> for testing
+					</div>
+				</ui-alert>
 
-			<!-- Legal Links Footer -->
-			<div class="legal-links mt-6">
-				<router-link :to="{ name: 'Privacy' }" class="legal-link">
-					{{ $t('pages.login.privacyNotice') }}
-				</router-link>
-				<div class="flex-grow"></div>
-				<router-link :to="{ name: 'Imprint' }" class="legal-link">
-					{{ $t('pages.login.imprint') }}
-				</router-link>
-			</div>
-		</form>
+				<ui-button type="submit"
+						   data-test="btn-login"
+						   variant="primary"
+						   block
+						   :loading="loading"
+						   class="mt-5">
+					{{ $t('pages.login.login') }}
+				</ui-button>
+
+				<!-- Legal Links Footer -->
+				<div class="mt-6 flex items-center justify-between border-t border-ink-700/60 pt-4">
+					<router-link :to="{ name: 'Privacy' }" class="text-xs text-bone-500 transition-colors hover:text-bone-300 hover:underline">
+						{{ $t('pages.login.privacyNotice') }}
+					</router-link>
+					<router-link :to="{ name: 'Imprint' }" class="text-xs text-bone-500 transition-colors hover:text-bone-300 hover:underline">
+						{{ $t('pages.login.imprint') }}
+					</router-link>
+				</div>
+			</form>
+		</div>
 	</div>
 </template>
 
@@ -77,9 +79,13 @@
 import { mapActions, mapState } from 'pinia'
 import { store } from '../store'
 import axios from 'axios'
+import { Mail, Lock } from 'lucide-vue-next'
 
 export default {
 	name: 'Login',
+	setup() {
+		return { Mail, Lock }
+	},
 	data() {
 		return {
 			form: {
@@ -112,7 +118,7 @@ export default {
 			this.loading = true
 			try {
 				const result = await this.login(this.form.email, this.form.password)
-				
+
 				// Handle 2FA verification required
 				if (result?.requires_2fa_verification) {
 					this.$router.push({
@@ -121,13 +127,13 @@ export default {
 					})
 					return
 				}
-				
+
 				// Handle 2FA setup required
 				if (result?.requires_2fa_setup) {
 					this.$router.push({ name: 'TwoFactorSetup' })
 					return
 				}
-				
+
 				// Normal login success
 				this.$router.push('/')
 			} catch (error) {
@@ -139,115 +145,3 @@ export default {
 	}
 }
 </script>
-
-<style scoped>
-.login-container {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	min-height: 100vh;
-	background: linear-gradient(270deg, #0f172a, #1e293b, #3b82f6, #8b5cf6);
-	background-size: 400% 400%;
-	animation: gradientAnimation 30s ease infinite;
-}
-
-@keyframes gradientAnimation {
-	0% {
-		background-position: 0% 50%;
-	}
-
-	50% {
-		background-position: 100% 50%;
-	}
-
-	100% {
-		background-position: 0% 50%;
-	}
-}
-
-.login-form {
-	width: 100%;
-	max-width: 400px;
-	padding: 2rem;
-	border-radius: 8px;
-	background: rgba(0, 0, 0, 0.434);
-	border: 2px solid rgba(220, 220, 220, 0.701);
-	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-.form-group {
-	margin-bottom: 1rem;
-}
-
-.legal-links {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding-top: 1rem;
-	border-top: 1px solid rgba(220, 220, 220, 0.3);
-}
-
-.legal-link {
-	color: rgba(255, 255, 255, 0.9);
-	text-decoration: none;
-	font-size: 0.875rem;
-	transition: color 0.2s ease;
-}
-
-.legal-link:hover {
-	color: #ffffff;
-	text-decoration: underline;
-}
-
-.logo-container {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-}
-
-.company-logo {
-	max-width: 200px;
-	max-height: 80px;
-	object-fit: contain;
-}
-
-.demo-info {
-	font-size: 0.875rem;
-}
-
-.demo-credentials {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-.credential-item {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-}
-
-.credential-label {
-	font-weight: 500;
-	min-width: 70px;
-}
-
-.credential-value {
-	background: rgba(255, 255, 255, 0.15);
-	padding: 0.25rem 0.5rem;
-	border-radius: 4px;
-	font-family: monospace;
-	font-size: 0.85rem;
-	border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.demo-2fa-code {
-	background: rgba(255, 255, 255, 0.15);
-	padding: 0.15rem 0.4rem;
-	border-radius: 3px;
-	font-family: monospace;
-	font-weight: bold;
-	border: 1px solid rgba(255, 255, 255, 0.2);
-	margin: 0 0.25rem;
-}
-</style>

@@ -1,176 +1,145 @@
 <template>
-	<div class="two-factor-setup-container">
-		<v-card class="setup-card"
-				max-width="800"
-				elevation="8">
-			<v-card-title class="text-h5 pa-6">
-				<v-icon left
-						color="primary"
-						size="large">mdi-shield-lock</v-icon>
-				{{ $t('pages.twoFactor.setupTitle') }}
-			</v-card-title>
+	<div class="flex min-h-screen items-center justify-center px-4 py-8">
+		<div class="w-full max-w-lg">
+			<!-- Wordmark -->
+			<div class="mb-6 flex items-center justify-center gap-2">
+				<span class="flex h-7 w-7 items-center justify-center rounded-md bg-brass-500 font-mono text-[13px] font-semibold text-ink-950">CL</span>
+				<span class="text-[15px] font-semibold tracking-tight text-bone-100">
+					Client<span class="text-brass-400">ledger</span>
+				</span>
+			</div>
 
-			<v-card-text class="pa-6">
-				<v-stepper v-model="step"
-						   elevation="0">
-					<v-stepper-header>
-						<v-stepper-item :complete="step > 1"
-										:value="1"
-										:title="$t('pages.twoFactor.step1Title')"></v-stepper-item>
-						<v-divider></v-divider>
-						<v-stepper-item :complete="step > 2"
-										:value="2"
-										:title="$t('pages.twoFactor.step2Title')"></v-stepper-item>
-						<v-divider></v-divider>
-						<v-stepper-item :value="3"
-										:title="$t('pages.twoFactor.step3Title')"></v-stepper-item>
-					</v-stepper-header>
+			<div class="rounded-lg border border-ink-700 bg-ink-900 p-6">
+				<h2 class="mb-6 flex items-center gap-2 text-xl font-semibold tracking-tight text-bone-100">
+					<ShieldCheck class="h-5 w-5 text-brass-400" />
+					{{ $t('pages.twoFactor.setupTitle') }}
+				</h2>
 
-					<v-stepper-window>
-					<!-- Step 1: Generate QR Code -->
-					<v-stepper-window-item :value="1">
-						<div class="text-center py-6">
-							<p class="mb-4">
+				<ui-stepper v-model="step"
+							:steps="[$t('pages.twoFactor.step1Title'), $t('pages.twoFactor.step2Title'), $t('pages.twoFactor.step3Title')]">
+					<template #default="{ step: currentStep }">
+						<!-- Step 1: Generate QR Code -->
+						<div v-if="currentStep === 1" class="py-6 text-center">
+							<p class="mb-4 text-sm text-bone-300">
 								{{ $t('pages.twoFactor.setupDescription') }}
 							</p>
-							<div class="d-flex gap-2 justify-center flex-wrap">
-								<v-btn color="primary"
-									   size="large"
-									   :loading="loading"
-									   @click="generateQRCode">
+							<div class="flex flex-wrap justify-center gap-2">
+								<ui-button variant="primary"
+										   size="lg"
+										   :loading="loading"
+										   @click="generateQRCode">
 									{{ $t('pages.twoFactor.generateQRCode') }}
-								</v-btn>
-								
+								</ui-button>
 							</div>
 
 							<!-- Demo Site Info -->
-							<v-alert v-if="isAdminDemo" 
-									 type="info" 
-									 variant="elevated" 
-									 class="mt-4"
-									 icon="mdi-shield-check">
-								<div class="demo-setup-info">
-									<div class="text-subtitle-2 mb-2">
-										<strong>Demo Account Setup</strong>
-									</div>
-									<div class="text-caption">
-										When setting up 2FA on the demo site, use code <code class="demo-code">000000</code> for testing purposes.
-									</div>
+							<ui-alert v-if="isAdminDemo"
+									  type="info"
+									  class="mt-4 text-left"
+									  title="Demo Account Setup">
+								<div class="text-xs">
+									When setting up 2FA on the demo site, use code <code class="mx-1 rounded border border-ink-700 bg-ink-950/60 px-1.5 py-0.5 font-mono font-bold">000000</code> for testing purposes.
 								</div>
-							</v-alert>
+							</ui-alert>
 						</div>
-					</v-stepper-window-item>						<!-- Step 2: Scan QR Code and Verify -->
-						<v-stepper-window-item :value="2">
-							<div class="text-center">
-								<p class="mb-4">
-									{{ $t('pages.twoFactor.scanQRCode') }}
+
+						<!-- Step 2: Scan QR Code and Verify -->
+						<div v-else-if="currentStep === 2" class="text-center">
+							<p class="mb-4 text-sm text-bone-300">
+								{{ $t('pages.twoFactor.scanQRCode') }}
+							</p>
+							<div v-if="qrCode"
+								 class="mx-auto mb-4 w-fit rounded-lg bg-white p-4"
+								 v-html="qrCode"></div>
+
+							<div class="mb-4">
+								<p class="mb-2 text-xs text-bone-500">
+									<strong>{{ $t('pages.twoFactor.manualEntry') }}:</strong><br>
+									{{ $t('pages.twoFactor.manualEntryHint') }}
 								</p>
-								<div v-if="qrCode"
-									 class="qr-code-container mb-4"
-									 v-html="qrCode"></div>
-								
-								<div class="manual-entry-container mb-4">
-									<p class="text-caption text-medium-emphasis text-center mb-2">
-										<strong>{{ $t('pages.twoFactor.manualEntry') }}:</strong><br>
-										{{ $t('pages.twoFactor.manualEntryHint') }}
-									</p>
-									<code class="manual-key">{{ secret }}</code>
+								<code class="block break-all rounded-md border border-ink-700 bg-ink-950 px-4 py-3 text-center font-mono text-sm tracking-[0.1em] text-bone-100">{{ secret }}</code>
+							</div>
+
+							<!-- Demo Site Verification Info -->
+							<ui-alert v-if="isAdminDemo"
+									  type="info"
+									  class="mb-4 text-left"
+									  title="Demo Verification Code">
+								<div class="text-center text-xs">
+									<p class="mb-2">For testing on the demo site, use the verification code:</p>
+									<code class="inline-block rounded border border-ink-700 bg-ink-950/60 px-3 py-1.5 font-mono text-base font-bold tracking-[0.2em]">000000</code>
 								</div>
+							</ui-alert>
 
-								<!-- Demo Site Verification Info -->
-								<v-alert v-if="isAdminDemo" 
-										 type="info" 
-										 variant="elevated" 
-										 class="mb-4"
-										 icon="mdi-shield-check">
-									<div class="demo-verify-info">
-										<div class="text-subtitle-2 mb-2">
-											<strong>Demo Verification Code</strong>
-										</div>
-										<div class="text-caption mb-2">
-											For testing on the demo site, use the verification code:
-										</div>
-										<div class="demo-code-display">
-											<code class="demo-verification-code">000000</code>
-										</div>
-									</div>
-								</v-alert>
+							<div class="mb-4">
+								<ui-input v-model="verificationCode"
+										  :label="$t('pages.twoFactor.enterSixDigitCode')"
+										  inputmode="numeric"
+										  maxlength="6"
+										  class="text-center font-mono tracking-[0.3em]"
+										  :rules="[rules.required, rules.sixDigits]"
+										  @keyup.enter="verifyCode" />
+							</div>
 
-								<v-text-field v-model="verificationCode"
-											  :label="$t('pages.twoFactor.enterSixDigitCode')"
-											  variant="outlined"
-											  :rules="[rules.required, rules.sixDigits]"
-											  maxlength="6"
-											  @keyup.enter="verifyCode"
-											  class="mb-4"></v-text-field>
-
-								<div class="d-flex">
-									<v-btn variant="outlined"
+							<div class="flex items-center justify-between">
+								<ui-button variant="outline"
 										   @click="step = 1">
-										{{ $t('common.back') || 'Back' }}
-									</v-btn>
-									<v-spacer></v-spacer>
-									<v-btn color="primary"
+									{{ $t('common.back') || 'Back' }}
+								</ui-button>
+								<ui-button variant="primary"
 										   :loading="loading"
 										   @click="verifyCode">
-										{{ $t('pages.twoFactor.verifyAndContinue') }}
-									</v-btn>
-								</div>
+									{{ $t('pages.twoFactor.verifyAndContinue') }}
+								</ui-button>
 							</div>
-						</v-stepper-window-item>
+						</div>
 
 						<!-- Step 3: Save Recovery Codes -->
-						<v-stepper-window-item :value="3">
-							<div>
-								<v-alert type="warning"
-										 variant="tonal"
-										 class="mb-4">
-									<strong>{{ $t('common.important') || 'Important' }}:</strong> {{ $t('pages.twoFactor.recoveryCodesWarning') }}
-								</v-alert>
+						<div v-else-if="currentStep === 3">
+							<ui-alert type="warning" class="mb-4">
+								<strong>{{ $t('common.important') || 'Important' }}:</strong> {{ $t('pages.twoFactor.recoveryCodesWarning') }}
+							</ui-alert>
 
-								<v-card variant="outlined"
-										class="recovery-codes-card mb-4">
-									<v-card-text>
-										<div class="recovery-codes">
-											<div v-for="(code, index) in recoveryCodes"
-												 :key="index"
-												 class="recovery-code">
-												{{ code }}
-											</div>
-										</div>
-									</v-card-text>
-								</v-card>
-
-								<div class="d-flex justify-space-between align-center mb-4">
-									<v-btn variant="outlined"
-										   prepend-icon="mdi-content-copy"
-										   @click="copyRecoveryCodes">
-										{{ $t('pages.profile.copyAll') || 'Copy All' }}
-									</v-btn>
-									<v-btn variant="outlined"
-										   prepend-icon="mdi-download"
-										   @click="downloadRecoveryCodes">
-										{{ $t('common.download') }}
-									</v-btn>
+							<div class="mb-4 rounded-md border border-ink-700 bg-ink-950 p-4">
+								<div class="grid grid-cols-2 gap-2">
+									<div v-for="(code, index) in recoveryCodes"
+										 :key="index"
+										 class="rounded bg-ink-900 px-2 py-1.5 text-center font-mono text-[13px] text-bone-100">
+										{{ code }}
+									</div>
 								</div>
+							</div>
 
-								<v-checkbox v-model="confirmedSaved"
-											:label="$t('pages.twoFactor.confirmSavedRecoveryCodes')"
-											:rules="[rules.mustConfirm]"></v-checkbox>
+							<div class="mb-4 flex items-center justify-between">
+								<ui-button variant="outline"
+										   :icon="Copy"
+										   @click="copyRecoveryCodes">
+									{{ $t('pages.profile.copyAll') || 'Copy All' }}
+								</ui-button>
+								<ui-button variant="outline"
+										   :icon="Download"
+										   @click="downloadRecoveryCodes">
+									{{ $t('common.download') }}
+								</ui-button>
+							</div>
 
-								<v-btn color="success"
+							<div class="mb-4">
+								<ui-checkbox v-model="confirmedSaved"
+											 :label="$t('pages.twoFactor.confirmSavedRecoveryCodes')" />
+							</div>
+
+							<ui-button variant="primary"
 									   block
-									   size="large"
+									   size="lg"
 									   :disabled="!confirmedSaved"
 									   @click="completeSetup">
-									{{ $t('pages.twoFactor.completeSetup') }}
-								</v-btn>
-							</div>
-						</v-stepper-window-item>
-					</v-stepper-window>
-				</v-stepper>
-			</v-card-text>
-		</v-card>
+								{{ $t('pages.twoFactor.completeSetup') }}
+							</ui-button>
+						</div>
+					</template>
+				</ui-stepper>
+			</div>
+		</div>
 	</div>
 </template>
 
@@ -179,9 +148,14 @@ import { mapActions, mapState } from 'pinia'
 import { store } from '../store'
 import axios from 'axios'
 import { getDeviceFingerprint } from '../utils/deviceFingerprintUtil'
+import { ShieldCheck, Copy, Download } from 'lucide-vue-next'
 
 export default {
 	name: 'TwoFactorSetup',
+	components: { ShieldCheck },
+	setup() {
+		return { Copy, Download }
+	},
 	data() {
 		return {
 			step: 1,
@@ -212,7 +186,7 @@ export default {
 	},
 	methods: {
 		...mapActions(store, ['showSnackbar', 'getAuthUser']),
-		
+
 		async generateQRCode() {
 			this.loading = true
 			try {
@@ -233,24 +207,24 @@ export default {
 			try {
 				// First generate the QR code (creates the secret)
 				const enableResponse = await axios.post('/api/2fa/enable')
-				
+
 				// Get client fingerprint
 				const clientFingerprint = await getDeviceFingerprint()
-				
+
 				// Then verify with the bypass code
 				const confirmResponse = await axios.post('/api/2fa/confirm', {
 					code: '000000',
 					client_fingerprint: clientFingerprint
 				})
-				
+
 				this.recoveryCodes = confirmResponse.data.recovery_codes
 				this.step = 3
 				this.confirmedSaved = true
 				this.showSnackbar('2FA setup completed successfully!', 'success')
-				
+
 				// Refresh user data
 				await this.getAuthUser()
-				
+
 				// Small delay and redirect
 				await new Promise(resolve => setTimeout(resolve, 500))
 				this.$router.push('/')
@@ -271,7 +245,7 @@ export default {
 			try {
 				// Get client fingerprint for better device trust
 				const clientFingerprint = await getDeviceFingerprint()
-				
+
 				const response = await axios.post('/api/2fa/confirm', {
 					code: this.verificationCode,
 					client_fingerprint: clientFingerprint
@@ -308,142 +282,24 @@ export default {
 
 		async completeSetup() {
 			console.log('[TwoFactorSetup] Completing setup...')
-			
+
 			// Refresh user data to get updated 2FA status
 			console.log('[TwoFactorSetup] Fetching user data...')
 			await this.getAuthUser()
 			console.log('[TwoFactorSetup] User data fetched')
-			
+
 			// Mark in local storage that 2FA was just completed
 			// to prevent immediate re-verification
 			sessionStorage.setItem('2fa_just_completed', 'true')
-			
+
 			this.showSnackbar('2FA setup completed successfully!', 'success')
-			
+
 			// Small delay to ensure session is established
 			await new Promise(resolve => setTimeout(resolve, 500))
-			
+
 			console.log('[TwoFactorSetup] Redirecting to home...')
 			this.$router.push('/')
 		}
 	}
 }
 </script>
-
-<style scoped>
-.two-factor-setup-container {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	min-height: 100vh;
-	padding: 2rem;
-	background: linear-gradient(270deg, #0f172a, #1e293b, #3b82f6, #8b5cf6);
-	background-size: 400% 400%;
-	animation: gradientAnimation 30s ease infinite;
-}
-
-@keyframes gradientAnimation {
-	0% {
-		background-position: 0% 50%;
-	}
-
-	50% {
-		background-position: 100% 50%;
-	}
-
-	100% {
-		background-position: 0% 50%;
-	}
-}
-
-.setup-card {
-	width: 100%;
-	background: rgba(0, 0, 0, 0.434) !important;
-	border: 2px solid rgba(220, 220, 220, 0.701) !important;
-}
-
-.qr-code-container {
-	display: flex;
-	justify-content: center;
-	padding: 1.5rem;
-	background: white;
-	border-radius: 8px;
-	margin: 0 auto;
-	width: fit-content;
-	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-.manual-entry-container {
-	text-align: center;
-}
-
-.manual-key {
-	background: rgba(255, 255, 255, 0.1);
-	padding: 0.75rem 1rem;
-	border-radius: 4px;
-	border: 1px solid rgba(255, 255, 255, 0.2);
-	font-family: monospace;
-	font-size: 1.1rem;
-	letter-spacing: 0.1em;
-	word-break: break-all;
-	display: block;
-	text-align: center;
-	color: #fff;
-}
-
-.recovery-codes-card {
-	background: #f5f5f5;
-}
-
-.recovery-codes {
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
-	gap: 0.5rem;
-}
-
-.recovery-code {
-	font-family: monospace;
-	font-size: 0.9rem;
-	padding: 0.5rem;
-	background: white;
-	border-radius: 4px;
-	text-align: center;
-	color: #000;
-}
-
-.demo-setup-info,
-.demo-verify-info {
-	font-size: 0.875rem;
-}
-
-.demo-code {
-	background: rgba(255, 255, 255, 0.15);
-	padding: 0.15rem 0.4rem;
-	border-radius: 3px;
-	font-family: monospace;
-	font-weight: bold;
-	border: 1px solid rgba(255, 255, 255, 0.2);
-	margin: 0 0.25rem;
-}
-
-.demo-verify-info {
-	text-align: center;
-}
-
-.demo-code-display {
-	display: flex;
-	justify-content: center;
-	margin-top: 0.5rem;
-}
-
-.demo-verification-code {
-	background: rgba(255, 255, 255, 0.15);
-	padding: 0.5rem 1rem;
-	border-radius: 6px;
-	font-family: monospace;
-	font-size: 1.25rem;
-	font-weight: bold;
-	letter-spacing: 0.2em;
-	border: 1px solid rgba(255, 255, 255, 0.2);
-}
-</style>

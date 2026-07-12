@@ -46,54 +46,28 @@ export async function setDateFormat(page: Page, format: 'DD/MM/YYYY' | 'MM/DD/YY
 }
 
 /**
- * Open a Vuetify select/autocomplete by clicking its field wrapper
- * (clicking the inner <input> is intercepted by .v-field__input)
- * and choose the first option from the overlay list.
+ * Open a kit ui-select identified by data-test (the attribute lands on the
+ * component's root div) and choose the first option from its dropdown list.
  */
 export async function selectFirstOption(page: Page, testId: string) {
-  await page.locator(`[data-test="${testId}"] .v-field`).click();
-  const option = page.locator('.v-overlay-container .v-list-item').first();
-  await option.click();
+  const root = page.locator(`[data-test="${testId}"]`);
+  // ui-select opens from a button, ui-autocomplete from an input
+  await root.locator('button, input').first().click();
+  await root.locator('li').first().click();
 }
 
 /**
- * Open a Vuetify select/autocomplete identified by its label text (for forms
- * without data-test attributes) and choose the first option. Closes the menu
- * afterwards so it also works for multi-selects that stay open.
+ * Open a kit ui-select or ui-autocomplete by its label text (for forms
+ * without data-test attributes) and choose the first option. The kit renders
+ * label + trigger (button for select, input for autocomplete) + option list
+ * as direct children of one wrapper div.
  */
 export async function selectFirstOptionByLabel(page: Page, label: string) {
-  const field = page
-    .locator('.v-dialog .v-input', { has: page.locator('label', { hasText: label }) })
-    .first()
-    .locator('.v-field');
-  await field.click();
-  await page.locator('.v-overlay-container .v-list-item').first().click();
-  await page.keyboard.press('Escape');
-}
-
-/**
- * In the currently open v-date-picker, click today's date and close the menu.
- * Falls back to the already-selected day when the field was prefilled.
- */
-export async function pickTodayInOpenDatePicker(page: Page) {
-  const picker = page.locator('.v-overlay-container .v-date-picker').last();
-  await expect(picker).toBeVisible();
-
-  const selected = picker.locator('.v-date-picker-month__day--selected button');
-  if (await selected.count()) {
-    await selected.first().click();
-  } else {
-    const day = String(new Date().getDate());
-    await picker
-      .locator('.v-date-picker-month__day:not(.v-date-picker-month__day--adjacent) button')
-      .filter({ hasText: new RegExp(`^${day}$`) })
-      .first()
-      .click();
-  }
-
-  // v-menu has close-on-content-click=false, so close it explicitly.
-  await page.keyboard.press('Escape');
-  await expect(picker).toBeHidden();
+  const root = page
+    .locator(`[role="dialog"] div:has(> label:has-text("${label}"))`)
+    .first();
+  await root.locator('button, input').first().click();
+  await root.locator('li').first().click();
 }
 
 // Format a date the same way the app's formatters.js does for the basic patterns.
@@ -111,4 +85,9 @@ export function formatDateString(date: Date, format: string): string {
     default:
       return `${day}/${month}/${year}`;
   }
+}
+
+// Native date inputs (which replaced v-date-picker) always hold YYYY-MM-DD.
+export function todayISO(): string {
+  return new Date().toISOString().slice(0, 10);
 }

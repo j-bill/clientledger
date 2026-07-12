@@ -30,7 +30,7 @@ Built with Laravel and Vue.js, supporting PostgreSQL, MySQL, and SQLite.
 
 **Backend:** Laravel 12 (PHP 8.2+), PostgreSQL/MySQL/SQLite, Laravel Sanctum for API authentication
 
-**Frontend:** Vue 3 with Composition API, Vuetify 3, Vite, Vue Router, Pinia for state management
+**Frontend:** Vue 3 with Composition API, Tailwind CSS 4 with a custom dark UI kit, Vite, Vue Router, Pinia for state management
 
 **Additional Tools:** DOMPDF for PDF generation, Playwright for E2E testing, PHPUnit for unit tests
 
@@ -162,7 +162,7 @@ All endpoints are protected with Laravel Sanctum API tokens and role-based acces
 
 ## User Interface
 
-Built with Vuetify 3 and Material Design principles. Features a dark theme with responsive layouts for desktop, tablet, and mobile devices. Real-time updates on timers and data, smooth animations, and interactive charts for financial reporting.
+Built with Tailwind CSS 4 and a custom component kit in a dark "ledger" aesthetic — warm graphite surfaces, a single brass accent, and tabular monospace numerals for all amounts and hours. Responsive layouts for desktop, tablet, and mobile devices. Real-time updates on timers and data, and interactive charts for financial reporting.
 
 ---
 

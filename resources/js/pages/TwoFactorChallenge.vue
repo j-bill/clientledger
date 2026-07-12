@@ -1,104 +1,97 @@
 <template>
-	<div class="two-factor-challenge-container">
-		<form @submit.prevent="verifyCode"
-			  class="challenge-form">
-			<div class="text-center mb-4">
-				<v-icon color="primary"
-						size="60"
-						class="mb-3">mdi-shield-lock-outline</v-icon>
-				<h2 class="mb-2">{{ $t('pages.twoFactor.title') }}</h2>
-				<p class="text-subtitle-1">
-					{{ $t('pages.twoFactor.subtitle') }}
-				</p>
+	<div class="flex min-h-screen items-center justify-center px-4">
+		<div class="w-full max-w-sm">
+			<!-- Wordmark -->
+			<div class="mb-6 flex items-center justify-center gap-2">
+				<span class="flex h-7 w-7 items-center justify-center rounded-md bg-brass-500 font-mono text-[13px] font-semibold text-ink-950">CL</span>
+				<span class="text-[15px] font-semibold tracking-tight text-bone-100">
+					Client<span class="text-brass-400">ledger</span>
+				</span>
 			</div>
 
-			<div class="form-group">
-				<v-text-field v-model="code"
+			<form @submit.prevent="verifyCode"
+				  class="rounded-lg border border-ink-700 bg-ink-900 p-6">
+				<div class="mb-5 text-center">
+					<ShieldCheck class="mx-auto mb-3 h-10 w-10 text-brass-400" />
+					<h2 class="mb-1 text-xl font-semibold tracking-tight text-bone-100">{{ $t('pages.twoFactor.title') }}</h2>
+					<p class="text-sm text-bone-500">
+						{{ $t('pages.twoFactor.subtitle') }}
+					</p>
+				</div>
+
+				<div class="mb-4">
+					<ui-input v-model="code"
 							  :label="$t('pages.twoFactor.authenticationCode')"
-							  variant="outlined"
 							  type="text"
 							  inputmode="numeric"
 							  maxlength="6"
+							  class="text-center font-mono tracking-[0.3em]"
 							  :rules="[rules.required, rules.sixDigits]"
 							  autofocus
-							  @keyup.enter="verifyCode">
-				</v-text-field>
-			</div>
-
-			<!-- Demo Site 2FA Info -->
-			<v-alert v-if="isDemoSite" 
-					 type="info" 
-					 variant="elevated" 
-					 class="mb-4"
-					 icon="mdi-shield-check">
-				<div class="demo-2fa-info">
-					<div class="text-subtitle-2 mb-2">
-						<strong>Demo 2FA Code</strong>
-					</div>
-					<div class="text-caption mb-2">
-						For testing purposes on the demo site, use the code:
-					</div>
-					<div class="demo-code-display">
-						<code class="demo-2fa-code">000000</code>
-					</div>
+							  @keyup.enter="verifyCode" />
 				</div>
-			</v-alert>
 
-			<div class="form-group">
-				<v-checkbox v-model="trustDevice"
-							:label="$t('pages.twoFactor.trustDeviceLabel')"
-							density="compact"
-							hide-details></v-checkbox>
-			</div>
+				<!-- Demo Site 2FA Info -->
+				<ui-alert v-if="isDemoSite"
+						  type="info"
+						  class="mb-4"
+						  title="Demo 2FA Code">
+					<div class="text-center text-xs">
+						<p class="mb-2">For testing purposes on the demo site, use the code:</p>
+						<code class="inline-block rounded border border-ink-700 bg-ink-950/60 px-3 py-1.5 font-mono text-base font-bold tracking-[0.2em]">000000</code>
+					</div>
+				</ui-alert>
 
-			<v-btn type="submit"
-				   color="primary"
-				   block
-				   size="large"
-				   :loading="loading">
-				{{ $t('pages.twoFactor.verify') }}
-			</v-btn>
+				<div class="mb-4">
+					<ui-checkbox v-model="trustDevice"
+								 :label="$t('pages.twoFactor.trustDeviceLabel')" />
+				</div>
 
-			<v-divider class="my-4"></v-divider>
+				<ui-button type="submit"
+						   variant="primary"
+						   block
+						   size="lg"
+						   :loading="loading">
+					{{ $t('pages.twoFactor.verify') }}
+				</ui-button>
 
-			<div class="text-center">
-				<v-btn variant="text"
-					   size="small"
-					   @click="showRecoveryInput = !showRecoveryInput">
-					{{ showRecoveryInput ? $t('pages.twoFactor.useAuthenticatorCode') : $t('pages.twoFactor.useRecoveryCodeInstead') }}
-				</v-btn>
-			</div>
+				<hr class="my-4 border-ink-700/60" />
 
-			<v-expand-transition>
+				<div class="text-center">
+					<ui-button variant="ghost"
+							   size="sm"
+							   @click="showRecoveryInput = !showRecoveryInput">
+						{{ showRecoveryInput ? $t('pages.twoFactor.useAuthenticatorCode') : $t('pages.twoFactor.useRecoveryCodeInstead') }}
+					</ui-button>
+				</div>
+
 				<div v-if="showRecoveryInput"
 					 class="mt-4">
-					<div class="form-group">
-						<v-text-field v-model="recoveryCode"
-									  :label="$t('pages.twoFactor.recoveryCode')"
-									  variant="outlined"
-									  placeholder="XXXXXXXXXX-XXXXXXXXXX"
-									  :hint="$t('pages.twoFactor.recoveryCodeHint')"
-									  @keyup.enter="verifyRecoveryCode">
-						</v-text-field>
+					<div class="mb-4">
+						<ui-input v-model="recoveryCode"
+								  :label="$t('pages.twoFactor.recoveryCode')"
+								  placeholder="XXXXXXXXXX-XXXXXXXXXX"
+								  class="font-mono"
+								  :hint="$t('pages.twoFactor.recoveryCodeHint')"
+								  @keyup.enter="verifyRecoveryCode" />
 					</div>
-					<v-btn color="secondary"
-						   block
-						   :loading="loading"
-						   @click="verifyRecoveryCode">
+					<ui-button variant="outline"
+							   block
+							   :loading="loading"
+							   @click="verifyRecoveryCode">
 						{{ $t('pages.twoFactor.useRecoveryCode') }}
-					</v-btn>
+					</ui-button>
 				</div>
-			</v-expand-transition>
 
-			<div class="text-center mt-4">
-				<v-btn variant="text"
-					   size="small"
-					   color="error"
-					   @click="cancelLogin">
-					{{ $t('pages.twoFactor.cancelAndLogout') }}
-				</v-btn>
-			</div>
-		</form>
+				<div class="mt-4 text-center">
+					<ui-button variant="danger-ghost"
+							   size="sm"
+							   @click="cancelLogin">
+						{{ $t('pages.twoFactor.cancelAndLogout') }}
+					</ui-button>
+				</div>
+			</form>
+		</div>
 	</div>
 </template>
 
@@ -107,9 +100,11 @@ import { mapActions } from 'pinia'
 import { store } from '../store'
 import axios from 'axios'
 import { getDeviceFingerprint } from '../utils/deviceFingerprintUtil'
+import { ShieldCheck } from 'lucide-vue-next'
 
 export default {
 	name: 'TwoFactorChallenge',
+	components: { ShieldCheck },
 	data() {
 		return {
 			code: '',
@@ -141,7 +136,7 @@ export default {
 			try {
 				// Get client fingerprint for better device trust
 				const clientFingerprint = await getDeviceFingerprint()
-				
+
 				const response = await axios.post('/api/2fa/verify', {
 					code: this.code,
 					trust_device: this.trustDevice,
@@ -179,7 +174,7 @@ export default {
 			try {
 				// Get client fingerprint for better device trust
 				const clientFingerprint = await getDeviceFingerprint()
-				
+
 				const response = await axios.post('/api/2fa/verify', {
 					code: this.recoveryCode,
 					trust_device: this.trustDevice,
@@ -214,63 +209,3 @@ export default {
 	}
 }
 </script>
-
-<style scoped>
-.two-factor-challenge-container {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	min-height: 100vh;
-	background: linear-gradient(270deg, #0f172a, #1e293b, #3b82f6, #8b5cf6);
-	background-size: 400% 400%;
-	animation: gradientAnimation 30s ease infinite;
-}
-
-@keyframes gradientAnimation {
-	0% {
-		background-position: 0% 50%;
-	}
-	50% {
-		background-position: 100% 50%;
-	}
-	100% {
-		background-position: 0% 50%;
-	}
-}
-
-.challenge-form {
-	width: 100%;
-	max-width: 400px;
-	padding: 2rem;
-	border-radius: 8px;
-	background: rgba(0, 0, 0, 0.434);
-	border: 2px solid rgba(220, 220, 220, 0.701);
-	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-.form-group {
-	margin-bottom: 1rem;
-}
-
-.demo-2fa-info {
-	font-size: 0.875rem;
-	text-align: center;
-}
-
-.demo-code-display {
-	display: flex;
-	justify-content: center;
-	margin-top: 0.5rem;
-}
-
-.demo-2fa-code {
-	background: rgba(255, 255, 255, 0.15);
-	padding: 0.5rem 1rem;
-	border-radius: 6px;
-	font-family: monospace;
-	font-size: 1.25rem;
-	font-weight: bold;
-	letter-spacing: 0.2em;
-	border: 1px solid rgba(255, 255, 255, 0.2);
-}
-</style>

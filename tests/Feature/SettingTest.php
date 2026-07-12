@@ -109,4 +109,80 @@ class SettingTest extends TestCase
 
         $response->assertStatus(200);
     }
+
+    public function test_openai_api_key_is_encrypted_at_rest(): void
+    {
+        Setting::create(['key' => 'openai_api_key', 'value' => 'sk-super-secret-key']);
+
+        $this->assertDatabaseMissing('settings', ['key' => 'openai_api_key', 'value' => 'sk-super-secret-key']);
+
+        $stored = \DB::table('settings')->where('key', 'openai_api_key')->value('value');
+        $this->assertNotEquals('sk-super-secret-key', $stored);
+        $this->assertEquals('sk-super-secret-key', Setting::where('key', 'openai_api_key')->first()->value);
+    }
+
+    public function test_openai_api_key_is_masked_in_batch_response(): void
+    {
+        Setting::create(['key' => 'openai_api_key', 'value' => 'sk-super-secret-key']);
+
+        $response = $this->actingAs($this->admin)
+            ->getJson('/api/settings/batch');
+
+        $response->assertStatus(200);
+        $masked = $response->json('openai_api_key');
+        $this->assertNotEquals('sk-super-secret-key', $masked);
+        $this->assertStringEndsWith('-key', $masked);
+        $this->assertStringContainsString('••••••••', $masked);
+    }
+
+    public function test_openai_api_key_is_masked_in_index_and_show(): void
+    {
+        $setting = Setting::create(['key' => 'openai_api_key', 'value' => 'sk-super-secret-key']);
+
+        $index = $this->actingAs($this->admin)->getJson('/api/settings');
+        $index->assertStatus(200);
+        $this->assertStringNotContainsString('sk-super-secret-key', $index->getContent());
+
+        $show = $this->actingAs($this->admin)->getJson("/api/settings/{$setting->id}");
+        $show->assertStatus(200);
+        $this->assertStringNotContainsString('sk-super-secret-key', $show->getContent());
+    }
+
+    public function test_resaving_masked_value_does_not_overwrite_stored_api_key(): void
+    {
+        Setting::create(['key' => 'openai_api_key', 'value' => 'sk-super-secret-key']);
+
+        $masked = $this->actingAs($this->admin)
+            ->getJson('/api/settings/batch')
+            ->json('openai_api_key');
+
+        $this->actingAs($this->admin)
+            ->postJson('/api/settings/batch', ['openai_api_key' => $masked])
+            ->assertStatus(200);
+
+        $this->assertEquals('sk-super-secret-key', Setting::where('key', 'openai_api_key')->first()->value);
+    }
+
+    public function test_batch_save_can_replace_openai_api_key_with_a_new_value(): void
+    {
+        Setting::create(['key' => 'openai_api_key', 'value' => 'sk-old-key']);
+
+        $this->actingAs($this->admin)
+            ->postJson('/api/settings/batch', ['openai_api_key' => 'sk-new-key'])
+            ->assertStatus(200);
+
+        $this->assertEquals('sk-new-key', Setting::where('key', 'openai_api_key')->first()->value);
+    }
+
+    public function test_legacy_plaintext_openai_api_key_is_upgraded_on_read(): void
+    {
+        // Simulate a row written before encryption existed: raw insert, bypassing the mutator.
+        \DB::table('settings')->insert(['key' => 'openai_api_key', 'value' => 'sk-legacy-plaintext']);
+
+        $value = Setting::where('key', 'openai_api_key')->first()->value;
+        $this->assertEquals('sk-legacy-plaintext', $value);
+
+        $stored = \DB::table('settings')->where('key', 'openai_api_key')->value('value');
+        $this->assertNotEquals('sk-legacy-plaintext', $stored);
+    }
 }

@@ -36,7 +36,9 @@
     "back": "Zurück",
     "important": "Wichtig",
     "due": "Fällig",
-    "created": "Erstellt"
+    "created": "Erstellt",
+    "noData": "Keine Einträge",
+    "rowsPerPage": "Zeilen"
   },
   "invoices": {
     "title": "Rechnungen",
@@ -391,7 +393,7 @@
       "thisMonthRevenue": "Umsatz diesen Monat",
       "thisMonthEarnings": "Einnahmen diesen Monat",
       "extrapolatedEstimate": "Hochgerechnete Schätzung",
-      "thisYear": "Letzte 12 Monate",
+      "thisYear": "Dieses Jahr",
       "thisMonth": "Dieser Monat",
       "estimated": "Geschätzt",
       "hours": "Stunden",
@@ -419,7 +421,8 @@
         "nonBillable": "Nicht abrechenbar",
         "actual": "Tatsächlich",
         "projection": "Projektion"
-      }
+      },
+      "lastTwelveMonths": "Letzte 12 Monate"
     },
     "profile": {
       "yourName": "Ihr Name",
@@ -529,7 +532,13 @@
       "regenerateCodesConfirmation": "Möchten Sie Ihre Wiederherstellungscodes wirklich neu generieren?",
       "regenerateCodesDescription": "Dies macht alle Ihre vorhandenen Wiederherstellungscodes ungültig und generiert einen neuen Satz. Stellen Sie sicher, dass Sie die neuen Codes an einem sicheren Ort speichern.",
       "regenerateCodes": "Codes neu generieren",
-      "activeProjects": "Aktive Projekte"
+      "activeProjects": "Aktive Projekte",
+      "applicationName": "Anwendung",
+      "applicationNameValue": "Clientledger — Zeiterfassung und Rechnungsstellung für Freelancer",
+      "securityTitle": "Sicherheit",
+      "securityDescription": "Dein Konto ist durch Zwei-Faktor-Authentifizierung und vertrauenswürdige Geräte geschützt.",
+      "accessTitle": "Datenzugriff",
+      "accessDescription": "Deine Daten sind nur für dich und Administratoren dieser Installation zugänglich."
     },
     "settings": {
       "systemSettings": "Systemeinstellungen",
@@ -711,7 +720,11 @@
       "worklogSoundEnabledHint": "Beim Stoppen der Zeiterfassung wird ein kurzer Ton abgespielt",
       "worklogSound": "Ton",
       "previewSound": "Anhören",
-      "soundPlaybackFailed": "Ton konnte nicht abgespielt werden"
+      "soundPlaybackFailed": "Ton konnte nicht abgespielt werden",
+      "openaiApiKeyPlaceholder": "OpenAI-API-Schlüssel eingeben",
+      "openaiApiKeyCurrent": "Aktueller Schlüssel",
+      "openaiApiKeyReplaceHint": "gib oben einen neuen Schlüssel ein, um ihn zu ersetzen",
+      "openaiApiKeyHint": "Wird verschlüsselt gespeichert. Nach dem Speichern nie wieder angezeigt."
     },
     "errorPages": {
       "accessDenied": "Zugriff verweigert",
@@ -794,4 +807,3 @@
     "endDate": "Enddatum"
   }
 }
-

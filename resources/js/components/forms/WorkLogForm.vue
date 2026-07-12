@@ -1,146 +1,88 @@
 <template>
-	<v-form ref="form"
-			@submit.prevent="submit">
-		<v-row>
-			<v-col cols="12"
-				   md="6">
-				<v-select v-model="selectedCustomer"
-						  :items="customers"
-						  item-title="name"
-						  item-value="id"
-						  :label="$t('forms.workLog.customer')"
-						  prepend-icon="mdi-account"
-						  clearable
-						  @update:model-value="filterProjects"></v-select>
-			</v-col>
+	<ui-form ref="form" @submit="submit">
+		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+			<ui-select v-model="selectedCustomer"
+					   :items="customers"
+					   item-title="name"
+					   item-value="id"
+					   :label="$t('forms.workLog.customer')"
+					   clearable
+					   @update:model-value="filterProjects" />
 
-			<v-col cols="12"
-				   md="6">
-				<v-select v-model="formData.project_id"
-						  :items="filteredProjects"
-						  item-title="name"
-						  item-value="id"
-						  :label="$t('forms.workLog.project')"
-						  prepend-icon="mdi-folder"
-						  :rules="[v => !!v || $t('forms.workLog.projectRequired')]"
-						  @update:model-value="updateProjectDetails"></v-select>
-			</v-col>
+			<ui-select v-model="formData.project_id"
+					   :items="filteredProjects"
+					   item-title="name"
+					   item-value="id"
+					   :label="$t('forms.workLog.project')"
+					   :rules="[v => !!v || $t('forms.workLog.projectRequired')]"
+					   @update:model-value="updateProjectDetails" />
 
-			<v-col cols="12"
-				   md="6" v-if="isAdmin">
-				<v-select v-model="formData.user_id"
-						  :items="projectUsers"
-						  item-title="name"
-						  item-value="id"
-						  :label="$t('forms.workLog.freelancer')"
-						  prepend-icon="mdi-account"
-						  :rules="[v => !!v || $t('forms.workLog.freelancerRequired')]"
-						  @update:model-value="updateUserRate"></v-select>
-			</v-col>
+			<ui-select v-if="isAdmin"
+					   v-model="formData.user_id"
+					   :items="projectUsers"
+					   item-title="name"
+					   item-value="id"
+					   :label="$t('forms.workLog.freelancer')"
+					   :rules="[v => !!v || $t('forms.workLog.freelancerRequired')]"
+					   @update:model-value="updateUserRate" />
+		</div>
 
-			<v-col cols="12"
-				   md="4">
-				<v-menu v-model="dateMenu"
-						:close-on-content-click="false"
-						transition="scale-transition"
-						offset-y
-						min-width="auto">
-					<template v-slot:activator="{ props }">
-						<v-text-field :model-value="formattedDate"
-									  :label="$t('forms.workLog.date')"
-									  prepend-icon="mdi-calendar"
-									  readonly
-									  :rules="[v => !!v || $t('forms.workLog.dateRequired')]"
-									  v-bind="props"></v-text-field>
-					</template>
-					<v-date-picker v-model="internalDate"
-								   @update:model-value="updateDate"></v-date-picker>
-				</v-menu>
-			</v-col>
+		<div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+			<ui-input v-model="formData.date"
+					  type="date"
+					  :label="$t('forms.workLog.date')"
+					  :icon="Calendar"
+					  :rules="[v => !!v || $t('forms.workLog.dateRequired')]" />
 
-			<v-col cols="12"
-				   md="4">
-				<v-menu v-model="startTimeMenu"
-						:close-on-content-click="false"
-						transition="scale-transition"
-						offset-y
-						min-width="auto">
-					<template v-slot:activator="{ props }">
-						<v-text-field v-model="formData.start_time"
-									  :label="$t('forms.workLog.startTime')"
-									  prepend-icon="mdi-clock-start"
-									  readonly
-									  :rules="[v => !!v || $t('forms.workLog.startTimeRequired')]"
-									  v-bind="props"></v-text-field>
-					</template>
-					<v-time-picker v-model="formData.start_time"
-								   format="24hr"
-								   @click:minute="startTimeMenu = false"></v-time-picker>
-				</v-menu>
-			</v-col>
+			<ui-input v-model="formData.start_time"
+					  type="time"
+					  :label="$t('forms.workLog.startTime')"
+					  :icon="Clock"
+					  :rules="[v => !!v || $t('forms.workLog.startTimeRequired')]" />
 
-			<v-col cols="12"
-				   md="4">
-				<v-menu v-model="endTimeMenu"
-						:close-on-content-click="false"
-						transition="scale-transition"
-						offset-y
-						min-width="auto">
-					<template v-slot:activator="{ props }">
-						<v-text-field v-model="formData.end_time"
-									  :label="$t('forms.workLog.endTime')"
-									  prepend-icon="mdi-clock-end"
-									  readonly
-									  :rules="[v => !!v || $t('forms.workLog.endTimeRequired')]"
-									  v-bind="props"></v-text-field>
-					</template>
-					<v-time-picker v-model="formData.end_time"
-								   format="24hr"
-								   @click:minute="endTimeMenu = false"></v-time-picker>
-				</v-menu>
-			</v-col>
+			<ui-input v-model="formData.end_time"
+					  type="time"
+					  :label="$t('forms.workLog.endTime')"
+					  :icon="Clock"
+					  :rules="[v => !!v || $t('forms.workLog.endTimeRequired')]" />
+		</div>
 
-			<v-col cols="12"
-				   md="6" v-if="isAdmin">
-				<v-text-field v-model="formData.hourly_rate"
-							  :label="$t('forms.workLog.hourlyRate')"
-							  type="number"
-							  prepend-icon="mdi-cash"
-							  :disabled="isNewWorkLog && formData.user_id"
-							  :hint="$t('forms.workLog.hourlyRateHint')"></v-text-field>
-			</v-col>
+		<div v-if="isAdmin" class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+			<ui-input v-model="formData.hourly_rate"
+					  :label="$t('forms.workLog.hourlyRate')"
+					  type="number"
+					  :icon="Banknote"
+					  :disabled="!!(isNewWorkLog && formData.user_id)"
+					  :hint="$t('forms.workLog.hourlyRateHint')" />
+		</div>
 
-			<v-col cols="12">
-				<v-textarea v-model="formData.description"
-							:label="$t('forms.workLog.description')"
-							prepend-icon="mdi-text"
-							:rules="[v => !!v || $t('forms.workLog.descriptionRequired')]"
-							counter
-							:maxlength="1500"
-							rows="4"
-							auto-grow></v-textarea>
-				<v-btn v-if="aiEnabled"
-					   class="mt-2 ml-9"
-					   variant="tonal"
-					   color="primary"
-					   size="small"
-					   prepend-icon="mdi-creation"
+		<div class="mt-4">
+			<ui-textarea v-model="formData.description"
+						 :label="$t('forms.workLog.description')"
+						 :rules="[v => !!v || $t('forms.workLog.descriptionRequired')]"
+						 :maxlength="1500"
+						 rows="4" />
+			<p class="mt-1 text-right font-mono text-xs text-bone-700 tnum">
+				{{ (formData.description || '').length }} / 1500
+			</p>
+			<ui-button v-if="aiEnabled"
+					   class="mt-1"
+					   variant="brass-ghost"
+					   size="sm"
+					   :icon="Sparkles"
 					   :loading="generatingAi"
 					   :disabled="!formData.description"
 					   @click="generateDescription">
-					{{ $t('forms.workLog.generateWithAi') }}
-				</v-btn>
-			</v-col>
+				{{ $t('forms.workLog.generateWithAi') }}
+			</ui-button>
+		</div>
 
-			<v-col cols="12">
-				<v-checkbox v-model="formData.billable"
-							:true-value="1"
-							:false-value="0"
-							:label="$t('forms.workLog.billable')"
-							color="primary"></v-checkbox>
-			</v-col>
-		</v-row>
-	</v-form>
+		<div class="mt-4">
+			<ui-checkbox :model-value="!!formData.billable"
+						 :label="$t('forms.workLog.billable')"
+						 @update:model-value="formData.billable = $event ? 1 : 0" />
+		</div>
+	</ui-form>
 </template>
 
 <script>
@@ -148,6 +90,7 @@ import { mapState, mapActions } from 'pinia'
 import { store } from '../../store'
 import { formatDate } from '../../utils/formatters';
 import axios from 'axios'
+import { Calendar, Clock, Banknote, Sparkles } from 'lucide-vue-next';
 
 export default {
 	name: 'WorkLogForm',
@@ -162,12 +105,12 @@ export default {
 		}
 	},
 
+	setup() {
+		return { Calendar, Clock, Banknote, Sparkles };
+	},
+
 	data() {
 		return {
-			dateMenu: false,
-			startTimeMenu: false,
-			endTimeMenu: false,
-			internalDate: null,
 			formData: {
 				date: new Date().toISOString().substr(0, 10),
 				project_id: null,
@@ -191,7 +134,7 @@ export default {
 
 	computed: {
 		...mapState(store, ['user', 'settings']),
-		
+
 		formattedDate() {
 			if (!this.formData.date) return '';
 			// Display the date in the user's preferred format
@@ -208,20 +151,19 @@ export default {
 			if (this.workLog.project && this.workLog.project.customer_id) {
 				this.selectedCustomer = this.workLog.project.customer_id;
 			}
-			// Initialize the internal date for the date picker with a Date object
-			if (this.workLog.date) {
-				this.internalDate = new Date(this.workLog.date);
+			// Native date input needs a plain YYYY-MM-DD string
+			// (previously a Date object was fed into v-date-picker)
+			if (this.formData.date) {
+				this.formData.date = String(this.formData.date).slice(0, 10);
 			}
 		} else {
 			// For new work logs, set the user_id to the authenticated user
 			this.formData.user_id = this.user?.id;
-			// Initialize internal date to today for new work logs
-			this.internalDate = new Date();
 		}
 		this.fetchCustomers();
 		this.checkAiEnabled();
 		this.filteredProjects = [...this.projects];
-		
+
 		// If editing a work log with a project, populate the project users
 		if (this.workLog && this.workLog.project_id) {
 			this.updateProjectDetails();
@@ -313,20 +255,6 @@ export default {
 					this.formData.hourly_rate = selectedUser.hourly_rate;
 				}
 			}
-		},
-
-		updateDate(date) {
-			// Convert Date object to ISO string format (YYYY-MM-DD)
-			if (date instanceof Date) {
-				const year = date.getFullYear();
-				const month = String(date.getMonth() + 1).padStart(2, '0');
-				const day = String(date.getDate()).padStart(2, '0');
-				this.formData.date = `${year}-${month}-${day}`;
-			} else if (typeof date === 'string') {
-				// Already a string, store as is
-				this.formData.date = date;
-			}
-			this.dateMenu = false;
 		},
 
 		async submit() {

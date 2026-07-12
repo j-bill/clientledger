@@ -1,833 +1,669 @@
 <template>
-	<v-container fluid class="profile-container">
+	<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
 		<!-- Hero Section with Profile Picture -->
-		<v-row>
-			<v-col cols="12">
-				<v-card class="profile-hero" elevation="0">
-					<div class="hero-gradient"></div>
-					<v-card-text class="text-center position-relative">
-						<div class="avatar-wrapper">
-							<v-avatar 
-								size="150" 
-								class="profile-avatar elevation-8"
-								@click="triggerFileInput"
-								style="cursor: pointer;"
-							>
-								<v-img 
-									v-if="profile.avatar" 
-									:src="profile.avatar"
-									cover
-								></v-img>
-								<v-icon v-else size="80" color="white">mdi-account-circle</v-icon>
-								<div class="avatar-overlay">
-									<v-icon color="white">mdi-camera</v-icon>
-								</div>
-							</v-avatar>
-							<input 
-								ref="fileInput" 
-								type="file" 
-								accept="image/*" 
-								style="display: none" 
-								@change="onFileSelected"
-							/>
-						</div>
-						<h2 class="text-h4 font-weight-bold mt-6 text-white">{{ profile.name || $t('pages.profile.yourName') }}</h2>
-						<p class="text-subtitle-1 text-white mb-0">{{ profile.email }}</p>
-						<v-chip 
-							v-if="profile.email_verified_at" 
-							color="success" 
-							size="small" 
-							class="mt-2"
-						>
-							<v-icon start size="small">mdi-check-circle</v-icon>
-							{{ $t('pages.profile.verified') }}
-						</v-chip>
-					</v-card-text>
-				</v-card>
-			</v-col>
-		</v-row>
+		<ui-card>
+			<div class="flex flex-col items-center py-4 text-center">
+				<button type="button" class="group relative rounded-full" @click="triggerFileInput">
+					<ui-avatar :name="profile.name" :image="profile.avatar || ''" :size="112">
+						<User class="h-12 w-12 text-bone-500" />
+					</ui-avatar>
+					<span class="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+						<Camera class="h-6 w-6 text-bone-100" />
+					</span>
+				</button>
+				<input
+					ref="fileInput"
+					type="file"
+					accept="image/*"
+					class="hidden"
+					@change="onFileSelected"
+				/>
+				<h1 class="mt-4 text-2xl font-semibold tracking-tight text-bone-100">{{ profile.name || $t('pages.profile.yourName') }}</h1>
+				<p class="mt-1 text-sm text-bone-500">{{ profile.email }}</p>
+				<ui-chip
+					v-if="profile.email_verified_at"
+					color="success"
+					:icon="CircleCheck"
+					:text="$t('pages.profile.verified')"
+					class="mt-3"
+				/>
+			</div>
+		</ui-card>
 
 		<!-- Statistics Cards -->
-		<v-row v-if="statistics" class="mt-2">
-			<v-col cols="12" sm="6" md="3">
-				<v-card class="stat-card" elevation="2">
-					<v-card-text class="text-center pa-6">
-						<v-icon size="40" color="primary" class="mb-3">mdi-briefcase-clock</v-icon>
-						<div class="text-h4 font-weight-bold">{{ statistics.total_work_logs || 0 }}</div>
-						<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.workSessions') }}</div>
-					</v-card-text>
-				</v-card>
-			</v-col>
-			
-			<v-col cols="12" sm="6" md="3">
-				<v-card class="stat-card" elevation="2">
-					<v-card-text class="text-center pa-6">
-						<v-icon size="40" color="success" class="mb-3">mdi-clock-outline</v-icon>
-						<div class="text-h4 font-weight-bold">{{ formatHours(statistics.total_hours) }}</div>
-						<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.hoursTracked') }}</div>
-					</v-card-text>
-				</v-card>
-			</v-col>
-			
-			<v-col cols="12" sm="6" md="3">
-				<v-card class="stat-card" elevation="2">
-					<v-card-text class="text-center pa-6">
-						<v-icon size="40" color="info" class="mb-3">mdi-cash-multiple</v-icon>
-						<div class="text-h4 font-weight-bold">{{ formatMoney(statistics.total_earnings) }}</div>
-						<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.totalEarned') }}</div>
-					</v-card-text>
-				</v-card>
-			</v-col>
-			
-			<v-col cols="12" sm="6" md="3">
-				<v-card class="stat-card" elevation="2">
-					<v-card-text class="text-center pa-6">
-						<v-icon size="40" color="warning" class="mb-3">mdi-folder-multiple</v-icon>
-						<div class="text-h4 font-weight-bold">{{ statistics.active_projects || 0 }}</div>
-						<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.activeProjects') }}</div>
-					</v-card-text>
-				</v-card>
-			</v-col>
-		</v-row>
+		<div v-if="statistics" class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+			<ui-card>
+				<div class="flex flex-col items-center py-2 text-center">
+					<Briefcase class="mb-3 h-6 w-6 text-bone-500" />
+					<div class="tnum text-2xl font-semibold text-bone-100">{{ statistics.total_work_logs || 0 }}</div>
+					<div class="mt-1 text-xs text-bone-500">{{ $t('pages.profile.workSessions') }}</div>
+				</div>
+			</ui-card>
+
+			<ui-card>
+				<div class="flex flex-col items-center py-2 text-center">
+					<Clock class="mb-3 h-6 w-6 text-bone-500" />
+					<div class="tnum text-2xl font-semibold text-bone-100">{{ formatHours(statistics.total_hours) }}</div>
+					<div class="mt-1 text-xs text-bone-500">{{ $t('pages.profile.hoursTracked') }}</div>
+				</div>
+			</ui-card>
+
+			<ui-card>
+				<div class="flex flex-col items-center py-2 text-center">
+					<Banknote class="mb-3 h-6 w-6 text-bone-500" />
+					<div class="tnum text-2xl font-semibold text-bone-100">{{ formatMoney(statistics.total_earnings) }}</div>
+					<div class="mt-1 text-xs text-bone-500">{{ $t('pages.profile.totalEarned') }}</div>
+				</div>
+			</ui-card>
+
+			<ui-card>
+				<div class="flex flex-col items-center py-2 text-center">
+					<Folders class="mb-3 h-6 w-6 text-bone-500" />
+					<div class="tnum text-2xl font-semibold text-bone-100">{{ statistics.active_projects || 0 }}</div>
+					<div class="mt-1 text-xs text-bone-500">{{ $t('pages.profile.activeProjects') }}</div>
+				</div>
+			</ui-card>
+		</div>
 
 		<!-- Main Content Tabs -->
-		<v-row class="mt-2">
-			<v-col cols="12">
-				<v-card elevation="2">
-					<v-tabs v-model="tab" bg-color="primary" dark>
-						<v-tab value="personal">
-							<v-icon start>mdi-account-edit</v-icon>
-							{{ $t('pages.profile.personalInfo') }}
-						</v-tab>
-						<v-tab value="security">
-							<v-icon start>mdi-shield-lock</v-icon>
-							{{ $t('pages.profile.security') }}
-						</v-tab>
-						<v-tab value="activity">
-							<v-icon start>mdi-history</v-icon>
-							{{ $t('pages.profile.activity') }}
-						</v-tab>
-						<v-tab value="info">
-							<v-icon start>mdi-information</v-icon>
-							Info & Legal
-						</v-tab>
-					</v-tabs>
+		<ui-card dense class="mt-4">
+			<ui-tabs v-model="tab" :tabs="profileTabs" class="px-3" />
 
-					<v-card-text class="pa-8">
-						<v-window v-model="tab">
-							<!-- Personal Information Tab -->
-							<v-window-item value="personal">
-								<v-form ref="form" v-model="valid">
-									<v-row>
-										<v-col cols="12" md="6">
-											<div class="text-h6 mb-4 d-flex align-center">
-												<v-icon class="mr-2" color="primary">mdi-account</v-icon>
-												{{ $t('pages.profile.basicInformation') }}
-											</div>
-											<v-text-field
-												v-model="profile.name"
-												:label="$t('pages.profile.fullName')"
-												variant="outlined"
-												prepend-inner-icon="mdi-account"
-												:rules="[rules.required]"
-												density="comfortable"
-											></v-text-field>
+			<div class="p-6 sm:p-8">
+				<!-- Personal Information Tab -->
+				<div v-if="tab === 'personal'">
+					<ui-form ref="form">
+						<div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+							<div>
+								<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+									<User class="h-4 w-4 text-bone-500" />
+									{{ $t('pages.profile.basicInformation') }}
+								</div>
+								<div class="space-y-4">
+									<ui-input
+										v-model="profile.name"
+										:label="$t('pages.profile.fullName')"
+										:icon="User"
+										:rules="[rules.required]"
+									/>
 
-											<v-text-field
-												v-model="profile.email"
-												:label="$t('pages.profile.emailAddress')"
-												variant="outlined"
-												prepend-inner-icon="mdi-email"
-												:rules="[rules.required, rules.email]"
-												density="comfortable"
-											></v-text-field>
+									<ui-input
+										v-model="profile.email"
+										:label="$t('pages.profile.emailAddress')"
+										:icon="Mail"
+										:rules="[rules.required, rules.email]"
+									/>
 
-											<v-switch
-												v-model="profile.notify_on_project_assignment"
-												color="primary"
-												density="comfortable"
-												hide-details
-											>
-												<template v-slot:label>
-													<div>
-														<div class="text-body-2 font-weight-medium">{{ $t('pages.profile.projectNotifications') }}</div>
-														<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.projectNotificationsHint') }}</div>
-													</div>
-												</template>
-											</v-switch>
-										</v-col>
+									<ui-switch
+										v-model="profile.notify_on_project_assignment"
+										:label="$t('pages.profile.projectNotifications')"
+										:hint="$t('pages.profile.projectNotificationsHint')"
+									/>
+								</div>
+							</div>
 
-										<v-col cols="12" md="6">
-											<div class="text-h6 mb-4 d-flex align-center">
-												<v-icon class="mr-2" color="primary">mdi-information</v-icon>
-												{{ $t('pages.profile.accountDetails') }}
-											</div>
-											<v-card variant="outlined" class="pa-4">
-												<v-list density="compact" bg-color="transparent">
-													<v-list-item>
-														<template v-slot:prepend>
-															<v-icon color="primary">mdi-calendar-check</v-icon>
-														</template>
-														<v-list-item-title class="text-caption text-medium-emphasis">{{ $t('pages.profile.memberSince') }}</v-list-item-title>
-														<v-list-item-subtitle class="text-body-2 font-weight-medium">
-															{{ formatDate(profile.created_at) }}
-														</v-list-item-subtitle>
-													</v-list-item>
-													
-													<v-divider class="my-2"></v-divider>
-													
-													<v-list-item>
-														<template v-slot:prepend>
-															<v-icon color="info">mdi-update</v-icon>
-														</template>
-														<v-list-item-title class="text-caption text-medium-emphasis">{{ $t('pages.profile.lastUpdated') }}</v-list-item-title>
-														<v-list-item-subtitle class="text-body-2 font-weight-medium">
-															{{ formatDate(profile.updated_at) }}
-														</v-list-item-subtitle>
-													</v-list-item>
-													
-													<v-divider class="my-2"></v-divider>
-													
-													<v-list-item>
-														<template v-slot:prepend>
-															<v-icon :color="profile.email_verified_at ? 'success' : 'warning'">
-																{{ profile.email_verified_at ? 'mdi-check-decagram' : 'mdi-alert-circle' }}
-															</v-icon>
-														</template>
-														<v-list-item-title class="text-caption text-medium-emphasis">{{ $t('pages.profile.emailStatus') }}</v-list-item-title>
-														<v-list-item-subtitle class="text-body-2 font-weight-medium">
-															{{ profile.email_verified_at ? $t('pages.profile.verified') : $t('pages.profile.notVerified') }}
-														</v-list-item-subtitle>
-													</v-list-item>
-												</v-list>
-											</v-card>
-										</v-col>
-									</v-row>
-
-									<v-divider class="my-6"></v-divider>
-
-									<div class="d-flex justify-end">
-										<v-btn
-											variant="text"
-											@click="resetForm"
-											:disabled="loading"
-											class="mr-2"
-										>
-											{{ $t('common.cancel') }}
-										</v-btn>
-										<v-btn
-											color="primary"
-											@click="updateProfile"
-											:loading="loading"
-											:disabled="!valid"
-											size="large"
-										>
-											<v-icon start>mdi-content-save</v-icon>
-											{{ $t('pages.profile.saveChanges') }}
-										</v-btn>
+							<div>
+								<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+									<Info class="h-4 w-4 text-bone-500" />
+									{{ $t('pages.profile.accountDetails') }}
+								</div>
+								<div class="rounded-lg border border-ink-700/60 p-4">
+									<div class="flex items-start gap-3">
+										<Calendar class="mt-0.5 h-4 w-4 text-bone-500" />
+										<div>
+											<div class="font-mono text-[11px] uppercase tracking-[0.12em] text-bone-500">{{ $t('pages.profile.memberSince') }}</div>
+											<div class="tnum mt-0.5 text-sm text-bone-100">{{ formatDate(profile.created_at) }}</div>
+										</div>
 									</div>
-								</v-form>
-							</v-window-item>
 
-							<!-- Security Tab -->
-							<v-window-item value="security">
-								<!-- Password Section -->
-								<div class="text-h6 mb-4 d-flex align-center">
-									<v-icon class="mr-2" color="primary">mdi-lock-reset</v-icon>
-									{{ $t('pages.profile.changePassword') }}
-								</div>
-								
-								<v-row>
-									<v-col cols="12" md="12">
-										<v-text-field
-											v-model="passwordData.current_password"
-											:label="$t('pages.profile.currentPassword')"
-											variant="outlined"
-											prepend-inner-icon="mdi-lock"
-											:append-inner-icon="showCurrentPassword ? 'mdi-eye-off' : 'mdi-eye'"
-											:type="showCurrentPassword ? 'text' : 'password'"
-											@click:append-inner="showCurrentPassword = !showCurrentPassword"
-											density="comfortable"
-										></v-text-field>
+									<hr class="my-3 border-ink-700/60" />
 
-										<v-text-field
-											v-model="passwordData.new_password"
-											:label="$t('pages.profile.newPassword')"
-											variant="outlined"
-											prepend-inner-icon="mdi-lock-plus"
-											:append-inner-icon="showNewPassword ? 'mdi-eye-off' : 'mdi-eye'"
-											:type="showNewPassword ? 'text' : 'password'"
-											@click:append-inner="showNewPassword = !showNewPassword"
-											:rules="passwordData.new_password ? [rules.minLength] : []"
-											density="comfortable"
-										></v-text-field>
+									<div class="flex items-start gap-3">
+										<RefreshCw class="mt-0.5 h-4 w-4 text-bone-500" />
+										<div>
+											<div class="font-mono text-[11px] uppercase tracking-[0.12em] text-bone-500">{{ $t('pages.profile.lastUpdated') }}</div>
+											<div class="tnum mt-0.5 text-sm text-bone-100">{{ formatDate(profile.updated_at) }}</div>
+										</div>
+									</div>
 
-										<v-text-field
-											v-model="passwordData.new_password_confirmation"
-											:label="$t('pages.profile.confirmPassword')"
-											variant="outlined"
-											prepend-inner-icon="mdi-lock-check"
-											:append-inner-icon="showConfirmPassword ? 'mdi-eye-off' : 'mdi-eye'"
-											:type="showConfirmPassword ? 'text' : 'password'"
-											@click:append-inner="showConfirmPassword = !showConfirmPassword"
-											:rules="passwordData.new_password ? [rules.passwordMatch] : []"
-											density="comfortable"
-										></v-text-field>
+									<hr class="my-3 border-ink-700/60" />
 
-										<v-alert
-											type="info"
-											variant="tonal"
-											density="compact"
-											class="mb-4"
-										>
-											<strong>{{ $t('pages.profile.passwordRequirements') }}:</strong> {{ $t('pages.profile.passwordRequirementsText') }} 
-											{{ $t('pages.profile.passwordAdvice') }}
-										</v-alert>
-
-										<v-btn
-											color="primary"
-											@click="updateProfile"
-											:loading="loading"
-											:disabled="!passwordData.current_password || !passwordData.new_password"
-											size="large"
-											class="mt-4"
-										>
-											<v-icon start>mdi-shield-check</v-icon>
-											{{ $t('pages.profile.updatePassword') }}
-										</v-btn>
-									</v-col>
-								</v-row>
-
-								<v-divider class="my-8"></v-divider>
-
-								<!-- 2FA Section -->
-								<div class="text-h6 mb-4 d-flex align-center">
-									<v-icon class="mr-2" color="primary">mdi-shield-lock</v-icon>
-									{{ $t('pages.profile.twoFactorAuthentication') }}
-								</div>
-
-								<v-row>
-									<v-col cols="12" md="12">
-										<v-card variant="outlined" class="pa-4">
-											<div class="d-flex align-center justify-space-between mb-4">
-												<div class="d-flex align-center">
-													<v-icon 
-														:color="twoFactorStatus.enabled ? 'success' : 'warning'" 
-														size="large" 
-														class="mr-3"
-													>
-														{{ twoFactorStatus.enabled ? 'mdi-shield-check' : 'mdi-shield-alert' }}
-													</v-icon>
-													<div>
-														<div class="text-subtitle-1 font-weight-bold">
-															{{ twoFactorStatus.enabled ? $t('pages.profile.twoFactorEnabled') : $t('pages.profile.twoFactorDisabled') }}
-														</div>
-														<div class="text-caption text-medium-emphasis">
-															{{ twoFactorStatus.enabled 
-																? $t('pages.profile.twoFactorEnabledHint') 
-																: $t('pages.profile.twoFactorDisabledHint') 
-															}}
-														</div>
-													</div>
-												</div>
-												<v-chip 
-													:color="twoFactorStatus.enabled ? 'success' : 'warning'" 
-													size="small"
-												>
-													{{ twoFactorStatus.enabled ? $t('pages.profile.twoFactorActive') : $t('pages.profile.twoFactorInactive') }}
-												</v-chip>
+									<div class="flex items-start gap-3">
+										<component
+											:is="profile.email_verified_at ? ShieldCheck : TriangleAlert"
+											class="mt-0.5 h-4 w-4"
+											:class="profile.email_verified_at ? 'text-sage-400' : 'text-ochre-400'"
+										/>
+										<div>
+											<div class="font-mono text-[11px] uppercase tracking-[0.12em] text-bone-500">{{ $t('pages.profile.emailStatus') }}</div>
+											<div class="mt-0.5 text-sm text-bone-100">
+												{{ profile.email_verified_at ? $t('pages.profile.verified') : $t('pages.profile.notVerified') }}
 											</div>
-
-											<v-divider class="mb-4"></v-divider>
-
-											<!-- When 2FA is enabled -->
-											<div v-if="twoFactorStatus.enabled">
-												<v-alert type="success" variant="tonal" density="compact" class="mb-4">
-													{{ $t('pages.profile.twoFactorAlertText') }}
-												</v-alert>
-
-												<!-- 2FA Management Actions -->
-												<div class="d-flex gap-2 mb-6">
-													<v-btn 
-														variant="outlined" 
-														color="warning"
-														prepend-icon="mdi-refresh"
-														@click="reset2FADialog = true"
-														:loading="resetting2FA"
-													>
-														{{ $t('pages.profile.reset2FA') }}
-													</v-btn>
-												</div>
-
-												<v-divider class="mb-4"></v-divider>
-
-												<!-- Trusted Devices Section -->
-												<div class="mb-6">
-													<div class="d-flex align-center justify-space-between mb-3">
-														<div>
-															<div class="text-subtitle-1 font-weight-bold">{{ $t('pages.profile.trustedDevices') }}</div>
-															<div class="text-caption text-medium-emphasis">{{ twoFactorStatus.trusted_devices_count }} {{ $t('pages.profile.devicesTrusted') }}</div>
-														</div>
-														<v-btn 
-															variant="outlined" 
-															size="small"
-															prepend-icon="mdi-refresh"
-															@click="fetchTrustedDevices"
-															:loading="loadingDevices"
-														>
-															{{ $t('pages.profile.refreshDevices') }}
-														</v-btn>
-													</div>
-
-													<v-card variant="outlined" class="mb-4">
-													<v-card-text v-if="loadingDevices" class="text-center py-8">
-														<v-progress-circular indeterminate color="primary"></v-progress-circular>
-														<div class="text-caption text-medium-emphasis mt-2">{{ $t('pages.profile.loadingDevices') }}</div>
-													</v-card-text>														<v-card-text v-else-if="trustedDevices.length === 0" class="text-center py-8">
-														<v-icon size="48" color="grey-lighten-1" class="mb-2">mdi-devices-off</v-icon>
-														<div class="text-body-2 text-medium-emphasis">{{ $t('pages.profile.noDevicesFound') }}</div>
-													</v-card-text>														<v-list v-else density="compact">
-															<template v-for="(device, index) in trustedDevices" :key="device.fingerprint">
-																<v-list-item>
-																	<template v-slot:prepend>
-																		<v-icon :color="device.is_current ? 'primary' : 'grey'">
-																			{{ getDeviceIcon(device.user_agent) }}
-																		</v-icon>
-																	</template>
-
-																	<v-list-item-title>
-																		{{ formatUserAgent(device.user_agent) }}
-																		<v-chip 
-																			v-if="device.is_current" 
-																			size="x-small" 
-																			color="primary" 
-																			class="ml-2"
-																		>
-																			{{ $t('pages.profile.currentDevice') }}
-																		</v-chip>
-																	</v-list-item-title>
-
-																	<v-list-item-subtitle class="mt-1">
-																		<div class="text-caption">
-																			<v-icon size="12" class="mr-1">mdi-clock-plus-outline</v-icon>
-																			{{ $t('pages.profile.addedAt') }} {{ device.added_at_human }}
-																		</div>
-																		<div class="text-caption">
-																			<v-icon size="12" class="mr-1">mdi-clock-alert-outline</v-icon>
-																			{{ $t('pages.profile.expires') }} {{ device.expires_at_human }}
-																		</div>
-																	</v-list-item-subtitle>
-
-																	<template v-slot:append>
-																		<v-btn
-																			v-if="!device.is_current"
-																			icon="mdi-delete"
-																			size="small"
-																			variant="text"
-																			color="error"
-																			@click="removeDevice(device.fingerprint)"
-																			:loading="removingDevice === device.fingerprint"
-																		></v-btn>
-																		<v-tooltip v-else location="left">
-																			<template v-slot:activator="{ props }">
-																				<v-icon v-bind="props" size="small" color="grey">mdi-lock</v-icon>
-																			</template>
-																			<span>{{ $t('pages.profile.cannotRemoveCurrentDevice') }}</span>
-																		</v-tooltip>
-																	</template>
-																</v-list-item>
-																<v-divider v-if="index < trustedDevices.length - 1"></v-divider>
-															</template>
-														</v-list>
-													</v-card>
-												</div>
-
-												<!-- Recovery Codes Section -->
-												<div class="mb-6">
-													<div class="d-flex align-center justify-space-between mb-3">
-														<div>
-															<div class="text-subtitle-1 font-weight-bold">{{ $t('pages.profile.recoveryCodes') }}</div>
-															<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.recoveryCodesHint') }}</div>
-														</div>
-													</div>
-
-													<v-card variant="outlined">
-														<v-card-text>
-															<div v-if="!showingRecoveryCodes" class="text-center py-4">
-																<v-icon size="48" color="warning" class="mb-2">mdi-shield-key</v-icon>
-																<div class="text-body-2 text-medium-emphasis mb-4">
-																	{{ $t('pages.profile.recoveryCodesHidden') }}
-																</div>
-																<div class="d-flex justify-center gap-2">
-																	<v-btn 
-																		variant="outlined" 
-																		prepend-icon="mdi-eye"
-																		@click="fetchRecoveryCodes"
-																		:loading="loadingRecoveryCodes"
-																	>
-																		{{ $t('pages.profile.viewCodes') }}
-																	</v-btn>
-																	<v-btn 
-																		variant="outlined" 
-																		color="warning"
-																		prepend-icon="mdi-refresh"
-																		@click="regenerateCodesDialog = true"
-																		:loading="loadingRecoveryCodes"
-																	>
-																		{{ $t('pages.profile.regenerate') }}
-																	</v-btn>
-																</div>
-															</div>
-
-															<div v-else>
-																<v-alert type="warning" variant="tonal" density="compact" class="mb-4">
-																	<strong>{{ $t('pages.profile.saveTheseCodes') }}</strong> {{ $t('pages.profile.recoveryCodesWarning') }}
-																</v-alert>
-
-																<div class="recovery-codes-grid mb-4">
-																	<v-card
-																		v-for="(code, index) in recoveryCodes"
-																		:key="index"
-																		variant="outlined"
-																		class="pa-3 text-center"
-																	>
-																		<code class="text-body-2 font-weight-bold">{{ code }}</code>
-																	</v-card>
-																</div>
-
-																<div class="d-flex justify-center gap-2">
-																	<v-btn 
-																		variant="outlined"
-																		prepend-icon="mdi-content-copy"
-																		@click="copyRecoveryCodes"
-																	>
-																		{{ $t('pages.profile.copyAll') }}
-																	</v-btn>
-																	<v-btn 
-																		variant="outlined"
-																		prepend-icon="mdi-download"
-																		@click="downloadRecoveryCodes"
-																	>
-																		{{ $t('common.download') }}
-																	</v-btn>
-																	<v-btn 
-																		variant="text"
-																		prepend-icon="mdi-eye-off"
-																		@click="hideRecoveryCodes"
-																	>
-																		<v-icon end>mdi-eye-off</v-icon>
-																	</v-btn>
-																</div>
-															</div>
-														</v-card-text>
-													</v-card>
-												</div>
-											</div>
-
-											<!-- When 2FA is disabled -->
-											<div v-else>
-												<v-alert type="warning" variant="tonal" density="compact" class="mb-4">
-													{{ $t('pages.profile.twoFactorDisabledAlert') }}
-												</v-alert>
-
-												<v-btn 
-													color="primary"
-													prepend-icon="mdi-shield-plus"
-													@click="$router.push('/2fa/setup')"
-												>
-													{{ $t('pages.profile.enable2FA') }}
-												</v-btn>
-											</div>
-										</v-card>
-									</v-col>
-								</v-row>
-							</v-window-item>
-
-							<!-- Activity Tab -->
-							<v-window-item value="activity">
-								<div class="text-h6 mb-4 d-flex align-center">
-									<v-icon class="mr-2" color="primary">mdi-chart-timeline-variant</v-icon>
-									{{ $t('pages.profile.yourActivity') }}
+										</div>
+									</div>
 								</div>
-								
-								<v-row v-if="statistics">
-									<!-- Activity Heatmap -->
-									<v-col cols="12">
-										<v-card variant="outlined">
-											<v-card-text>
-												<div class="d-flex align-center justify-space-between mb-4">
-													<div>
-														<div class="text-h6 font-weight-bold">{{ $t('pages.profile.activityHeatmap') }}</div>
-														<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.activityHeatmapHint') }}</div>
-													</div>
-													<div class="d-flex align-center gap-2">
-														<div class="heatmap-legend">
-															<div class="heatmap-cell legend-0"></div>
-															<div class="heatmap-cell legend-1"></div>
-															<div class="heatmap-cell legend-2"></div>
-															<div class="heatmap-cell legend-3"></div>
-															<div class="heatmap-cell legend-4"></div>
-														</div>
-													</div>
-												</div>
+							</div>
+						</div>
 
-												<div class="heatmap-container">
-													<div class="heatmap-wrapper">
-														<!-- Month labels -->
-														<div class="heatmap-months">
-															<div v-for="month in visibleMonths" :key="month.name" :style="{ gridColumn: `span ${month.weeks}` }" class="month-label">
-																{{ month.name }}
-															</div>
-														</div>
+						<hr class="my-6 border-ink-700/60" />
 
-														<!-- Day labels -->
-														<div class="heatmap-days">
-															<div class="day-label">{{ weekdaysArray[1] }}</div>
-															<div class="day-label"></div>
-															<div class="day-label">{{ weekdaysArray[3] }}</div>
-															<div class="day-label"></div>
-															<div class="day-label">{{ weekdaysArray[5] }}</div>
-															<div class="day-label"></div>
-															<div class="day-label"></div>
-														</div>
+						<div class="flex justify-end gap-2">
+							<ui-button variant="ghost" :disabled="loading" @click="resetForm">
+								{{ $t('common.cancel') }}
+							</ui-button>
+							<ui-button variant="primary" :loading="loading" @click="updateProfile">
+								{{ $t('pages.profile.saveChanges') }}
+							</ui-button>
+						</div>
+					</ui-form>
+				</div>
 
-														<!-- Heatmap grid -->
-														<div class="heatmap-grid">
-															<div
-																v-for="(day, index) in heatmapData"
-																:key="index"
-																class="heatmap-cell"
-																:class="getHeatmapClass(day.count)"
-															></div>
-														</div>
-													</div>
-												</div>
-											</v-card-text>
-										</v-card>
-									</v-col>
-								</v-row>
+				<!-- Security Tab -->
+				<div v-if="tab === 'security'">
+					<!-- Password Section -->
+					<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+						<Lock class="h-4 w-4 text-bone-500" />
+						{{ $t('pages.profile.changePassword') }}
+					</div>
 
-								<v-alert
-									v-else
-									type="info"
-									variant="tonal"
-									class="mt-4"
+					<div class="max-w-xl space-y-4">
+						<div class="flex items-end gap-2">
+							<ui-input
+								v-model="passwordData.current_password"
+								:label="$t('pages.profile.currentPassword')"
+								:icon="Lock"
+								:type="showCurrentPassword ? 'text' : 'password'"
+								wrapper-class="flex-1"
+							/>
+							<ui-button
+								variant="ghost"
+								:icon="showCurrentPassword ? EyeOff : Eye"
+								@click="showCurrentPassword = !showCurrentPassword"
+							/>
+						</div>
+
+						<div class="flex items-end gap-2">
+							<ui-input
+								v-model="passwordData.new_password"
+								:label="$t('pages.profile.newPassword')"
+								:icon="Lock"
+								:type="showNewPassword ? 'text' : 'password'"
+								:rules="passwordData.new_password ? [rules.minLength] : []"
+								wrapper-class="flex-1"
+							/>
+							<ui-button
+								variant="ghost"
+								:icon="showNewPassword ? EyeOff : Eye"
+								@click="showNewPassword = !showNewPassword"
+							/>
+						</div>
+
+						<div class="flex items-end gap-2">
+							<ui-input
+								v-model="passwordData.new_password_confirmation"
+								:label="$t('pages.profile.confirmPassword')"
+								:icon="Lock"
+								:type="showConfirmPassword ? 'text' : 'password'"
+								:rules="passwordData.new_password ? [rules.passwordMatch] : []"
+								wrapper-class="flex-1"
+							/>
+							<ui-button
+								variant="ghost"
+								:icon="showConfirmPassword ? EyeOff : Eye"
+								@click="showConfirmPassword = !showConfirmPassword"
+							/>
+						</div>
+
+						<ui-alert type="info" :title="$t('pages.profile.passwordRequirements')">
+							{{ $t('pages.profile.passwordRequirementsText') }}
+							{{ $t('pages.profile.passwordAdvice') }}
+						</ui-alert>
+
+						<ui-button
+							variant="primary"
+							:icon="ShieldCheck"
+							:loading="loading"
+							:disabled="!passwordData.current_password || !passwordData.new_password"
+							class="mt-2"
+							@click="updateProfile"
+						>
+							{{ $t('pages.profile.updatePassword') }}
+						</ui-button>
+					</div>
+
+					<hr class="my-8 border-ink-700/60" />
+
+					<!-- 2FA Section -->
+					<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+						<ShieldCheck class="h-4 w-4 text-bone-500" />
+						{{ $t('pages.profile.twoFactorAuthentication') }}
+					</div>
+
+					<div class="rounded-lg border border-ink-700/60 p-4">
+						<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+							<div class="flex items-center gap-3">
+								<component
+									:is="twoFactorStatus.enabled ? ShieldCheck : ShieldAlert"
+									class="h-6 w-6 shrink-0"
+									:class="twoFactorStatus.enabled ? 'text-sage-400' : 'text-ochre-400'"
+								/>
+								<div>
+									<div class="text-sm font-semibold text-bone-100">
+										{{ twoFactorStatus.enabled ? $t('pages.profile.twoFactorEnabled') : $t('pages.profile.twoFactorDisabled') }}
+									</div>
+									<div class="text-xs text-bone-500">
+										{{ twoFactorStatus.enabled
+											? $t('pages.profile.twoFactorEnabledHint')
+											: $t('pages.profile.twoFactorDisabledHint')
+										}}
+									</div>
+								</div>
+							</div>
+							<ui-chip
+								:color="twoFactorStatus.enabled ? 'success' : 'warning'"
+								:text="twoFactorStatus.enabled ? $t('pages.profile.twoFactorActive') : $t('pages.profile.twoFactorInactive')"
+							/>
+						</div>
+
+						<hr class="mb-4 border-ink-700/60" />
+
+						<!-- When 2FA is enabled -->
+						<div v-if="twoFactorStatus.enabled">
+							<ui-alert type="success" class="mb-4">
+								{{ $t('pages.profile.twoFactorAlertText') }}
+							</ui-alert>
+
+							<!-- 2FA Management Actions -->
+							<div class="mb-6 flex gap-2">
+								<ui-button
+									variant="danger-ghost"
+									:icon="RefreshCw"
+									:loading="resetting2FA"
+									@click="reset2FADialog = true"
 								>
-									{{ $t('pages.profile.startTrackingTime') }}
-								</v-alert>
-							</v-window-item>
+									{{ $t('pages.profile.reset2FA') }}
+								</ui-button>
+							</div>
 
-							<!-- Info & Legal Tab -->
-							<v-window-item value="info">
-								<div class="text-h6 mb-4 d-flex align-center">
-									<v-icon class="mr-2" color="primary">mdi-information-outline</v-icon>
-									{{ $t('pages.profile.informationLegal') }}
-								</div>
-								
-								<v-row>
-									<v-col cols="12" md="6">
-										<v-card variant="outlined" class="info-card" hover @click="$router.push({ name: 'Privacy' })">
-											<v-card-text class="pa-6">
-												<div class="d-flex align-center mb-4">
-													<v-avatar color="primary" size="56" class="mr-4">
-														<v-icon size="32" color="white">mdi-shield-account</v-icon>
-													</v-avatar>
-													<div>
-														<div class="text-h6 font-weight-bold">{{ $t('pages.profile.privacyNotice') }}</div>
-														<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.privacyNoticeHint') }}</div>
-													</div>
-												</div>
-												<p class="text-body-2 mb-0">
-													{{ $t('pages.profile.privacyNoticeDescription') }}
-												</p>
-											</v-card-text>
-											<v-divider></v-divider>
-											<v-card-actions class="px-6 py-3">
-												<v-spacer></v-spacer>
-												<v-btn variant="text" color="primary">
-													{{ $t('pages.profile.readPrivacyNotice') }}
-													<v-icon end>mdi-arrow-right</v-icon>
-												</v-btn>
-											</v-card-actions>
-										</v-card>
-									</v-col>
+							<hr class="mb-4 border-ink-700/60" />
 
-									<v-col cols="12" md="6">
-										<v-card variant="outlined" class="info-card" hover @click="$router.push({ name: 'Imprint' })">
-											<v-card-text class="pa-6">
-												<div class="d-flex align-center mb-4">
-													<v-avatar color="secondary" size="56" class="mr-4">
-														<v-icon size="32" color="white">mdi-gavel</v-icon>
-													</v-avatar>
-													<div>
-														<div class="text-h6 font-weight-bold">{{ $t('pages.profile.imprint') }}</div>
-														<div class="text-caption text-medium-emphasis">{{ $t('pages.profile.imprintHint') }}</div>
-													</div>
-												</div>
-												<p class="text-body-2 mb-0">
-													{{ $t('pages.profile.imprintDescription') }}
-												</p>
-											</v-card-text>
-											<v-divider></v-divider>
-											<v-card-actions class="px-6 py-3">
-												<v-spacer></v-spacer>
-												<v-btn variant="text" color="secondary">
-													{{ $t('pages.profile.readImprint') }}
-													<v-icon end>mdi-arrow-right</v-icon>
-												</v-btn>
-											</v-card-actions>
-										</v-card>
-									</v-col>
-								</v-row>
-
-								<v-divider class="my-8"></v-divider>
-
-								<div class="text-h6 mb-4 d-flex align-center">
-									<v-icon class="mr-2" color="primary">mdi-help-circle-outline</v-icon>
-									{{ $t('pages.profile.applicationInformation') }}
+							<!-- Trusted Devices Section -->
+							<div class="mb-6">
+								<div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+									<div>
+										<div class="text-sm font-semibold text-bone-100">{{ $t('pages.profile.trustedDevices') }}</div>
+										<div class="text-xs text-bone-500"><span class="tnum">{{ twoFactorStatus.trusted_devices_count }}</span> {{ $t('pages.profile.devicesTrusted') }}</div>
+									</div>
+									<ui-button
+										variant="ghost"
+										size="sm"
+										:icon="RefreshCw"
+										:loading="loadingDevices"
+										@click="fetchTrustedDevices"
+									>
+										{{ $t('pages.profile.refreshDevices') }}
+									</ui-button>
 								</div>
 
-								<v-row>
-									<v-col cols="12">
-										<v-card variant="outlined">
-											<v-card-text class="pa-6">
-												<v-list density="compact" bg-color="transparent">
-													<v-list-item>
-														<template v-slot:prepend>
-															<v-icon color="primary">mdi-application</v-icon>
-														</template>
-														<v-list-item-title class="text-body-2 font-weight-medium">{{ $t('pages.profile.applicationName') }}</v-list-item-title>
-														<v-list-item-subtitle class="text-body-1">{{ $t('pages.profile.applicationNameValue') }}</v-list-item-subtitle>
-													</v-list-item>
+								<div class="rounded-lg border border-ink-700/60">
+									<div v-if="loadingDevices" class="py-8 text-center">
+										<div class="flex justify-center">
+											<ui-spinner :size="28" />
+										</div>
+										<div class="mt-2 text-xs text-bone-500">{{ $t('pages.profile.loadingDevices') }}</div>
+									</div>
+									<div v-else-if="trustedDevices.length === 0" class="py-8 text-center">
+										<MonitorSmartphone class="mx-auto mb-2 h-10 w-10 text-bone-700" />
+										<div class="text-sm text-bone-500">{{ $t('pages.profile.noDevicesFound') }}</div>
+									</div>
+									<ul v-else class="divide-y divide-ink-700/60">
+										<li
+											v-for="device in trustedDevices"
+											:key="device.fingerprint"
+											class="flex items-start gap-3 px-4 py-3"
+										>
+											<component
+												:is="getDeviceIcon(device.user_agent)"
+												class="mt-0.5 h-5 w-5 shrink-0"
+												:class="device.is_current ? 'text-brass-400' : 'text-bone-500'"
+											/>
 
-													<v-divider class="my-2"></v-divider>
+											<div class="min-w-0 flex-1">
+												<div class="flex flex-wrap items-center gap-2 text-sm text-bone-100">
+													{{ formatUserAgent(device.user_agent) }}
+													<ui-chip
+														v-if="device.is_current"
+														color="brass"
+														:text="$t('pages.profile.currentDevice')"
+													/>
+												</div>
+												<div class="mt-1 space-y-0.5 text-xs text-bone-500">
+													<div class="flex items-center gap-1.5">
+														<Clock class="h-3 w-3" />
+														{{ $t('pages.profile.addedAt') }} <span class="tnum">{{ device.added_at_human }}</span>
+													</div>
+													<div class="flex items-center gap-1.5">
+														<Clock class="h-3 w-3" />
+														{{ $t('pages.profile.expires') }} <span class="tnum">{{ device.expires_at_human }}</span>
+													</div>
+												</div>
+											</div>
 
-													<v-list-item>
-														<template v-slot:prepend>
-															<v-icon color="info">mdi-shield-check</v-icon>
-														</template>
-														<v-list-item-title class="text-body-2 font-weight-medium">{{ $t('pages.profile.securityTitle') }}</v-list-item-title>
-														<v-list-item-subtitle class="text-body-1">
-															{{ $t('pages.profile.securityDescription') }}
-														</v-list-item-subtitle>
-													</v-list-item>
+											<ui-button
+												v-if="!device.is_current"
+												variant="danger-ghost"
+												size="sm"
+												:icon="Trash2"
+												:loading="removingDevice === device.fingerprint"
+												@click="removeDevice(device.fingerprint)"
+											/>
+											<ui-tooltip v-else :text="$t('pages.profile.cannotRemoveCurrentDevice')">
+												<Lock class="mt-1 h-4 w-4 text-bone-700" />
+											</ui-tooltip>
+										</li>
+									</ul>
+								</div>
+							</div>
 
-													<v-divider class="my-2"></v-divider>
+							<!-- Recovery Codes Section -->
+							<div class="mb-2">
+								<div class="mb-3">
+									<div class="text-sm font-semibold text-bone-100">{{ $t('pages.profile.recoveryCodes') }}</div>
+									<div class="text-xs text-bone-500">{{ $t('pages.profile.recoveryCodesHint') }}</div>
+								</div>
 
-													<v-list-item>
-														<template v-slot:prepend>
-															<v-icon color="success">mdi-account-lock</v-icon>
-														</template>
-														<v-list-item-title class="text-body-2 font-weight-medium">{{ $t('pages.profile.accessTitle') }}</v-list-item-title>
-														<v-list-item-subtitle class="text-body-1">
-															{{ $t('pages.profile.accessDescription') }}
-														</v-list-item-subtitle>
-													</v-list-item>
-												</v-list>
-											</v-card-text>
-										</v-card>
-									</v-col>
-								</v-row>
-							</v-window-item>
-						</v-window>
-					</v-card-text>
-				</v-card>
-			</v-col>
-		</v-row>
+								<div class="rounded-lg border border-ink-700/60 p-4">
+									<div v-if="!showingRecoveryCodes" class="py-4 text-center">
+										<KeyRound class="mx-auto mb-2 h-10 w-10 text-bone-700" />
+										<div class="mb-4 text-sm text-bone-500">
+											{{ $t('pages.profile.recoveryCodesHidden') }}
+										</div>
+										<div class="flex flex-wrap justify-center gap-2">
+											<ui-button
+												variant="outline"
+												:icon="Eye"
+												:loading="loadingRecoveryCodes"
+												@click="fetchRecoveryCodes"
+											>
+												{{ $t('pages.profile.viewCodes') }}
+											</ui-button>
+											<ui-button
+												variant="danger-ghost"
+												:icon="RefreshCw"
+												:loading="loadingRecoveryCodes"
+												@click="regenerateCodesDialog = true"
+											>
+												{{ $t('pages.profile.regenerate') }}
+											</ui-button>
+										</div>
+									</div>
+
+									<div v-else>
+										<ui-alert type="warning" :title="$t('pages.profile.saveTheseCodes')" class="mb-4">
+											{{ $t('pages.profile.recoveryCodesWarning') }}
+										</ui-alert>
+
+										<div class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+											<div
+												v-for="(code, index) in recoveryCodes"
+												:key="index"
+												class="rounded-md border border-ink-700/60 bg-ink-850 px-3 py-2 text-center"
+											>
+												<code class="tnum text-sm text-bone-100">{{ code }}</code>
+											</div>
+										</div>
+
+										<div class="flex flex-wrap justify-center gap-2">
+											<ui-button variant="outline" :icon="Copy" @click="copyRecoveryCodes">
+												{{ $t('pages.profile.copyAll') }}
+											</ui-button>
+											<ui-button variant="outline" :icon="Download" @click="downloadRecoveryCodes">
+												{{ $t('common.download') }}
+											</ui-button>
+											<ui-button variant="ghost" :icon="EyeOff" @click="hideRecoveryCodes" />
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- When 2FA is disabled -->
+						<div v-else>
+							<ui-alert type="warning" class="mb-4">
+								{{ $t('pages.profile.twoFactorDisabledAlert') }}
+							</ui-alert>
+
+							<ui-button variant="primary" :icon="ShieldPlus" @click="$router.push('/2fa/setup')">
+								{{ $t('pages.profile.enable2FA') }}
+							</ui-button>
+						</div>
+					</div>
+				</div>
+
+				<!-- Activity Tab -->
+				<div v-if="tab === 'activity'">
+					<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+						<ChartLine class="h-4 w-4 text-bone-500" />
+						{{ $t('pages.profile.yourActivity') }}
+					</div>
+
+					<div v-if="statistics" class="rounded-lg border border-ink-700/60 p-4">
+						<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+							<div>
+								<div class="text-sm font-semibold text-bone-100">{{ $t('pages.profile.activityHeatmap') }}</div>
+								<div class="text-xs text-bone-500">{{ $t('pages.profile.activityHeatmapHint') }}</div>
+							</div>
+							<div class="heatmap-legend">
+								<div class="heatmap-cell legend-0"></div>
+								<div class="heatmap-cell legend-1"></div>
+								<div class="heatmap-cell legend-2"></div>
+								<div class="heatmap-cell legend-3"></div>
+								<div class="heatmap-cell legend-4"></div>
+							</div>
+						</div>
+
+						<div class="heatmap-container">
+							<div class="heatmap-wrapper">
+								<!-- Month labels -->
+								<div class="heatmap-months">
+									<div v-for="month in visibleMonths" :key="month.name" :style="{ gridColumn: `span ${month.weeks}` }" class="month-label">
+										{{ month.name }}
+									</div>
+								</div>
+
+								<!-- Day labels -->
+								<div class="heatmap-days">
+									<div class="day-label">{{ weekdaysArray[1] }}</div>
+									<div class="day-label"></div>
+									<div class="day-label">{{ weekdaysArray[3] }}</div>
+									<div class="day-label"></div>
+									<div class="day-label">{{ weekdaysArray[5] }}</div>
+									<div class="day-label"></div>
+									<div class="day-label"></div>
+								</div>
+
+								<!-- Heatmap grid -->
+								<div class="heatmap-grid">
+									<div
+										v-for="(day, index) in heatmapData"
+										:key="index"
+										class="heatmap-cell"
+										:class="getHeatmapClass(day.count)"
+									></div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<ui-alert v-else type="info" class="mt-4">
+						{{ $t('pages.profile.startTrackingTime') }}
+					</ui-alert>
+				</div>
+
+				<!-- Info & Legal Tab -->
+				<div v-if="tab === 'info'">
+					<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+						<Info class="h-4 w-4 text-bone-500" />
+						{{ $t('pages.profile.informationLegal') }}
+					</div>
+
+					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+						<button
+							type="button"
+							class="rounded-lg border border-ink-700/60 text-left transition-colors hover:bg-ink-850"
+							@click="$router.push({ name: 'Privacy' })"
+						>
+							<div class="p-5">
+								<div class="mb-3 flex items-center gap-3">
+									<Shield class="h-6 w-6 shrink-0 text-bone-500" />
+									<div>
+										<div class="text-[15px] font-semibold text-bone-100">{{ $t('pages.profile.privacyNotice') }}</div>
+										<div class="text-xs text-bone-500">{{ $t('pages.profile.privacyNoticeHint') }}</div>
+									</div>
+								</div>
+								<p class="text-sm text-bone-300">
+									{{ $t('pages.profile.privacyNoticeDescription') }}
+								</p>
+							</div>
+							<div class="flex items-center justify-end gap-1.5 border-t border-ink-700/60 px-5 py-3 text-sm font-medium text-bone-300">
+								{{ $t('pages.profile.readPrivacyNotice') }}
+								<ArrowRight class="h-4 w-4" />
+							</div>
+						</button>
+
+						<button
+							type="button"
+							class="rounded-lg border border-ink-700/60 text-left transition-colors hover:bg-ink-850"
+							@click="$router.push({ name: 'Imprint' })"
+						>
+							<div class="p-5">
+								<div class="mb-3 flex items-center gap-3">
+									<Scale class="h-6 w-6 shrink-0 text-bone-500" />
+									<div>
+										<div class="text-[15px] font-semibold text-bone-100">{{ $t('pages.profile.imprint') }}</div>
+										<div class="text-xs text-bone-500">{{ $t('pages.profile.imprintHint') }}</div>
+									</div>
+								</div>
+								<p class="text-sm text-bone-300">
+									{{ $t('pages.profile.imprintDescription') }}
+								</p>
+							</div>
+							<div class="flex items-center justify-end gap-1.5 border-t border-ink-700/60 px-5 py-3 text-sm font-medium text-bone-300">
+								{{ $t('pages.profile.readImprint') }}
+								<ArrowRight class="h-4 w-4" />
+							</div>
+						</button>
+					</div>
+
+					<hr class="my-8 border-ink-700/60" />
+
+					<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+						<CircleHelp class="h-4 w-4 text-bone-500" />
+						{{ $t('pages.profile.applicationInformation') }}
+					</div>
+
+					<div class="rounded-lg border border-ink-700/60 p-5">
+						<div class="flex items-start gap-3">
+							<AppWindow class="mt-0.5 h-4 w-4 text-bone-500" />
+							<div>
+								<div class="text-sm font-medium text-bone-100">{{ $t('pages.profile.applicationName') }}</div>
+								<div class="text-sm text-bone-300">{{ $t('pages.profile.applicationNameValue') }}</div>
+							</div>
+						</div>
+
+						<hr class="my-3 border-ink-700/60" />
+
+						<div class="flex items-start gap-3">
+							<ShieldCheck class="mt-0.5 h-4 w-4 text-bone-500" />
+							<div>
+								<div class="text-sm font-medium text-bone-100">{{ $t('pages.profile.securityTitle') }}</div>
+								<div class="text-sm text-bone-300">{{ $t('pages.profile.securityDescription') }}</div>
+							</div>
+						</div>
+
+						<hr class="my-3 border-ink-700/60" />
+
+						<div class="flex items-start gap-3">
+							<Lock class="mt-0.5 h-4 w-4 text-bone-500" />
+							<div>
+								<div class="text-sm font-medium text-bone-100">{{ $t('pages.profile.accessTitle') }}</div>
+								<div class="text-sm text-bone-300">{{ $t('pages.profile.accessDescription') }}</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</ui-card>
 
 		<!-- Reset 2FA Confirmation Dialog -->
-		<v-dialog v-model="reset2FADialog" max-width="600" persistent>
-			<v-card>
-				<v-card-title class="d-flex align-center bg-warning pa-4">
-					<v-icon color="white" class="mr-2">mdi-refresh-circle</v-icon>
-					<span class="text-white">{{ $t('pages.profile.resetTwoFactorAuthentication') }}</span>
-				</v-card-title>
-				<v-card-text class="pa-6">
-					<v-alert type="warning" variant="tonal" density="compact" class="mb-4">
-						<strong>{{ $t('common.warning') }}:</strong> {{ $t('pages.profile.resetTwoFactorWarning') }}
-					</v-alert>
-					
-					<p class="text-body-1 mb-4">{{ $t('pages.profile.resetTwoFactorConfirmation') }}</p>
-					
-					<p class="text-body-2 mb-2">{{ $t('pages.profile.resetTwoFactorWill') }}:</p>
-					<ul class="text-body-2 ml-4 mb-4">
-						<li>{{ $t('pages.profile.resetTwoFactorItem1') }}</li>
-						<li>{{ $t('pages.profile.resetTwoFactorItem2') }}</li>
-						<li>{{ $t('pages.profile.resetTwoFactorItem3') }}</li>
-						<li>{{ $t('pages.profile.resetTwoFactorItem4') }}</li>
-					</ul>
-					
-					<p class="text-body-2 mb-4">{{ $t('pages.profile.resetTwoFactorRedirect') }}</p>
-					
-					<v-text-field
-						v-model="reset2FAPassword"
-						:label="$t('pages.profile.enterPasswordToConfirm')"
-						type="password"
-						variant="outlined"
-						prepend-inner-icon="mdi-lock"
-						density="comfortable"
-						autofocus
-					></v-text-field>
-				</v-card-text>
-				<v-card-actions class="pa-4">
-					<v-spacer></v-spacer>
-					<v-btn 
-						variant="text" 
-						@click="reset2FADialog = false; reset2FAPassword = ''"
-					>
-						{{ $t('common.cancel') }}
-					</v-btn>
-					<v-btn 
-						color="warning" 
-						@click="handleReset2FA"
-						:loading="resetting2FA"
-						:disabled="!reset2FAPassword"
-					>
-						{{ $t('pages.profile.reset2FA') }}
-					</v-btn>
-				</v-card-actions>
-			</v-card>
-		</v-dialog>
+		<ui-dialog v-model="reset2FADialog" :title="$t('pages.profile.resetTwoFactorAuthentication')" max-width="600px" persistent>
+			<ui-alert type="warning" :title="$t('common.warning')" class="mb-4">
+				{{ $t('pages.profile.resetTwoFactorWarning') }}
+			</ui-alert>
+
+			<p class="mb-4 text-sm text-bone-300">{{ $t('pages.profile.resetTwoFactorConfirmation') }}</p>
+
+			<p class="mb-2 text-sm text-bone-300">{{ $t('pages.profile.resetTwoFactorWill') }}:</p>
+			<ul class="mb-4 ml-5 list-disc space-y-1 text-sm text-bone-300">
+				<li>{{ $t('pages.profile.resetTwoFactorItem1') }}</li>
+				<li>{{ $t('pages.profile.resetTwoFactorItem2') }}</li>
+				<li>{{ $t('pages.profile.resetTwoFactorItem3') }}</li>
+				<li>{{ $t('pages.profile.resetTwoFactorItem4') }}</li>
+			</ul>
+
+			<p class="mb-4 text-sm text-bone-300">{{ $t('pages.profile.resetTwoFactorRedirect') }}</p>
+
+			<ui-input
+				v-model="reset2FAPassword"
+				:label="$t('pages.profile.enterPasswordToConfirm')"
+				type="password"
+				:icon="Lock"
+				autofocus
+			/>
+
+			<template #actions>
+				<ui-button variant="ghost" @click="reset2FADialog = false; reset2FAPassword = ''">
+					{{ $t('common.cancel') }}
+				</ui-button>
+				<ui-button
+					variant="danger"
+					:loading="resetting2FA"
+					:disabled="!reset2FAPassword"
+					@click="handleReset2FA"
+				>
+					{{ $t('pages.profile.reset2FA') }}
+				</ui-button>
+			</template>
+		</ui-dialog>
 
 		<!-- Regenerate Recovery Codes Confirmation Dialog -->
-		<v-dialog v-model="regenerateCodesDialog" max-width="600" persistent>
-			<v-card>
-				<v-card-title class="d-flex align-center bg-warning pa-4">
-					<v-icon color="white" class="mr-2">mdi-shield-refresh</v-icon>
-					<span class="text-white">{{ $t('pages.profile.regenerateRecoveryCodes') }}</span>
-				</v-card-title>
-				<v-card-text class="pa-6">
-					<v-alert type="warning" variant="tonal" density="compact" class="mb-4">
-						<strong>{{ $t('common.warning') }}:</strong> {{ $t('pages.profile.regenerateCodesWarning') }}
-					</v-alert>
-					
-					<p class="text-body-1 mb-4">
-						{{ $t('pages.profile.regenerateCodesConfirmation') }}
-					</p>
-					
-					<p class="text-body-2 mb-4">
-						{{ $t('pages.profile.regenerateCodesDescription') }}
-					</p>
-				</v-card-text>
-				<v-card-actions class="pa-4">
-					<v-spacer></v-spacer>
-					<v-btn 
-						variant="text" 
-						@click="regenerateCodesDialog = false"
-					>
-						{{ $t('common.cancel') }}
-					</v-btn>
-					<v-btn 
-						color="warning" 
-						@click="handleRegenerateRecoveryCodes"
-						:loading="loadingRecoveryCodes"
-					>
-						{{ $t('pages.profile.regenerateCodes') }}
-					</v-btn>
-				</v-card-actions>
-			</v-card>
-		</v-dialog>
-	</v-container>
+		<ui-dialog v-model="regenerateCodesDialog" :title="$t('pages.profile.regenerateRecoveryCodes')" max-width="600px" persistent>
+			<ui-alert type="warning" :title="$t('common.warning')" class="mb-4">
+				{{ $t('pages.profile.regenerateCodesWarning') }}
+			</ui-alert>
+
+			<p class="mb-4 text-sm text-bone-300">
+				{{ $t('pages.profile.regenerateCodesConfirmation') }}
+			</p>
+
+			<p class="text-sm text-bone-300">
+				{{ $t('pages.profile.regenerateCodesDescription') }}
+			</p>
+
+			<template #actions>
+				<ui-button variant="ghost" @click="regenerateCodesDialog = false">
+					{{ $t('common.cancel') }}
+				</ui-button>
+				<ui-button
+					variant="danger"
+					:loading="loadingRecoveryCodes"
+					@click="handleRegenerateRecoveryCodes"
+				>
+					{{ $t('pages.profile.regenerateCodes') }}
+				</ui-button>
+			</template>
+		</ui-dialog>
+	</div>
 </template>
 
 <script>
@@ -835,9 +671,87 @@ import { mapActions, mapState } from 'pinia'
 import { store } from '../store'
 import axios from 'axios'
 import { formatDate, formatCurrency } from '../utils/formatters'
+import { useI18n } from 'vue-i18n'
+import {
+	User,
+	Camera,
+	CircleCheck,
+	Briefcase,
+	Clock,
+	Banknote,
+	Folders,
+	UserPen,
+	Info,
+	Mail,
+	Calendar,
+	RefreshCw,
+	Shield,
+	ShieldCheck,
+	ShieldAlert,
+	ShieldPlus,
+	TriangleAlert,
+	History,
+	Lock,
+	Eye,
+	EyeOff,
+	Trash2,
+	Copy,
+	Download,
+	KeyRound,
+	MonitorSmartphone,
+	Smartphone,
+	Tablet,
+	Laptop,
+	ChartLine,
+	Scale,
+	ArrowRight,
+	CircleHelp,
+	AppWindow,
+} from 'lucide-vue-next'
 
 export default {
 	name: 'Profile',
+	components: {
+		User,
+		Camera,
+		Briefcase,
+		Clock,
+		Banknote,
+		Folders,
+		Info,
+		Calendar,
+		RefreshCw,
+		Shield,
+		ShieldCheck,
+		Lock,
+		MonitorSmartphone,
+		KeyRound,
+		ChartLine,
+		Scale,
+		ArrowRight,
+		CircleHelp,
+		AppWindow,
+	},
+	setup() {
+		const { t } = useI18n()
+		return {
+			t,
+			User,
+			CircleCheck,
+			Mail,
+			Lock,
+			Eye,
+			EyeOff,
+			ShieldCheck,
+			ShieldAlert,
+			ShieldPlus,
+			TriangleAlert,
+			RefreshCw,
+			Trash2,
+			Copy,
+			Download,
+		}
+	},
 	data() {
 		return {
 			profile: {
@@ -859,7 +773,6 @@ export default {
 			activityData: [],
 			heatmapData: [],
 			visibleMonths: [],
-			valid: false,
 			loading: false,
 			showCurrentPassword: false,
 			showNewPassword: false,
@@ -903,6 +816,14 @@ export default {
 	},
 	computed: {
 		...mapState(store, ['settings']),
+		profileTabs() {
+			return [
+				{ value: 'personal', label: this.t('pages.profile.personalInfo'), icon: UserPen },
+				{ value: 'security', label: this.t('pages.profile.security'), icon: ShieldCheck },
+				{ value: 'activity', label: this.t('pages.profile.activity'), icon: History },
+				{ value: 'info', label: 'Info & Legal', icon: Info },
+			]
+		},
 		weekdaysArray() {
 			try {
 				if (!window.$i18n?.global?.locale?.value) return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -928,27 +849,27 @@ export default {
 	},
 	methods: {
 		...mapActions(store, ['showSnackbar', 'updateAuthUser']),
-		
+
 		triggerFileInput() {
 			this.$refs.fileInput.click()
 		},
-		
+
 		onFileSelected(event) {
 			const file = event.target.files[0]
 			if (!file) return
-			
+
 			// Validate file type
 			if (!file.type.startsWith('image/')) {
 				this.showSnackbar('Please select an image file', 'error')
 				return
 			}
-			
+
 			// Validate file size (max 2MB)
 			if (file.size > 2 * 1024 * 1024) {
 				this.showSnackbar('Image size must be less than 2MB', 'error')
 				return
 			}
-			
+
 			// Convert to base64
 			const reader = new FileReader()
 			reader.onload = (e) => {
@@ -958,7 +879,7 @@ export default {
 			}
 			reader.readAsDataURL(file)
 		},
-		
+
 		async fetchProfile() {
 			this.loading = true
 			try {
@@ -980,7 +901,7 @@ export default {
 				this.loading = false
 			}
 		},
-		
+
 		async fetchStatistics() {
 			try {
 				const response = await axios.get('/api/profile/statistics')
@@ -990,10 +911,13 @@ export default {
 				// Don't show error for statistics as it's not critical
 			}
 		},
-		
+
 		async updateProfile() {
-			if (!this.valid && this.tab === 'personal') return
-			
+			if (this.tab === 'personal' && this.$refs.form) {
+				const { valid } = await this.$refs.form.validate()
+				if (!valid) return
+			}
+
 			this.loading = true
 			try {
 				const payload = {
@@ -1002,16 +926,16 @@ export default {
 					avatar: this.profile.avatar,
 					notify_on_project_assignment: this.profile.notify_on_project_assignment,
 				}
-				
+
 				// Only include password if provided
 				if (this.passwordData.current_password && this.passwordData.new_password) {
 					payload.current_password = this.passwordData.current_password
 					payload.new_password = this.passwordData.new_password
 					payload.new_password_confirmation = this.passwordData.new_password_confirmation
 				}
-				
+
 				const response = await axios.put('/api/profile', payload)
-				
+
 				// Update the profile data
 				this.profile = {
 					name: response.data.name,
@@ -1023,17 +947,17 @@ export default {
 					notify_on_project_assignment: response.data.notify_on_project_assignment ?? true,
 				}
 				this.originalProfile = { ...this.profile }
-				
+
 				// Update the store with the new user data
 				this.updateAuthUser(response.data)
-				
+
 				// Clear password fields
 				this.passwordData = {
 					current_password: '',
 					new_password: '',
 					new_password_confirmation: '',
 				}
-				
+
 				this.showSnackbar('Profile updated successfully', 'success')
 			} catch (error) {
 				console.error('Error updating profile:', error)
@@ -1043,7 +967,7 @@ export default {
 				this.loading = false
 			}
 		},
-		
+
 		resetForm() {
 			this.profile = { ...this.originalProfile }
 			this.passwordData = {
@@ -1055,11 +979,11 @@ export default {
 				this.$refs.form.resetValidation()
 			}
 		},
-		
+
 		async fetchActivityData() {
 			// Only fetch if we haven't already
 			if (this.heatmapData.length > 0) return
-			
+
 			try {
 				const response = await axios.get('/api/profile/activity')
 				this.activityData = response.data
@@ -1070,28 +994,28 @@ export default {
 				this.generateHeatmap()
 			}
 		},
-		
+
 		generateHeatmap() {
 			// Don't regenerate if already generated
 			if (this.heatmapData.length > 0) return
-			
+
 			const today = new Date()
 			const oneYearAgo = new Date(today)
 			oneYearAgo.setFullYear(today.getFullYear() - 1)
-			
+
 			// Start from the first Sunday before one year ago
 			const startDate = new Date(oneYearAgo)
 			startDate.setDate(startDate.getDate() - startDate.getDay())
-			
+
 			// Generate all days for the past year
 			const heatmapData = []
 			const activityMap = {}
-			
+
 			// Create a map of dates to activity counts
 			this.activityData.forEach(activity => {
 				activityMap[activity.date] = activity.count
 			})
-			
+
 			// Generate 53 weeks of data (371 days)
 			let currentDate = new Date(startDate)
 			for (let i = 0; i < 371; i++) {
@@ -1102,31 +1026,31 @@ export default {
 				})
 				currentDate.setDate(currentDate.getDate() + 1)
 			}
-			
+
 			this.heatmapData = heatmapData
 			this.calculateVisibleMonths()
 		},
-		
+
 	calculateVisibleMonths() {
 		const months = []
 		let currentMonth = null
 		let weekCount = 0
-		
+
 		this.heatmapData.forEach((day, index) => {
 			const date = new Date(day.date)
 			const month = date.getMonth()
-			
+
 			// Count weeks (every 7 days)
 			if (index % 7 === 0) {
 				weekCount++
 			}
-			
+
 			if (currentMonth !== month) {
 				if (currentMonth !== null) {
 					months[months.length - 1].weeks = weekCount
 					weekCount = 0
 				}
-				
+
 				months.push({
 					name: this.monthsArray[month],
 					weeks: 0
@@ -1134,12 +1058,12 @@ export default {
 				currentMonth = month
 			}
 		})
-		
+
 		// Set the last month's week count
 		if (months.length > 0) {
 			months[months.length - 1].weeks = weekCount + 1
 		}
-		
+
 		this.visibleMonths = months
 	},		getHeatmapClass(count) {
 			if (count === 0) return 'level-0'
@@ -1148,7 +1072,7 @@ export default {
 			if (count === 3) return 'level-3'
 			return 'level-4' // 4 or more sessions = darkest green
 		},
-		
+
 		formatHeatmapDate(dateStr) {
 			const date = new Date(dateStr)
 			return date.toLocaleDateString('en-US', {
@@ -1158,12 +1082,12 @@ export default {
 				year: 'numeric'
 			})
 		},
-		
+
 		async fetch2FAStatus() {
 			try {
 				const response = await axios.get('/api/2fa/status')
 				this.twoFactorStatus = response.data
-				
+
 				// Auto-fetch trusted devices if 2FA is enabled
 				if (response.data.enabled) {
 					await this.fetchTrustedDevices()
@@ -1172,7 +1096,7 @@ export default {
 				console.error('Error fetching 2FA status:', error)
 			}
 		},
-		
+
 		async fetchTrustedDevices() {
 			this.loadingDevices = true
 			try {
@@ -1185,18 +1109,18 @@ export default {
 				this.loadingDevices = false
 			}
 		},
-		
+
 		async removeDevice(fingerprint) {
 			if (!confirm('Are you sure you want to remove this device? You will need to verify 2FA the next time you log in from this device.')) {
 				return
 			}
-			
+
 			this.removingDevice = fingerprint
 			try {
 				await axios.delete('/api/2fa/devices', {
 					data: { fingerprint }
 				})
-				
+
 				this.showSnackbar('Device removed successfully', 'success')
 				await this.fetchTrustedDevices()
 				await this.fetch2FAStatus()
@@ -1206,7 +1130,7 @@ export default {
 				this.removingDevice = null
 			}
 		},
-		
+
 		async fetchRecoveryCodes() {
 			this.loadingRecoveryCodes = true
 			try {
@@ -1219,12 +1143,12 @@ export default {
 				this.loadingRecoveryCodes = false
 			}
 		},
-		
+
 		hideRecoveryCodes() {
 			this.showingRecoveryCodes = false
 			this.recoveryCodes = []
 		},
-		
+
 		async handleRegenerateRecoveryCodes() {
 			this.loadingRecoveryCodes = true
 			try {
@@ -1239,7 +1163,7 @@ export default {
 				this.loadingRecoveryCodes = false
 			}
 		},
-		
+
 		copyRecoveryCodes() {
 			const codesText = this.recoveryCodes.join('\n')
 			navigator.clipboard.writeText(codesText).then(() => {
@@ -1248,7 +1172,7 @@ export default {
 				this.showSnackbar('Failed to copy codes', 'error')
 			})
 		},
-		
+
 		downloadRecoveryCodes() {
 			const codesText = this.recoveryCodes.join('\n')
 			const blob = new Blob([codesText], { type: 'text/plain' })
@@ -1262,29 +1186,29 @@ export default {
 			document.body.removeChild(a)
 			this.showSnackbar('Recovery codes downloaded', 'success')
 		},
-		
+
 		getDeviceIcon(userAgent) {
 			const ua = userAgent.toLowerCase()
 			if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
-				return 'mdi-cellphone'
+				return Smartphone
 			} else if (ua.includes('tablet') || ua.includes('ipad')) {
-				return 'mdi-tablet'
+				return Tablet
 			} else {
-				return 'mdi-laptop'
+				return Laptop
 			}
 		},
-		
+
 		formatUserAgent(userAgent) {
 			// Simple user agent parsing
 			const ua = userAgent
-			
+
 			// Extract browser
 			let browser = 'Unknown Browser'
 			if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome'
 			else if (ua.includes('Firefox')) browser = 'Firefox'
 			else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari'
 			else if (ua.includes('Edg')) browser = 'Edge'
-			
+
 			// Extract OS
 			let os = 'Unknown OS'
 			if (ua.includes('Windows')) os = 'Windows'
@@ -1292,25 +1216,25 @@ export default {
 			else if (ua.includes('Linux')) os = 'Linux'
 			else if (ua.includes('Android')) os = 'Android'
 			else if (ua.includes('iOS') || ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS'
-			
+
 			return `${browser} on ${os}`
 		},
-		
+
 		async handleReset2FA() {
 			if (!this.reset2FAPassword) {
 				this.showSnackbar('Please enter your password', 'error')
 				return
 			}
-			
+
 			this.resetting2FA = true
 			try {
 				// Disable current 2FA first
 				await axios.post('/api/2fa/disable', { password: this.reset2FAPassword })
-				
+
 				// Close dialog and reset password
 				this.reset2FADialog = false
 				this.reset2FAPassword = ''
-				
+
 				// Redirect to setup page
 				this.$router.push('/2fa/setup')
 				this.showSnackbar('2FA reset. Please set up your authenticator again.', 'success')
@@ -1321,95 +1245,23 @@ export default {
 				this.resetting2FA = false
 			}
 		},
-	
+
 	formatDate(date) {
 		return formatDate(date, this.settings);
 	},		formatHours(hours) {
 			if (!hours) return '0h'
 			return `${parseFloat(hours).toFixed(1)}h`
 		},
-		
-	
+
+
 	formatMoney(amount) {
 		return formatCurrency(amount);
 	},
 },
 }
-</script><style scoped>
-.profile-container {
-	max-width: 1400px;
-	margin: 0 auto;
-}
+</script>
 
-.profile-hero {
-	position: relative;
-	overflow: hidden;
-	border-radius: 16px !important;
-}
-
-.hero-gradient {
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-	opacity: 0.95;
-}
-
-.avatar-wrapper {
-	position: relative;
-	display: inline-block;
-	margin-top: 20px;
-}
-
-.profile-avatar {
-	border: 5px solid white;
-	background: rgba(255, 255, 255, 0.2);
-	transition: all 0.3s ease;
-}
-
-.profile-avatar:hover {
-	transform: scale(1.05);
-}
-
-.avatar-overlay {
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background: rgba(0, 0, 0, 0.5);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	opacity: 0;
-	transition: opacity 0.3s ease;
-	border-radius: 50%;
-}
-
-.profile-avatar:hover .avatar-overlay {
-	opacity: 1;
-}
-
-.stat-card {
-	border-radius: 12px !important;
-	transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.stat-card:hover {
-	transform: translateY(-4px);
-	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
-}
-
-.position-relative {
-	position: relative;
-}
-
-.opacity-20 {
-	opacity: 0.2;
-}
-
+<style scoped>
 /* Heatmap Styles */
 .heatmap-container {
 	width: 100%;
@@ -1437,8 +1289,7 @@ export default {
 
 .month-label {
 	font-size: 10px;
-	color: rgb(var(--v-theme-on-surface));
-	opacity: 0.6;
+	color: var(--color-bone-500);
 	grid-row: 1;
 }
 
@@ -1453,8 +1304,7 @@ export default {
 .day-label {
 	font-size: 9px;
 	line-height: 12px;
-	color: rgb(var(--v-theme-on-surface));
-	opacity: 0.6;
+	color: var(--color-bone-500);
 }
 
 .heatmap-grid {
@@ -1473,33 +1323,33 @@ export default {
 }
 
 .heatmap-cell:hover {
-	outline: 2px solid rgba(102, 126, 234, 0.5);
+	outline: 1.5px solid var(--color-brass-400);
 	outline-offset: 1px;
 }
 
 .heatmap-cell.level-0,
 .heatmap-cell.legend-0 {
-	background-color: #ebedf0;
+	background-color: var(--color-ink-800);
 }
 
 .heatmap-cell.level-1,
 .heatmap-cell.legend-1 {
-	background-color: #9be9a8;
+	background-color: color-mix(in srgb, var(--color-sage-500) 30%, var(--color-ink-900));
 }
 
 .heatmap-cell.level-2,
 .heatmap-cell.legend-2 {
-	background-color: #40c463;
+	background-color: color-mix(in srgb, var(--color-sage-500) 55%, var(--color-ink-900));
 }
 
 .heatmap-cell.level-3,
 .heatmap-cell.legend-3 {
-	background-color: #30a14e;
+	background-color: var(--color-sage-500);
 }
 
 .heatmap-cell.level-4,
 .heatmap-cell.legend-4 {
-	background-color: #216e39;
+	background-color: var(--color-sage-400);
 }
 
 .heatmap-legend {
@@ -1507,29 +1357,7 @@ export default {
 	gap: 3px;
 }
 
-.gap-2 {
-	gap: 8px;
-}
-
-/* Recovery Codes Grid */
-.recovery-codes-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-	gap: 12px;
-}
-
-.recovery-codes-grid code {
-	font-family: 'Courier New', monospace;
-	color: rgb(var(--v-theme-primary));
-}
-
-.info-card {
-	cursor: pointer;
-	transition: all 0.3s ease;
-}
-
-.info-card:hover {
-	transform: translateY(-4px);
-	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+.heatmap-legend .heatmap-cell {
+	width: 12px;
 }
 </style>

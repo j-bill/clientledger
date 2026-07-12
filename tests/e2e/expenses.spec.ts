@@ -13,7 +13,7 @@ test.describe('Expenses e2e', () => {
 
     await page.getByRole('button', { name: 'New Expense' }).click();
 
-    const dialog = page.locator('.v-dialog');
+    const dialog = page.locator('[role="dialog"]');
     await expect(dialog).toBeVisible();
 
     const uniqueDescription = `E2E expense ${Date.now()}`;

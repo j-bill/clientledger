@@ -36,7 +36,9 @@
     "back": "Atrás",
     "important": "Importante",
     "due": "Vencido",
-    "created": "Creado"
+    "created": "Creado",
+    "noData": "Sin registros",
+    "rowsPerPage": "Filas"
   },
   "invoices": {
     "title": "Facturas",
@@ -391,7 +393,7 @@
       "thisMonthRevenue": "Ingresos Este Mes",
       "thisMonthEarnings": "Ganancias Este Mes",
       "extrapolatedEstimate": "Estimación extrapolada",
-      "thisYear": "Últimos 12 Meses",
+      "thisYear": "Este Año",
       "thisMonth": "Este Mes",
       "estimated": "Estimado",
       "hours": "Horas",
@@ -419,7 +421,8 @@
         "nonBillable": "No Facturable",
         "actual": "Real",
         "projection": "Proyección"
-      }
+      },
+      "lastTwelveMonths": "Últimos 12 Meses"
     },
     "profile": {
       "yourName": "Tu Nombre",
@@ -529,7 +532,13 @@
       "regenerateCodesConfirmation": "¿Está seguro de que desea regenerar sus códigos de recuperación?",
       "regenerateCodesDescription": "Esto invalidará todos sus códigos de recuperación existentes y generará un nuevo conjunto. Asegúrese de guardar los nuevos códigos en un lugar seguro.",
       "regenerateCodes": "Regenerar Códigos",
-      "activeProjects": "Proyectos Activos"
+      "activeProjects": "Proyectos Activos",
+      "applicationName": "Aplicación",
+      "applicationNameValue": "Clientledger — control de tiempo y facturación para freelancers",
+      "securityTitle": "Seguridad",
+      "securityDescription": "Tu cuenta está protegida con autenticación de dos factores y dispositivos de confianza.",
+      "accessTitle": "Acceso a los datos",
+      "accessDescription": "Tus datos solo son accesibles para ti y los administradores de esta instalación."
     },
     "settings": {
       "systemSettings": "Configuración del Sistema",
@@ -711,7 +720,11 @@
       "worklogSoundEnabledHint": "Se reproduce un sonido breve al detener el registro de tiempo",
       "worklogSound": "Sonido",
       "previewSound": "Escuchar",
-      "soundPlaybackFailed": "No se pudo reproducir el sonido"
+      "soundPlaybackFailed": "No se pudo reproducir el sonido",
+      "openaiApiKeyPlaceholder": "Introduce tu clave API de OpenAI",
+      "openaiApiKeyCurrent": "Clave actual",
+      "openaiApiKeyReplaceHint": "introduce una nueva clave arriba para reemplazarla",
+      "openaiApiKeyHint": "Se almacena cifrada. No se vuelve a mostrar tras guardarla."
     },
     "errorPages": {
       "accessDenied": "Acceso denegado",
@@ -776,4 +789,3 @@
     }
   }
 }
-

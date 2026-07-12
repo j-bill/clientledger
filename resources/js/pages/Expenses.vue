@@ -1,228 +1,178 @@
 <template>
-  <v-container fluid>
-    <h1 class="text-h4 mb-4">{{ $t('expenses.title') }}</h1>
-
-    <!-- Search & Actions -->
-    <v-row class="mb-4">
-      <v-col cols="12" sm="6">
-        <v-text-field
-          v-model="filters.search"
-          :label="$t('common.search')"
-          prepend-inner-icon="mdi-magnify"
-          single-line
-          hide-details
-          clearable
-          @input="loadExpenses"
-        ></v-text-field>
-      </v-col>
-      <v-col cols="12" sm="6" class="d-flex justify-end">
-        <v-btn color="secondary" @click="toggleFilters" class="mr-2">
-          <v-icon>mdi-filter</v-icon>
-        </v-btn>
-        <v-btn color="success" @click="exportExpenses" class="mr-2" prepend-icon="mdi-download">
+  <div class="mx-auto max-w-[1800px] px-6 py-8 lg:px-10">
+    <!-- Heading + primary actions -->
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-2xl font-semibold tracking-tight">{{ $t('expenses.title') }}</h1>
+      <div class="flex flex-wrap items-center gap-2">
+        <ui-button variant="outline" :icon="Filter" @click="toggleFilters" />
+        <ui-button variant="outline" :icon="Download" @click="exportExpenses">
           {{ $t('expenses.exportCSV') }}
-        </v-btn>
-        <v-btn color="primary" @click="openCreateDialog" prepend-icon="mdi-plus">
+        </ui-button>
+        <ui-button variant="primary" :icon="Plus" @click="openCreateDialog">
           {{ $t('expenses.newExpense') }}
-        </v-btn>
-      </v-col>
-    </v-row>
+        </ui-button>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="mb-4 max-w-sm">
+      <ui-input
+        v-model="filters.search"
+        :icon="Search"
+        clearable
+        :placeholder="$t('common.search')"
+        @update:model-value="loadExpenses"
+      />
+    </div>
 
     <!-- Filters -->
-    <v-card v-if="showFilters" class="mb-4">
-      <v-card-title>{{ $t('common.filters') }}</v-card-title>
-      <v-card-text>
-        <v-row>
-          <v-col cols="12" sm="6" md="3">
-            <v-text-field
-              v-model="filters.start_date"
-              :label="$t('expenses.startDate')"
-              type="date"
-              prepend-icon="mdi-calendar"
-              @change="loadExpenses"
-            ></v-text-field>
-          </v-col>
-
-          <v-col cols="12" sm="6" md="3">
-            <v-text-field
-              v-model="filters.end_date"
-              :label="$t('expenses.endDate')"
-              type="date"
-              prepend-icon="mdi-calendar"
-              @change="loadExpenses"
-            ></v-text-field>
-          </v-col>
-
-          <v-col cols="12" sm="6" md="3">
-            <v-select
-              v-model="filters.project_id"
-              :items="projects"
-              item-title="name"
-              item-value="id"
-              :label="$t('expenses.project')"
-              clearable
-              prepend-icon="mdi-folder"
-              @update:model-value="loadExpenses"
-            ></v-select>
-          </v-col>
-
-          <v-col cols="12" sm="6" md="3">
-            <v-select
-              v-model="filters.customer_id"
-              :items="customers"
-              item-title="name"
-              item-value="id"
-              :label="$t('expenses.customer')"
-              clearable
-              prepend-icon="mdi-account"
-              @update:model-value="loadExpenses"
-            ></v-select>
-          </v-col>
-        </v-row>
-      </v-card-text>
-    </v-card>
+    <ui-card v-if="showFilters" :title="$t('common.filters')" class="mb-4">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+        <ui-input
+          v-model="filters.start_date"
+          :label="$t('expenses.startDate')"
+          type="date"
+          :icon="Calendar"
+          @update:model-value="loadExpenses"
+        />
+        <ui-input
+          v-model="filters.end_date"
+          :label="$t('expenses.endDate')"
+          type="date"
+          :icon="Calendar"
+          @update:model-value="loadExpenses"
+        />
+        <ui-select
+          v-model="filters.project_id"
+          :items="projects"
+          item-title="name"
+          item-value="id"
+          :label="$t('expenses.project')"
+          clearable
+          @update:model-value="loadExpenses"
+        />
+        <ui-select
+          v-model="filters.customer_id"
+          :items="customers"
+          item-title="name"
+          item-value="id"
+          :label="$t('expenses.customer')"
+          clearable
+          @update:model-value="loadExpenses"
+        />
+      </div>
+    </ui-card>
 
     <!-- Data Table -->
-    <v-data-table-server
-      v-model:items-per-page="itemsPerPage"
-      :headers="headers"
-      :items="expenses"
-      :items-length="totalExpenses"
-      :loading="loading"
-      @update:options="loadExpenses"
-    >
-      <template v-slot:item.date="{ item }">
-        {{ formatDate(item.date) }}
-      </template>
-      <template v-slot:item.amount="{ item }">
-        {{ formatCurrency(item.amount, item.currency) }}
-      </template>
-      <template v-slot:item.is_tax_deductible="{ item }">
-        <v-icon :color="item.is_tax_deductible ? 'success' : 'grey'">
-          {{ item.is_tax_deductible ? 'mdi-check' : 'mdi-close' }}
-        </v-icon>
-      </template>
-      <template v-slot:item.receipt_path="{ item }">
-        <v-btn
-          v-if="item.receipt_path"
-          icon="mdi-file-document"
-          variant="text"
-          color="primary"
-          :href="`/storage/${item.receipt_path}`"
-          target="_blank"
-        ></v-btn>
-      </template>
-      <template v-slot:item.actions="{ item }">
-        <v-icon size="small" class="me-2" @click="editExpense(item)">
-          mdi-pencil
-        </v-icon>
-        <v-icon size="small" @click="deleteExpense(item)">
-          mdi-delete
-        </v-icon>
-      </template>
-    </v-data-table-server>
+    <ui-card dense>
+      <ui-data-table
+        v-model:items-per-page="itemsPerPage"
+        :headers="headers"
+        :items="expenses"
+        :server-items-length="totalExpenses"
+        :loading="loading"
+        @update:options="loadExpenses"
+      >
+        <template v-slot:item.date="{ item }">
+          <span class="tnum">{{ formatDate(item.date) }}</span>
+        </template>
+        <template v-slot:item.amount="{ item }">
+          <span class="tnum">{{ formatCurrency(item.amount, item.currency) }}</span>
+        </template>
+        <template v-slot:item.is_tax_deductible="{ item }">
+          <Check v-if="item.is_tax_deductible" class="h-4 w-4 text-sage-400" />
+          <X v-else class="h-4 w-4 text-bone-700" />
+        </template>
+        <template v-slot:item.receipt_path="{ item }">
+          <a
+            v-if="item.receipt_path"
+            :href="`/storage/${item.receipt_path}`"
+            target="_blank"
+            class="inline-flex h-7 w-7 items-center justify-center rounded-md text-brass-400 transition-colors hover:bg-ink-850 hover:text-brass-300"
+          >
+            <FileText class="h-4 w-4" />
+          </a>
+        </template>
+        <template v-slot:item.actions="{ item }">
+          <div class="flex justify-end gap-1">
+            <ui-button variant="ghost" size="sm" :icon="Pencil" @click="editExpense(item)" />
+            <ui-button variant="danger-ghost" size="sm" :icon="Trash2" @click="deleteExpense(item)" />
+          </div>
+        </template>
+      </ui-data-table>
+    </ui-card>
 
     <!-- Create/Edit Dialog -->
-    <v-dialog v-model="dialog" max-width="600px">
-      <v-card>
-        <v-card-title>
-          <span class="text-h5">{{ form.id ? $t('expenses.editExpense') : $t('expenses.newExpense') }}</span>
-        </v-card-title>
+    <ui-dialog v-model="dialog" :title="form.id ? $t('expenses.editExpense') : $t('expenses.newExpense')" max-width="600px">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="sm:col-span-2">
+          <ui-input
+            v-model="form.description"
+            :label="$t('expenses.description')"
+          />
+        </div>
+        <ui-input
+          v-model="form.amount"
+          :label="$t('expenses.amount')"
+          type="number"
+        />
+        <ui-input
+          v-model="form.currency"
+          :label="$t('expenses.currency')"
+        />
+        <ui-input
+          v-model="form.date"
+          :label="$t('expenses.date')"
+          type="date"
+        />
+        <ui-input
+          v-model="form.category"
+          :label="$t('expenses.category')"
+        />
+        <ui-select
+          v-model="form.customer_id"
+          :items="customers"
+          item-title="name"
+          item-value="id"
+          :label="$t('expenses.customer')"
+          clearable
+          @update:model-value="onCustomerChange"
+        />
+        <ui-select
+          v-model="form.project_id"
+          :items="customerProjects"
+          item-title="name"
+          item-value="id"
+          :label="$t('expenses.project')"
+          clearable
+          :disabled="!form.customer_id"
+          :hint="!form.customer_id ? 'Select a customer first' : ''"
+        />
+        <div class="sm:col-span-2">
+          <ui-file-input
+            v-model="form.receipt"
+            :label="$t('expenses.receipt')"
+            accept="image/*,application/pdf"
+          />
+        </div>
+        <div class="sm:col-span-2">
+          <ui-checkbox
+            v-model="form.is_tax_deductible"
+            :label="$t('expenses.taxDeductible')"
+          />
+        </div>
+      </div>
 
-        <v-card-text>
-          <v-container>
-            <v-row>
-              <v-col cols="12">
-                <v-text-field
-                  v-model="form.description"
-                  :label="$t('expenses.description')"
-                  required
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12" sm="6">
-                <v-text-field
-                  v-model="form.amount"
-                  :label="$t('expenses.amount')"
-                  type="number"
-                  step="0.01"
-                  required
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12" sm="6">
-                <v-text-field
-                  v-model="form.currency"
-                  :label="$t('expenses.currency')"
-                  required
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12" sm="6">
-                <v-text-field
-                  v-model="form.date"
-                  :label="$t('expenses.date')"
-                  type="date"
-                  required
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12" sm="6">
-                <v-text-field
-                  v-model="form.category"
-                  :label="$t('expenses.category')"
-                  required
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12" sm="6">
-                <v-select
-                  v-model="form.customer_id"
-                  :items="customers"
-                  item-title="name"
-                  item-value="id"
-                  :label="$t('expenses.customer')"
-                  clearable
-                  @update:model-value="onCustomerChange"
-                ></v-select>
-              </v-col>
-              <v-col cols="12" sm="6">
-                <v-select
-                  v-model="form.project_id"
-                  :items="customerProjects"
-                  item-title="name"
-                  item-value="id"
-                  :label="$t('expenses.project')"
-                  clearable
-                  :disabled="!form.customer_id"
-                  :hint="!form.customer_id ? 'Select a customer first' : ''"
-                ></v-select>
-              </v-col>
-              <v-col cols="12">
-                <v-file-input
-                  v-model="form.receipt"
-                  :label="$t('expenses.receipt')"
-                  accept="image/*,application/pdf"
-                  prepend-icon="mdi-camera"
-                ></v-file-input>
-              </v-col>
-              <v-col cols="12">
-                <v-checkbox
-                  v-model="form.is_tax_deductible"
-                  :label="$t('expenses.taxDeductible')"
-                ></v-checkbox>
-              </v-col>
-            </v-row>
-          </v-container>
-        </v-card-text>
-
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="blue-darken-1" variant="text" @click="closeDialog">
-            {{ $t('common.cancel') }}
-          </v-btn>
-          <v-btn color="blue-darken-1" variant="text" @click="saveExpense">
-            {{ $t('common.save') }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-  </v-container>
+      <template #actions>
+        <ui-button variant="ghost" @click="closeDialog">
+          {{ $t('common.cancel') }}
+        </ui-button>
+        <ui-button variant="primary" @click="saveExpense">
+          {{ $t('common.save') }}
+        </ui-button>
+      </template>
+    </ui-dialog>
+  </div>
 </template>
 
 <script setup>
@@ -231,6 +181,7 @@ import { useI18n } from 'vue-i18n';
 import axios from 'axios';
 import { store } from '../store';
 import { formatDate as formatDateUtil, formatCurrency as formatCurrencyUtil } from '../utils/formatters';
+import { Plus, Search, Filter, Download, Calendar, Pencil, Trash2, Check, X, FileText } from 'lucide-vue-next';
 
 const { t } = useI18n();
 const appStore = store();
@@ -286,7 +237,7 @@ const loadExpenses = async ({ page, itemsPerPage, sortBy } = {}) => {
       per_page: itemsPerPage || 10,
       ...filters,
     };
-    
+
     if (sortBy && sortBy.length) {
         params.sort_by = sortBy[0].key;
         params.sort_dir = sortBy[0].order;
@@ -315,11 +266,11 @@ const onCustomerChange = async () => {
   // Clear project selection when customer changes
   form.project_id = null;
   customerProjects.value = [];
-  
+
   if (!form.customer_id) {
     return;
   }
-  
+
   try {
     const response = await axios.get('/api/invoices/customer-projects', {
       params: { customer_id: form.customer_id }
@@ -346,7 +297,7 @@ const exportExpenses = async () => {
       params,
       responseType: 'blob',
     });
-    
+
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
     link.href = url;
