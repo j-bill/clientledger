@@ -262,7 +262,10 @@
       "hourlyRate": "Taux horaire du freelance",
       "hourlyRateHint": "Le taux est hérité du freelance pour les nouveaux journaux de travail",
       "generateWithAi": "Générer avec l'IA",
-      "aiGenerationFailed": "Échec de la génération de la description"
+      "aiGenerationFailed": "Échec de la génération de la description",
+      "aiSuggestionTitle": "Suggestion de l'IA",
+      "aiApply": "Appliquer la suggestion",
+      "aiDiscard": "Ignorer"
     },
     "user": {
       "name": "Nom",

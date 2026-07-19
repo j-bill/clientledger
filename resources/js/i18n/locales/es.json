@@ -262,7 +262,10 @@
       "hourlyRate": "Tarifa por hora del freelancer",
       "hourlyRateHint": "La tarifa se hereda del freelancer para nuevos registros de trabajo",
       "generateWithAi": "Generar con IA",
-      "aiGenerationFailed": "No se pudo generar la descripción"
+      "aiGenerationFailed": "No se pudo generar la descripción",
+      "aiSuggestionTitle": "Sugerencia de IA",
+      "aiApply": "Aplicar sugerencia",
+      "aiDiscard": "Descartar"
     },
     "user": {
       "name": "Nombre",

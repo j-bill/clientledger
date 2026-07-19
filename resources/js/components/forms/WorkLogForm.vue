@@ -71,10 +71,34 @@
 					   size="sm"
 					   :icon="Sparkles"
 					   :loading="generatingAi"
-					   :disabled="!formData.description"
+					   :disabled="!formData.description || !!aiSuggestion"
 					   @click="generateDescription">
 				{{ $t('forms.workLog.generateWithAi') }}
 			</ui-button>
+
+			<div v-if="aiSuggestion" class="mt-3 rounded border border-brass-500/40 bg-ink-800/60">
+				<p class="ledger-rule px-3 py-2 text-xs font-semibold uppercase tracking-wide text-brass-400">
+					{{ $t('forms.workLog.aiSuggestionTitle') }}
+				</p>
+				<p class="whitespace-pre-wrap p-3 text-sm leading-relaxed">
+					<template v-for="(part, i) in aiDiff" :key="i">
+						<del v-if="part.removed" class="rounded-sm bg-clay-900 px-0.5 text-clay-400">{{ part.value }}</del>
+						<ins v-else-if="part.added" class="rounded-sm bg-sage-900 px-0.5 text-sage-400 no-underline">{{ part.value }}</ins>
+						<span v-else class="text-bone-300">{{ part.value }}</span>
+					</template>
+				</p>
+				<p v-if="aiFeedback" class="border-t border-ink-700/60 px-3 py-2 text-xs text-bone-700">
+					{{ aiFeedback }}
+				</p>
+				<div class="flex items-center justify-end gap-2 border-t border-ink-700/60 px-3 py-2">
+					<ui-button variant="ghost" size="sm" @click="discardAiSuggestion">
+						{{ $t('forms.workLog.aiDiscard') }}
+					</ui-button>
+					<ui-button variant="primary" size="sm" @click="applyAiSuggestion">
+						{{ $t('forms.workLog.aiApply') }}
+					</ui-button>
+				</div>
+			</div>
 		</div>
 
 		<div class="mt-4">
@@ -82,6 +106,7 @@
 						 :label="$t('forms.workLog.billable')"
 						 @update:model-value="formData.billable = $event ? 1 : 0" />
 		</div>
+
 	</ui-form>
 </template>
 
@@ -90,6 +115,7 @@ import { mapState, mapActions } from 'pinia'
 import { store } from '../../store'
 import { formatDate } from '../../utils/formatters';
 import axios from 'axios'
+import { diffWords } from 'diff';
 import { Calendar, Clock, Banknote, Sparkles } from 'lucide-vue-next';
 
 export default {
@@ -128,7 +154,10 @@ export default {
 			isNewWorkLog: true,
 			isAdmin: false,
 			aiEnabled: false,
-			generatingAi: false
+			generatingAi: false,
+			aiOriginal: '',
+			aiSuggestion: '',
+			aiFeedback: ''
 		};
 	},
 
@@ -139,6 +168,10 @@ export default {
 			if (!this.formData.date) return '';
 			// Display the date in the user's preferred format
 			return formatDate(this.formData.date, this.settings);
+		},
+
+		aiDiff() {
+			return diffWords(this.aiOriginal, this.aiSuggestion);
 		}
 	},
 
@@ -191,12 +224,25 @@ export default {
 					notes: this.formData.description,
 					project_id: this.formData.project_id
 				});
-				this.formData.description = response.data.description;
+				this.aiOriginal = this.formData.description;
+				this.aiSuggestion = response.data.description;
+				this.aiFeedback = response.data.feedback || '';
 			} catch (error) {
 				this.showSnackbar(error.response?.data?.message || this.$t('forms.workLog.aiGenerationFailed'), 'error');
 			} finally {
 				this.generatingAi = false;
 			}
+		},
+
+		applyAiSuggestion() {
+			this.formData.description = this.aiSuggestion;
+			this.discardAiSuggestion();
+		},
+
+		discardAiSuggestion() {
+			this.aiOriginal = '';
+			this.aiSuggestion = '';
+			this.aiFeedback = '';
 		},
 
 		async checkUserRole() {

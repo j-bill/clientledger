@@ -31,7 +31,7 @@ class AiController extends Controller
             : null;
 
         try {
-            $description = $service->generate($validated['notes'], $project);
+            $result = $service->generate($validated['notes'], $project);
         } catch (RuntimeException $e) {
             return response()->json([
                 'message' => 'OpenAI API key is not configured',
@@ -45,7 +45,8 @@ class AiController extends Controller
         }
 
         return response()->json([
-            'description' => $description,
+            'description' => $result['description'],
+            'feedback' => $result['feedback'],
         ]);
     }
 }

@@ -45,7 +45,10 @@ class AiDescriptionTest extends TestCase
             'name' => 'Website Relaunch',
         ]);
 
-        Ai::fakeAgent(AnonymousAgent::class, ['Polished description.']);
+        Ai::fakeAgent(AnonymousAgent::class, [json_encode([
+            'description' => 'Polished description.',
+            'feedback' => 'Rephrased the notes into full sentences.',
+        ])]);
 
         $response = $this->actingAs($this->freelancer)
             ->postJson('/api/worklogs/generate-description', [
@@ -54,7 +57,10 @@ class AiDescriptionTest extends TestCase
             ]);
 
         $response->assertStatus(200)
-            ->assertJson(['description' => 'Polished description.']);
+            ->assertJson([
+                'description' => 'Polished description.',
+                'feedback' => 'Rephrased the notes into full sentences.',
+            ]);
 
         Ai::assertAgentWasPrompted(AnonymousAgent::class, function ($prompt) {
             return $prompt->contains('fixed login bug, deployed staging')
@@ -120,7 +126,8 @@ class AiDescriptionTest extends TestCase
             ->assertStatus(200);
 
         Ai::assertAgentWasPrompted(AnonymousAgent::class, function ($prompt) {
-            return $prompt->agent->instructions() === 'Write like a pirate.';
+            return str_starts_with($prompt->agent->instructions(), 'Write like a pirate.')
+                && str_contains($prompt->agent->instructions(), AiDescriptionService::FORMAT_PROMPT);
         });
     }
 
@@ -137,8 +144,45 @@ class AiDescriptionTest extends TestCase
             ->assertStatus(200);
 
         Ai::assertAgentWasPrompted(AnonymousAgent::class, function ($prompt) {
-            return $prompt->agent->instructions() === AiDescriptionService::DEFAULT_PROMPT;
+            return str_starts_with($prompt->agent->instructions(), AiDescriptionService::DEFAULT_PROMPT)
+                && str_contains($prompt->agent->instructions(), AiDescriptionService::FORMAT_PROMPT);
         });
+    }
+
+    public function test_plain_text_response_falls_back_to_description_only(): void
+    {
+        $this->enableAi();
+
+        Ai::fakeAgent(AnonymousAgent::class, ['Just a plain sentence, no JSON.']);
+
+        $this->actingAs($this->freelancer)
+            ->postJson('/api/worklogs/generate-description', [
+                'notes' => 'fixed login',
+            ])
+            ->assertStatus(200)
+            ->assertJson([
+                'description' => 'Just a plain sentence, no JSON.',
+                'feedback' => '',
+            ]);
+    }
+
+    public function test_json_wrapped_in_code_fences_is_parsed(): void
+    {
+        $this->enableAi();
+
+        Ai::fakeAgent(AnonymousAgent::class, [
+            "```json\n{\"description\": \"Fenced result.\", \"feedback\": \"Tightened wording.\"}\n```",
+        ]);
+
+        $this->actingAs($this->freelancer)
+            ->postJson('/api/worklogs/generate-description', [
+                'notes' => 'fixed login',
+            ])
+            ->assertStatus(200)
+            ->assertJson([
+                'description' => 'Fenced result.',
+                'feedback' => 'Tightened wording.',
+            ]);
     }
 
     public function test_public_settings_expose_flag_but_not_secrets(): void

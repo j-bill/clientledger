@@ -10,7 +10,9 @@ use function Laravel\Ai\agent;
 
 class AiDescriptionService
 {
-    public const DEFAULT_PROMPT = 'You are an assistant that rewrites rough time-tracking notes into a polished work log description. Write in first person, past tense, professional but plain language. Keep it concise (1-4 sentences), factual, and suitable for a client-facing invoice. Do not invent work that is not mentioned in the notes. Respond only with the rewritten description, in the same language as the notes.';
+    public const DEFAULT_PROMPT = 'You are an assistant that rewrites rough time-tracking notes into a polished work log description. Write in first person, past tense, professional but plain language. Keep it concise (1-4 sentences), factual, and suitable for a client-facing invoice. Do not invent work that is not mentioned in the notes. Write the description and feedback in the same language as the notes.';
+
+    public const FORMAT_PROMPT = 'Respond only with a JSON object containing exactly two keys: "description" (the rewritten description) and "feedback" (1-3 short sentences summarizing what you changed compared to the original notes and why). Do not wrap the JSON in markdown code fences.';
 
     public const DEFAULT_MODEL = 'gpt-4o-mini';
 
@@ -25,9 +27,11 @@ class AiDescriptionService
     /**
      * Rewrite rough time-tracking notes into a polished description.
      *
+     * @return array{description: string, feedback: string}
+     *
      * @throws RuntimeException when no OpenAI API key is configured
      */
-    public function generate(string $notes, ?Project $project = null): string
+    public function generate(string $notes, ?Project $project = null): array
     {
         $apiKey = SettingsHelper::get('openai_api_key');
 
@@ -50,8 +54,35 @@ class AiDescriptionService
             }
         }
 
-        $response = agent(instructions: $instructions)->prompt($prompt, model: $model);
+        $response = agent(instructions: $instructions."\n\n".self::FORMAT_PROMPT)->prompt($prompt, model: $model);
 
-        return mb_substr(trim($response->text), 0, 1500);
+        return self::parseResponse($response->text);
+    }
+
+    /**
+     * Parse the model response, tolerating markdown fences and plain-text
+     * replies from models that ignore the JSON format instructions.
+     *
+     * @return array{description: string, feedback: string}
+     */
+    private static function parseResponse(string $text): array
+    {
+        $text = trim($text);
+        $json = preg_replace('/^```(?:json)?\s*|\s*```$/', '', $text);
+
+        $decoded = json_decode($json, true);
+
+        if (is_array($decoded) && is_string($decoded['description'] ?? null)) {
+            $description = $decoded['description'];
+            $feedback = is_string($decoded['feedback'] ?? null) ? $decoded['feedback'] : '';
+        } else {
+            $description = $text;
+            $feedback = '';
+        }
+
+        return [
+            'description' => mb_substr(trim($description), 0, 1500),
+            'feedback' => mb_substr(trim($feedback), 0, 1500),
+        ];
     }
 }

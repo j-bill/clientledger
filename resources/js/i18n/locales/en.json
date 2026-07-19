@@ -263,7 +263,10 @@
       "hourlyRate": "Freelancer Hourly Rate",
       "hourlyRateHint": "Rate is inherited from freelancer for new work logs",
       "generateWithAi": "Generate with AI",
-      "aiGenerationFailed": "Failed to generate description"
+      "aiGenerationFailed": "Failed to generate description",
+      "aiSuggestionTitle": "AI suggestion",
+      "aiApply": "Apply suggestion",
+      "aiDiscard": "Discard"
     },
     "user": {
       "name": "Name",

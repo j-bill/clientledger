@@ -263,7 +263,10 @@
       "hourlyRate": "Freelancer-Stundensatz",
       "hourlyRateHint": "Satz wird für neue Arbeitsprotokolle von Freelancer geerbt",
       "generateWithAi": "Mit KI generieren",
-      "aiGenerationFailed": "Beschreibung konnte nicht generiert werden"
+      "aiGenerationFailed": "Beschreibung konnte nicht generiert werden",
+      "aiSuggestionTitle": "KI-Vorschlag",
+      "aiApply": "Vorschlag übernehmen",
+      "aiDiscard": "Verwerfen"
     },
     "user": {
       "name": "Name",
