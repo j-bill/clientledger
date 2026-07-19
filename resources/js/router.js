@@ -130,34 +130,28 @@ const router = createRouter({
 });
 
 // Add navigation guard
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
   const store = createStore();
-  
+
   // Allow access to 2FA setup if pending flag is set (recovery code flow)
   if (to.name === "TwoFactorSetup" && sessionStorage.getItem('2fa_setup_pending')) {
-    next();
     return;
   }
-  
+
   // Check if user is authenticated
   if (to.meta.requiresAuth !== false && !store.isAuthenticated) {
-    next({ name: "Login" });
-    return;
+    return { name: "Login" };
   }
 
   // Redirect to login if already authenticated and trying to access login page
   if (to.name === "Login" && store.isAuthenticated) {
-    next({ path: "/" });
-    return;
+    return { path: "/" };
   }
 
   // Check admin access
   if (to.meta.requiresAdmin && store.user?.role !== 'admin') {
-    next({ name: "NoPermission" });
-    return;
+    return { name: "NoPermission" };
   }
-
-  next();
 });
 
 export default router;

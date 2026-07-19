@@ -1,5 +1,5 @@
 <template>
-	<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+	<div class="mx-auto max-w-[1800px] px-6 py-8 lg:px-10">
 		<!-- Hero Section with Profile Picture -->
 		<ui-card>
 			<div class="flex flex-col items-center py-4 text-center">

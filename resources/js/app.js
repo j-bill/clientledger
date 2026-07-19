@@ -18,6 +18,19 @@ import App from "./App.vue";
 import axios from "axios";
 import "./bootstrap";
 
+// Log shipper (logger.admin-code.de)
+import { init as initLogShipper } from "@adminintelligence/js-log-shipper";
+
+initLogShipper({
+  endpoint: import.meta.env.VITE_LOG_SHIPPER_ENDPOINT,
+  apiKey: import.meta.env.VITE_LOG_SHIPPER_KEY,
+  channel: "frontend",
+  enabled: Boolean(
+    import.meta.env.VITE_LOG_SHIPPER_ENDPOINT &&
+      import.meta.env.VITE_LOG_SHIPPER_KEY
+  ),
+});
+
 // create store
 const pinia = createPinia();
 

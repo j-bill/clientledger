@@ -58,6 +58,12 @@ return [
             'ignore_exceptions' => false,
         ],
 
+        'log_shipper' => [
+            'driver' => 'custom',
+            'via' => \AdminIntelligence\LogShipper\Logging\CreateCustomLogger::class,
+            'level' => env('LOG_SHIPPER_LEVEL', 'error'),
+        ],
+
         'single' => [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),

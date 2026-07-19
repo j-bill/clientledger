@@ -271,13 +271,12 @@ export default {
 	},
 
 	// Add navigation guard to handle when already on worklogs page
-	beforeRouteUpdate(to, from, next) {
+	beforeRouteUpdate(to) {
 		// Check if query parameters related to tracking completion have changed
 		if (to.query.completeTracking && to.query.workLogId) {
 			// Call the handler with the new query params
 			this.handleCompletingTracking(to.query);
 		}
-		next();
 	},
 
 	// Add watcher for route query changes

@@ -2,7 +2,7 @@
 	<div>
 		<!-- Top bar -->
 		<header class="sticky top-0 z-30 border-b border-ink-700/60 bg-ink-900/95 backdrop-blur">
-			<div class="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6">
+			<div class="mx-auto flex h-14 max-w-[1800px] items-center gap-3 px-6 lg:px-10">
 				<!-- Mobile menu toggle -->
 				<button
 					type="button"
