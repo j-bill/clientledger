@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class UsersSeeder extends Seeder
 {
@@ -16,7 +16,7 @@ class UsersSeeder extends Seeder
             'password' => bcrypt('adminadmin'),
             'role' => 'admin',
             'hourly_rate' => 120,
-            'email_verified_at' => now()
+            'email_verified_at' => now(),
         ]);
 
         // E2E test admin: 2FA enabled with a pre-trusted device so Playwright
@@ -49,7 +49,7 @@ class UsersSeeder extends Seeder
             'email' => 'alex@example.com',
             'password' => bcrypt('password'),
             'role' => 'freelancer',
-            'hourly_rate' => 85
+            'hourly_rate' => 85,
         ]);
 
         User::create([
@@ -57,7 +57,7 @@ class UsersSeeder extends Seeder
             'email' => 'sarah@example.com',
             'password' => bcrypt('password'),
             'role' => 'freelancer',
-            'hourly_rate' => 95
+            'hourly_rate' => 95,
         ]);
 
         User::create([
@@ -65,7 +65,7 @@ class UsersSeeder extends Seeder
             'email' => 'marcus@example.com',
             'password' => bcrypt('password'),
             'role' => 'freelancer',
-            'hourly_rate' => 110
+            'hourly_rate' => 110,
         ]);
 
         User::create([
@@ -73,7 +73,7 @@ class UsersSeeder extends Seeder
             'email' => 'emma@example.com',
             'password' => bcrypt('password'),
             'role' => 'freelancer',
-            'hourly_rate' => 90
+            'hourly_rate' => 90,
         ]);
     }
 }

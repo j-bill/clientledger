@@ -2,9 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\Require2FASetup;
+use App\Http\Middleware\Verify2FA;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Project;
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\WorkLog;
 use Carbon\Carbon;
@@ -18,16 +21,19 @@ class InvoiceTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private User $freelancer;
+
     private Customer $customer;
+
     private Project $project;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->withoutMiddleware([
-            \App\Http\Middleware\Require2FASetup::class,
-            \App\Http\Middleware\Verify2FA::class,
+            Require2FASetup::class,
+            Verify2FA::class,
         ]);
 
         $this->admin = User::factory()->create(['role' => 'admin']);
@@ -208,6 +214,77 @@ class InvoiceTest extends TestCase
             ->assertJsonCount(2);
     }
 
+    public function test_invoice_show_includes_tax_fields(): void
+    {
+        Setting::create(['key' => 'tax_rate', 'value' => '19']);
+        $invoice = Invoice::factory()->create([
+            'customer_id' => $this->customer->id,
+            'total_amount' => 100,
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->getJson("/api/invoices/{$invoice->id}");
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'tax_rate' => 19,
+                'tax_amount' => 19,
+                'total_with_tax' => 119,
+            ]);
+    }
+
+    public function test_invoice_index_includes_tax_fields(): void
+    {
+        Setting::create(['key' => 'tax_rate', 'value' => '19']);
+        Invoice::factory()->count(2)->create(['customer_id' => $this->customer->id]);
+
+        $response = $this->actingAs($this->admin)
+            ->getJson('/api/invoices');
+
+        $response->assertStatus(200)
+            ->assertJsonStructure(['*' => ['tax_rate', 'tax_amount', 'total_with_tax']]);
+    }
+
+    public function test_created_invoice_response_includes_tax_fields(): void
+    {
+        Setting::create(['key' => 'tax_rate', 'value' => '7']);
+
+        $response = $this->actingAs($this->admin)
+            ->postJson('/api/invoices', [
+                'customer_id' => $this->customer->id,
+                'invoice_number' => 'INV-TAX-1',
+                'issue_date' => Carbon::now()->format('Y-m-d'),
+                'due_date' => Carbon::now()->addDays(30)->format('Y-m-d'),
+                'total_amount' => 200,
+                'status' => 'draft',
+            ]);
+
+        $response->assertStatus(201);
+        $this->assertEqualsWithDelta(7, $response->json('tax_rate'), 0.0001);
+        $this->assertEqualsWithDelta(14, $response->json('tax_amount'), 0.0001);
+        $this->assertEqualsWithDelta(214, $response->json('total_with_tax'), 0.0001);
+    }
+
+    public function test_unbilled_worklogs_include_billing_fields(): void
+    {
+        WorkLog::factory()->create([
+            'project_id' => $this->project->id,
+            'billable' => true,
+            'user_id' => $this->freelancer->id,
+            'hours_worked' => 2,
+            'hourly_rate' => 50,
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->getJson('/api/invoices/unbilled-worklogs?customer_id='.$this->customer->id);
+
+        $response->assertStatus(200)
+            ->assertJsonCount(1);
+
+        $this->assertEquals(50, $response->json('0.billing_rate'));
+        $this->assertEquals(100, $response->json('0.billing_amount'));
+    }
+
     public function test_get_customer_projects(): void
     {
         Project::factory()->count(3)->create(['customer_id' => $this->customer->id]);
@@ -251,7 +328,7 @@ class InvoiceTest extends TestCase
             'pdf_path' => 'invoices/test.pdf',
         ]);
 
-        Storage::put($invoice->pdf_path, 'fake pdf content');
+        Storage::put('invoices/test.pdf', 'fake pdf content');
 
         $response = $this->actingAs($this->admin)
             ->get("/api/invoices/{$invoice->id}/pdf");
@@ -266,7 +343,7 @@ class InvoiceTest extends TestCase
             'pdf_path' => 'invoices/test.pdf',
         ]);
 
-        Storage::put($invoice->pdf_path, 'fake pdf content');
+        Storage::put('invoices/test.pdf', 'fake pdf content');
 
         $response = $this->actingAs($this->admin)
             ->get("/api/invoices/{$invoice->id}/pdf-download");

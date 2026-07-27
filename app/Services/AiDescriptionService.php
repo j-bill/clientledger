@@ -41,8 +41,11 @@ class AiDescriptionService
 
         config(['ai.providers.openai.key' => $apiKey]);
 
-        $instructions = SettingsHelper::get('ai_worklog_prompt') ?: self::DEFAULT_PROMPT;
-        $model = SettingsHelper::get('openai_model') ?: self::DEFAULT_MODEL;
+        $instructions = SettingsHelper::get('ai_worklog_prompt');
+        $instructions = is_string($instructions) && $instructions !== '' ? $instructions : self::DEFAULT_PROMPT;
+
+        $model = SettingsHelper::get('openai_model');
+        $model = is_string($model) && $model !== '' ? $model : self::DEFAULT_MODEL;
 
         $prompt = "Notes:\n".$notes;
 
@@ -68,7 +71,7 @@ class AiDescriptionService
     private static function parseResponse(string $text): array
     {
         $text = trim($text);
-        $json = preg_replace('/^```(?:json)?\s*|\s*```$/', '', $text);
+        $json = preg_replace('/^```(?:json)?\s*|\s*```$/', '', $text) ?? $text;
 
         $decoded = json_decode($json, true);
 

@@ -2,10 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\Customer;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Customer>
+ * @extends Factory<Customer>
  */
 class CustomerFactory extends Factory
 {
@@ -22,9 +23,9 @@ class CustomerFactory extends Factory
             'contact_email' => fake()->unique()->safeEmail(),
             'contact_phone' => fake()->phoneNumber(),
             'address_line_1' => fake()->streetAddress(),
-            'address_line_2' => fake()->secondaryAddress(),
+            'address_line_2' => 'Apt. '.fake()->buildingNumber(),
             'city' => fake()->city(),
-            'state' => fake()->state(),
+            'state' => fake()->city(),
             'postcode' => fake()->postcode(),
             'country' => fake()->country(),
             'vat_number' => fake()->bothify('??########'),

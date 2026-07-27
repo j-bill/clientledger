@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -17,8 +17,8 @@ return new class extends Migration
 
         // Get the first admin user or create one if none exists
         $adminUser = DB::table('users')->where('role', 'admin')->first();
-        
-        if (!$adminUser) {
+
+        if (! $adminUser) {
             $adminUser = DB::table('users')->first();
         }
 
@@ -26,7 +26,7 @@ return new class extends Migration
             // Update existing records with the admin user and their hourly rate
             DB::table('work_logs')->update([
                 'user_id' => $adminUser->id,
-                'user_hourly_rate' => $adminUser->hourly_rate ?? 0
+                'user_hourly_rate' => $adminUser->hourly_rate ?? 0,
             ]);
         }
 
@@ -43,4 +43,4 @@ return new class extends Migration
             $table->dropColumn(['user_id', 'user_hourly_rate']);
         });
     }
-}; 
+};

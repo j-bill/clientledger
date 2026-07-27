@@ -11,14 +11,14 @@ class Require2FASetup
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
 
         // Skip if no user is authenticated
-        if (!$user) {
+        if (! $user) {
             return $next($request);
         }
 
@@ -28,7 +28,7 @@ class Require2FASetup
         }
 
         // If user doesn't have 2FA enabled, return a specific response
-        if (!$user->hasTwoFactorEnabled()) {
+        if (! $user->twoFactorEnabled()) {
             return response()->json([
                 'message' => '2FA setup required',
                 'requires_2fa_setup' => true,

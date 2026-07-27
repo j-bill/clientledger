@@ -3,11 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\Expense;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExpenseController extends Controller
 {
+    /**
+     * @return LengthAwarePaginator<int, Expense>
+     */
+    /**
+     * @return LengthAwarePaginator<int, Expense>
+     */
     public function index(Request $request)
     {
         $query = Expense::with(['customer', 'project']);
@@ -35,9 +45,9 @@ class ExpenseController extends Controller
         return $query->orderBy('date', 'desc')->paginate(20);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $this->validated($request, [
             'description' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
             'currency' => 'required|string|size:3',
@@ -62,15 +72,15 @@ class ExpenseController extends Controller
         return response()->json($expense, 201);
     }
 
-    public function show(Request $request, Expense $expense)
+    public function show(Request $request, Expense $expense): Expense
     {
         return $expense->load(['customer', 'project']);
     }
 
-    public function update(Request $request, Expense $expense)
+    public function update(Request $request, Expense $expense): JsonResponse
     {
 
-        $validated = $request->validate([
+        $validated = $this->validated($request, [
             'description' => 'sometimes|required|string|max:255',
             'amount' => 'sometimes|required|numeric|min:0',
             'currency' => 'sometimes|required|string|size:3',
@@ -94,7 +104,7 @@ class ExpenseController extends Controller
         return response()->json($expense);
     }
 
-    public function destroy(Request $request, Expense $expense)
+    public function destroy(Request $request, Expense $expense): Response
     {
         if ($expense->receipt_path) {
             Storage::disk('public')->delete($expense->receipt_path);
@@ -105,7 +115,7 @@ class ExpenseController extends Controller
         return response()->noContent();
     }
 
-    public function export(Request $request)
+    public function export(Request $request): StreamedResponse
     {
         $query = Expense::with(['customer', 'project']);
 
@@ -131,17 +141,20 @@ class ExpenseController extends Controller
 
         $expenses = $query->orderBy('date', 'desc')->get();
 
-        $csvFileName = 'expenses_export_' . date('Y-m-d_H-i-s') . '.csv';
+        $csvFileName = 'expenses_export_'.date('Y-m-d_H-i-s').'.csv';
         $headers = [
-            "Content-type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=$csvFileName",
-            "Pragma" => "no-cache",
-            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
-            "Expires" => "0"
+            'Content-type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=$csvFileName",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
         ];
 
-        $callback = function() use ($expenses) {
+        $callback = function () use ($expenses) {
             $file = fopen('php://output', 'w');
+            if ($file === false) {
+                return;
+            }
             fputcsv($file, ['Date', 'Description', 'Amount', 'Currency', 'Category', 'Project', 'Customer', 'Tax Deductible']);
 
             foreach ($expenses as $expense) {

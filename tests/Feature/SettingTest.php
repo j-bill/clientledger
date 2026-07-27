@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\Require2FASetup;
+use App\Http\Middleware\Verify2FA;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,8 +19,8 @@ class SettingTest extends TestCase
     {
         parent::setUp();
         $this->withoutMiddleware([
-            \App\Http\Middleware\Require2FASetup::class,
-            \App\Http\Middleware\Verify2FA::class,
+            Require2FASetup::class,
+            Verify2FA::class,
         ]);
 
         $this->admin = User::factory()->create(['role' => 'admin']);
@@ -118,7 +120,7 @@ class SettingTest extends TestCase
 
         $stored = \DB::table('settings')->where('key', 'openai_api_key')->value('value');
         $this->assertNotEquals('sk-super-secret-key', $stored);
-        $this->assertEquals('sk-super-secret-key', Setting::where('key', 'openai_api_key')->first()->value);
+        $this->assertEquals('sk-super-secret-key', Setting::where('key', 'openai_api_key')->firstOrFail()->value);
     }
 
     public function test_openai_api_key_is_masked_in_batch_response(): void
@@ -130,6 +132,7 @@ class SettingTest extends TestCase
 
         $response->assertStatus(200);
         $masked = $response->json('openai_api_key');
+        $this->assertIsString($masked);
         $this->assertNotEquals('sk-super-secret-key', $masked);
         $this->assertStringEndsWith('-key', $masked);
         $this->assertStringContainsString('••••••••', $masked);
@@ -141,11 +144,15 @@ class SettingTest extends TestCase
 
         $index = $this->actingAs($this->admin)->getJson('/api/settings');
         $index->assertStatus(200);
-        $this->assertStringNotContainsString('sk-super-secret-key', $index->getContent());
+        $indexContent = $index->getContent();
+        $this->assertNotFalse($indexContent);
+        $this->assertStringNotContainsString('sk-super-secret-key', $indexContent);
 
         $show = $this->actingAs($this->admin)->getJson("/api/settings/{$setting->id}");
         $show->assertStatus(200);
-        $this->assertStringNotContainsString('sk-super-secret-key', $show->getContent());
+        $showContent = $show->getContent();
+        $this->assertNotFalse($showContent);
+        $this->assertStringNotContainsString('sk-super-secret-key', $showContent);
     }
 
     public function test_resaving_masked_value_does_not_overwrite_stored_api_key(): void
@@ -160,7 +167,7 @@ class SettingTest extends TestCase
             ->postJson('/api/settings/batch', ['openai_api_key' => $masked])
             ->assertStatus(200);
 
-        $this->assertEquals('sk-super-secret-key', Setting::where('key', 'openai_api_key')->first()->value);
+        $this->assertEquals('sk-super-secret-key', Setting::where('key', 'openai_api_key')->firstOrFail()->value);
     }
 
     public function test_batch_save_can_replace_openai_api_key_with_a_new_value(): void
@@ -171,7 +178,7 @@ class SettingTest extends TestCase
             ->postJson('/api/settings/batch', ['openai_api_key' => 'sk-new-key'])
             ->assertStatus(200);
 
-        $this->assertEquals('sk-new-key', Setting::where('key', 'openai_api_key')->first()->value);
+        $this->assertEquals('sk-new-key', Setting::where('key', 'openai_api_key')->firstOrFail()->value);
     }
 
     public function test_legacy_plaintext_openai_api_key_is_upgraded_on_read(): void
@@ -179,7 +186,7 @@ class SettingTest extends TestCase
         // Simulate a row written before encryption existed: raw insert, bypassing the mutator.
         \DB::table('settings')->insert(['key' => 'openai_api_key', 'value' => 'sk-legacy-plaintext']);
 
-        $value = Setting::where('key', 'openai_api_key')->first()->value;
+        $value = Setting::where('key', 'openai_api_key')->firstOrFail()->value;
         $this->assertEquals('sk-legacy-plaintext', $value);
 
         $stored = \DB::table('settings')->where('key', 'openai_api_key')->value('value');

@@ -2,14 +2,16 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Customer;
-use App\Models\Project;
 use App\Models\Expense;
+use App\Models\Project;
 use Carbon\Carbon;
+use Faker\Factory;
+use Illuminate\Database\Seeder;
 
 class ExpensesSeeder extends Seeder
 {
+    /** @var array<string, list<array{desc: string, range: array{int, int}}>> */
     private array $categories = [
         'Software' => [
             ['desc' => 'Annual subscription renewal for project management tooling', 'range' => [200, 900]],
@@ -42,7 +44,7 @@ class ExpensesSeeder extends Seeder
 
     public function run(): void
     {
-        $faker = \Faker\Factory::create();
+        $faker = Factory::create();
         $now = Carbon::now();
 
         $customers = Customer::all();
@@ -67,7 +69,7 @@ class ExpensesSeeder extends Seeder
                 $entry = $this->categories[$categoryName][array_rand($this->categories[$categoryName])];
                 [$min, $max] = $entry['range'];
 
-                $date = $monthStart->copy()->addDays(rand(0, $daySpan));
+                $date = $monthStart->copy()->addDays(rand(0, (int) $daySpan));
 
                 // Most expenses are tied to a project/customer, a few are
                 // general overhead with no association.

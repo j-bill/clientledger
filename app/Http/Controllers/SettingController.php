@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\LanguageHelper;
+use App\Helpers\SettingsHelper;
 use App\Models\Setting;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SettingController extends Controller
@@ -11,7 +13,7 @@ class SettingController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): JsonResponse
     {
         $settings = Setting::all()->map(function (Setting $setting) {
             $setting->value = $this->maskIfSensitive($setting->key, $setting->value);
@@ -25,9 +27,9 @@ class SettingController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $this->validated($request, [
             'key' => 'required|string|max:255|unique:settings',
             'value' => 'required|string',
         ]);
@@ -41,7 +43,7 @@ class SettingController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Setting $setting)
+    public function show(Setting $setting): JsonResponse
     {
         $setting->value = $this->maskIfSensitive($setting->key, $setting->value);
 
@@ -51,9 +53,9 @@ class SettingController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Setting $setting)
+    public function update(Request $request, Setting $setting): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $this->validated($request, [
             'key' => 'sometimes|required|string|max:255|unique:settings,key,'.$setting->id,
             'value' => 'sometimes|required|string',
         ]);
@@ -67,7 +69,7 @@ class SettingController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Setting $setting)
+    public function destroy(Setting $setting): JsonResponse
     {
         $setting->delete();
 
@@ -77,13 +79,14 @@ class SettingController extends Controller
     /**
      * Get all settings as a key-value object
      */
-    public function getBatch()
+    public function getBatch(): JsonResponse
     {
         $settings = Setting::all()->pluck('value', 'key');
 
         foreach (Setting::SENSITIVE_KEYS as $key) {
             if (isset($settings[$key])) {
-                $settings[$key] = $this->maskIfSensitive($key, $settings[$key]);
+                $raw = $settings[$key];
+                $settings[$key] = $this->maskIfSensitive($key, is_string($raw) ? $raw : null);
             }
         }
 
@@ -93,14 +96,9 @@ class SettingController extends Controller
     /**
      * Save multiple settings at once (upsert)
      */
-    public function saveBatch(Request $request)
+    public function saveBatch(Request $request): JsonResponse
     {
         $data = $request->all();
-
-        // Validate that we have an object/array
-        if (! is_array($data)) {
-            return response()->json(['message' => 'Invalid data format'], 400);
-        }
 
         try {
             // Upsert all settings
@@ -128,6 +126,11 @@ class SettingController extends Controller
                     $value = '';
                 }
 
+                // Arrays/objects are not valid setting values
+                if (! is_scalar($value)) {
+                    continue;
+                }
+
                 // Ensure value is a string
                 $value = (string) $value;
 
@@ -146,12 +149,13 @@ class SettingController extends Controller
             }
 
             // Clear settings cache
-            \App\Helpers\SettingsHelper::clearCache();
+            SettingsHelper::clearCache();
 
             $settings = Setting::all()->pluck('value', 'key');
             foreach (Setting::SENSITIVE_KEYS as $key) {
                 if (isset($settings[$key])) {
-                    $settings[$key] = $this->maskIfSensitive($key, $settings[$key]);
+                    $raw = $settings[$key];
+                    $settings[$key] = $this->maskIfSensitive($key, is_string($raw) ? $raw : null);
                 }
             }
 
@@ -171,7 +175,7 @@ class SettingController extends Controller
      * Get public settings (no authentication required)
      * Returns only safe-to-display settings like company logo
      */
-    public function getPublicSettings()
+    public function getPublicSettings(): JsonResponse
     {
         $publicSettings = Setting::whereIn('key', [
             'company_logo',

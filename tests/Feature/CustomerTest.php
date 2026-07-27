@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\Require2FASetup;
+use App\Http\Middleware\Verify2FA;
 use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,8 +19,8 @@ class CustomerTest extends TestCase
     {
         parent::setUp();
         $this->withoutMiddleware([
-            \App\Http\Middleware\Require2FASetup::class,
-            \App\Http\Middleware\Verify2FA::class,
+            Require2FASetup::class,
+            Verify2FA::class,
         ]);
 
         $this->admin = User::factory()->create(['role' => 'admin']);

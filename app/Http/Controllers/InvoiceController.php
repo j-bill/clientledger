@@ -5,33 +5,25 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Project;
-use App\Models\Setting;
 use App\Models\WorkLog;
 use App\Services\InvoiceNumberGenerator;
 use App\Services\InvoicePdfGenerator;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class InvoiceController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): JsonResponse
     {
-        $taxRate = floatval(Setting::where('key', 'tax_rate')->value('value') ?? 0);
-
         $invoices = Invoice::with(['customer', 'workLogs'])
             ->orderByDesc('created_at')
-            ->get()
-            ->map(function ($invoice) use ($taxRate) {
-                $invoice->tax_rate = $taxRate;
-                $invoice->tax_amount = $invoice->total_amount * ($taxRate / 100);
-                $invoice->total_with_tax = $invoice->total_amount + $invoice->tax_amount;
-
-                return $invoice;
-            });
+            ->get();
 
         return response()->json($invoices);
     }
@@ -39,9 +31,9 @@ class InvoiceController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $this->validated($request, [
             'customer_id' => 'required|exists:customers,id',
             'invoice_number' => 'nullable|string',
             'issue_date' => 'required|date',
@@ -72,12 +64,7 @@ class InvoiceController extends Controller
             $invoice->workLogs()->attach($workLogs);
         }
 
-        // Add tax rate and calculated tax to response
-        $taxRate = floatval(Setting::where('key', 'tax_rate')->value('value') ?? 0);
         $invoice->load(['customer', 'workLogs']);
-        $invoice->tax_rate = $taxRate;
-        $invoice->tax_amount = $invoice->total_amount * ($taxRate / 100);
-        $invoice->total_with_tax = $invoice->total_amount + $invoice->tax_amount;
 
         return response()->json($invoice, 201);
     }
@@ -85,13 +72,9 @@ class InvoiceController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Invoice $invoice)
+    public function show(Invoice $invoice): JsonResponse
     {
-        $taxRate = floatval(Setting::where('key', 'tax_rate')->value('value') ?? 0);
         $invoice->load(['customer', 'workLogs']);
-        $invoice->tax_rate = $taxRate;
-        $invoice->tax_amount = $invoice->total_amount * ($taxRate / 100);
-        $invoice->total_with_tax = $invoice->total_amount + $invoice->tax_amount;
 
         return response()->json($invoice);
     }
@@ -99,9 +82,9 @@ class InvoiceController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Invoice $invoice)
+    public function update(Request $request, Invoice $invoice): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $this->validated($request, [
             'customer_id' => 'sometimes|required|exists:customers,id',
             'invoice_number' => 'sometimes|nullable|string',
             'issue_date' => 'sometimes|required|date',
@@ -119,19 +102,13 @@ class InvoiceController extends Controller
         $invoice->update($validated);
         $invoice->load(['customer', 'workLogs']);
 
-        // Add tax rate and calculated tax to response
-        $taxRate = floatval(Setting::where('key', 'tax_rate')->value('value') ?? 0);
-        $invoice->tax_rate = $taxRate;
-        $invoice->tax_amount = $invoice->total_amount * ($taxRate / 100);
-        $invoice->total_with_tax = $invoice->total_amount + $invoice->tax_amount;
-
         return response()->json($invoice);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Invoice $invoice)
+    public function destroy(Invoice $invoice): JsonResponse
     {
         // Delete PDF file if it exists
         if ($invoice->pdf_path && Storage::exists($invoice->pdf_path)) {
@@ -149,15 +126,15 @@ class InvoiceController extends Controller
      * This is for migrating from old systems.
      * If an existing PDF exists, it will be replaced.
      */
-    public function uploadPdf(Request $request, Invoice $invoice)
+    public function uploadPdf(Request $request, Invoice $invoice): JsonResponse
     {
-        $validated = $request->validate([
+        $request->validate([
             'pdf' => 'required|file|mimes:pdf|max:10240', // Max 10MB
         ]);
 
         // Delete old PDF if it exists
         if ($invoice->pdf_path) {
-            \Illuminate\Support\Facades\Storage::delete($invoice->pdf_path);
+            Storage::delete($invoice->pdf_path);
         }
 
         // Store the uploaded PDF
@@ -178,11 +155,11 @@ class InvoiceController extends Controller
      * Generate a PDF for an invoice.
      * If an existing PDF exists, it will be replaced.
      */
-    public function generatePdf(Invoice $invoice)
+    public function generatePdf(Invoice $invoice): JsonResponse
     {
         // Delete old PDF if it exists
         if ($invoice->pdf_path) {
-            \Illuminate\Support\Facades\Storage::delete($invoice->pdf_path);
+            Storage::delete($invoice->pdf_path);
         }
 
         // Generate and save PDF to filesystem
@@ -199,9 +176,9 @@ class InvoiceController extends Controller
     /**
      * Generate an invoice from unbilled work logs.
      */
-    public function generateFromWorkLogs(Request $request)
+    public function generateFromWorkLogs(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $this->validated($request, [
             'customer_id' => 'required|exists:customers,id',
             'work_log_ids' => 'required|array',
             'work_log_ids.*' => 'exists:work_logs,id',
@@ -210,7 +187,7 @@ class InvoiceController extends Controller
         ]);
 
         // Get customer and work logs
-        $customer = Customer::findOrFail($validated['customer_id']);
+        $customer = Customer::findOrFail($request->integer('customer_id'));
         $workLogs = WorkLog::whereIn('id', $validated['work_log_ids'])
             ->where('billable', true)
             ->get();
@@ -225,7 +202,7 @@ class InvoiceController extends Controller
             $project = Project::findOrFail($log->project_id);
             // Use project rate if set, otherwise fall back to customer rate
             $rate = $project->hourly_rate ?? $customer->hourly_rate ?? 0;
-            $totalAmount += $log->hours_worked * $rate;
+            $totalAmount += (float) ($log->hours_worked ?? 0) * (float) $rate;
         }
 
         // Generate unique invoice number
@@ -244,12 +221,7 @@ class InvoiceController extends Controller
         // Attach work logs to the invoice
         $invoice->workLogs()->attach($validated['work_log_ids']);
 
-        // Add tax rate and calculated tax to response
-        $taxRate = floatval(Setting::where('key', 'tax_rate')->value('value') ?? 0);
         $invoice->load(['customer', 'workLogs']);
-        $invoice->tax_rate = $taxRate;
-        $invoice->tax_amount = $invoice->total_amount * ($taxRate / 100);
-        $invoice->total_with_tax = $invoice->total_amount + $invoice->tax_amount;
 
         return response()->json($invoice, 201);
     }
@@ -257,9 +229,9 @@ class InvoiceController extends Controller
     /**
      * Get billable, unbilled work logs for a customer (to select for invoice generation)
      */
-    public function unbilledWorkLogs(Request $request)
+    public function unbilledWorkLogs(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $this->validated($request, [
             'customer_id' => 'required|exists:customers,id',
             'project_id' => 'nullable|exists:projects,id',
             'start_date' => 'nullable|date',
@@ -290,13 +262,8 @@ class InvoiceController extends Controller
             ->orderByDesc('date')
             ->get();
 
-        // Append billing rate to each log for the invoice preview
-        $logs = $logs->map(function ($log) {
-            $log->billing_rate = $log->getBillingRate();
-            $log->billing_amount = $log->calculateBillingAmount();
-
-            return $log;
-        });
+        // Expose the billing rate on each log for the invoice preview
+        $logs->each->append(['billing_rate', 'billing_amount']);
 
         return response()->json($logs);
     }
@@ -304,9 +271,9 @@ class InvoiceController extends Controller
     /**
      * Get projects for a customer (for filtering work logs)
      */
-    public function customerProjects(Request $request)
+    public function customerProjects(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $this->validated($request, [
             'customer_id' => 'required|exists:customers,id',
         ]);
 
@@ -321,7 +288,7 @@ class InvoiceController extends Controller
     /**
      * Download invoice as PDF
      */
-    public function downloadPdf(Invoice $invoice)
+    public function downloadPdf(Invoice $invoice): SymfonyResponse
     {
         // If PDF already exists, serve it from storage
         if ($invoice->pdf_path && Storage::exists($invoice->pdf_path)) {
@@ -337,7 +304,7 @@ class InvoiceController extends Controller
     /**
      * Stream invoice PDF for viewing
      */
-    public function viewPdf(Invoice $invoice)
+    public function viewPdf(Invoice $invoice): SymfonyResponse
     {
         // If PDF already exists, serve it from storage
         if ($invoice->pdf_path && Storage::exists($invoice->pdf_path)) {

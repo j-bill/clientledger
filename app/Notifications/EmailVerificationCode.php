@@ -2,8 +2,8 @@
 
 namespace App\Notifications;
 
+use App\Models\User;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -21,7 +21,7 @@ class EmailVerificationCode extends Notification
     /**
      * Create a new notification instance.
      */
-    public function __construct($code)
+    public function __construct(string $code)
     {
         $this->code = $code;
     }
@@ -31,7 +31,7 @@ class EmailVerificationCode extends Notification
      *
      * @return array<int, string>
      */
-    public function via(object $notifiable): array
+    public function via(User $notifiable): array
     {
         return ['mail'];
     }
@@ -39,17 +39,17 @@ class EmailVerificationCode extends Notification
     /**
      * Get the mail representation of the notification.
      */
-    public function toMail(object $notifiable): MailMessage
+    public function toMail(User $notifiable): MailMessage
     {
         return (new MailMessage)
-                    ->subject(__('notifications.email_verification_code.subject'))
-                    ->greeting(__('notifications.email_verification_code.greeting', ['name' => $notifiable->name]))
-                    ->line(__('notifications.email_verification_code.requested'))
-                    ->line(__('notifications.email_verification_code.code_is'))
-                    ->line('**' . $this->code . '**')
-                    ->line(__('notifications.email_verification_code.expires'))
-                    ->line(__('notifications.email_verification_code.ignore'))
-                    ->line(__('notifications.email_verification_code.thank_you'));
+            ->subject(__('notifications.email_verification_code.subject'))
+            ->greeting(__('notifications.email_verification_code.greeting', ['name' => $notifiable->name]))
+            ->line(__('notifications.email_verification_code.requested'))
+            ->line(__('notifications.email_verification_code.code_is'))
+            ->line('**'.$this->code.'**')
+            ->line(__('notifications.email_verification_code.expires'))
+            ->line(__('notifications.email_verification_code.ignore'))
+            ->line(__('notifications.email_verification_code.thank_you'));
     }
 
     /**
@@ -57,7 +57,7 @@ class EmailVerificationCode extends Notification
      *
      * @return array<string, mixed>
      */
-    public function toArray(object $notifiable): array
+    public function toArray(User $notifiable): array
     {
         return [
             'code' => $this->code,

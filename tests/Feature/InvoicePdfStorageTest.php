@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\Require2FASetup;
+use App\Http\Middleware\Verify2FA;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\User;
@@ -24,8 +26,8 @@ class InvoicePdfStorageTest extends TestCase
 
         // Skip 2FA middleware for tests
         $this->withoutMiddleware([
-            \App\Http\Middleware\Require2FASetup::class,
-            \App\Http\Middleware\Verify2FA::class,
+            Require2FASetup::class,
+            Verify2FA::class,
         ]);
 
         // Create an admin user
@@ -89,7 +91,7 @@ class InvoicePdfStorageTest extends TestCase
         ]);
 
         // Create a fake PDF file
-        Storage::put($invoice->pdf_path, 'fake pdf content');
+        Storage::put('invoices/test-invoice.pdf', 'fake pdf content');
 
         $response = $this->actingAs($this->admin)
             ->get("/api/invoices/{$invoice->id}/pdf-download");
@@ -107,7 +109,7 @@ class InvoicePdfStorageTest extends TestCase
         ]);
 
         // Create a fake PDF file
-        Storage::put($invoice->pdf_path, 'fake pdf content');
+        Storage::put('invoices/test-invoice.pdf', 'fake pdf content');
 
         $response = $this->actingAs($this->admin)
             ->get("/api/invoices/{$invoice->id}/pdf");
@@ -125,8 +127,8 @@ class InvoicePdfStorageTest extends TestCase
         ]);
 
         // Create a fake PDF file
-        Storage::put($invoice->pdf_path, 'fake pdf content');
-        Storage::assertExists($invoice->pdf_path);
+        Storage::put('invoices/test-invoice.pdf', 'fake pdf content');
+        Storage::assertExists('invoices/test-invoice.pdf');
 
         $response = $this->actingAs($this->admin)
             ->deleteJson("/api/invoices/{$invoice->id}");
@@ -134,7 +136,7 @@ class InvoicePdfStorageTest extends TestCase
         $response->assertStatus(204);
 
         // Verify PDF is deleted
-        Storage::assertMissing($invoice->pdf_path);
+        Storage::assertMissing('invoices/test-invoice.pdf');
     }
 
     public function test_old_pdf_is_replaced_when_uploading_new_one(): void
@@ -153,14 +155,14 @@ class InvoicePdfStorageTest extends TestCase
 
         $response1->assertStatus(200);
         $firstPdfPath = $response1->json('pdf_path');
-        $this->assertNotNull($firstPdfPath);
+        $this->assertIsString($firstPdfPath);
 
         // Verify first PDF is stored
         Storage::assertExists($firstPdfPath);
 
         // Get the invoice fresh to verify pdf_path is set
-        $invoiceAfterFirst = $invoice->fresh();
-        $this->assertEquals($firstPdfPath, $invoiceAfterFirst->pdf_path);
+        $invoice->refresh();
+        $this->assertEquals($firstPdfPath, $invoice->pdf_path);
 
         // Upload second PDF to replace the first one
         $secondPdf = UploadedFile::fake()->create('invoice-2.pdf', 150, 'application/pdf');
@@ -171,14 +173,14 @@ class InvoicePdfStorageTest extends TestCase
 
         $response2->assertStatus(200);
         $secondPdfPath = $response2->json('pdf_path');
-        $this->assertNotNull($secondPdfPath);
+        $this->assertIsString($secondPdfPath);
 
         // Verify second PDF path is the same (since filename is based on invoice number)
         $this->assertEquals($firstPdfPath, $secondPdfPath);
 
         // Verify invoice points to the (updated) PDF
-        $invoiceAfterSecond = $invoice->fresh();
-        $this->assertEquals($secondPdfPath, $invoiceAfterSecond->pdf_path);
+        $invoice->refresh();
+        $this->assertEquals($secondPdfPath, $invoice->pdf_path);
 
         // Verify the PDF exists (should only exist once)
         Storage::assertExists($secondPdfPath);

@@ -2,13 +2,15 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Project;
 use App\Models\WorkLog;
 use Carbon\Carbon;
+use Faker\Factory;
+use Illuminate\Database\Seeder;
 
 class WorkLogsSeeder extends Seeder
 {
+    /** @var array<string, list<string>> */
     private array $taskDescriptions = [
         'Frontend Development' => [
             'Implemented responsive React component for dashboard with dynamic data visualization, state management integration, and comprehensive error handling. Added unit tests and reviewed code with team members. Optimized rendering performance and ensured cross-browser compatibility.',
@@ -16,7 +18,7 @@ class WorkLogsSeeder extends Seeder
             'Built interactive invoice generation interface with real-time calculation, multi-select work log picker, and advanced filtering capabilities. Implemented client-side validation, error recovery, and user feedback mechanisms. Created accessible UI components following WCAG guidelines.',
             'Designed and implemented dark mode toggle feature with persistent user preferences stored in localStorage. Updated all components for theme consistency and accessibility compliance. Added smooth transitions and tested across all supported browsers and devices.',
             'Created reusable component library with Storybook integration. Documented all components with usage examples and prop specifications. Implemented automated visual regression testing. Collaborated with design team to ensure consistent branding.',
-            'Optimized bundle size by implementing code splitting and lazy loading strategies. Reduced initial load time by 55% through strategic webpack configuration. Analyzed bundle metrics and documented performance improvements for stakeholders.'
+            'Optimized bundle size by implementing code splitting and lazy loading strategies. Reduced initial load time by 55% through strategic webpack configuration. Analyzed bundle metrics and documented performance improvements for stakeholders.',
         ],
         'Backend Development' => [
             'Developed Laravel RESTful API endpoints for invoice management including creation, updating, deletion with proper authorization checks. Added database transactions for data integrity. Implemented comprehensive logging and error tracking mechanisms for debugging.',
@@ -24,34 +26,34 @@ class WorkLogsSeeder extends Seeder
             'Implemented complex billing rate hierarchy system respecting project rates, customer rates, and default fallback rates. Added comprehensive unit tests covering edge cases and boundary conditions. Optimized query performance through proper indexing strategy.',
             'Refactored invoice calculation logic to handle multiple billing scenarios. Optimized database queries reducing N+1 problems. Performance improved by 60% on large datasets. Added caching layer for frequently accessed calculations.',
             'Built comprehensive error logging and monitoring system with detailed stack traces. Integrated with error tracking service for real-time alerting and analytics. Created dashboard for monitoring application health and performance metrics.',
-            'Implemented JWT-based authentication system with refresh token rotation. Added multi-factor authentication support and rate limiting. Conducted security audit and documented authentication procedures.'
+            'Implemented JWT-based authentication system with refresh token rotation. Added multi-factor authentication support and rate limiting. Conducted security audit and documented authentication procedures.',
         ],
         'Database Management' => [
             'Optimized work_logs table with strategic indexing on frequently queried columns. Query performance improved by 75% for monthly report generation. Analyzed execution plans and documented optimization results. Performed load testing to verify improvements under high traffic.',
             'Created database backup procedures and tested disaster recovery scenarios. Documented restoration processes and created automated backup scheduling. Implemented point-in-time recovery capability and tested restoration accuracy.',
-            'Performed data migration from legacy system ensuring data integrity and consistency. Wrote validation scripts to verify data accuracy across all tables. Created rollback procedures and documented migration process for future reference.'
+            'Performed data migration from legacy system ensuring data integrity and consistency. Wrote validation scripts to verify data accuracy across all tables. Created rollback procedures and documented migration process for future reference.',
         ],
         'Testing & QA' => [
             'Wrote comprehensive unit tests for invoice calculation logic covering all billing rate combinations, edge cases, and boundary conditions. Achieved 95% code coverage using PHPUnit and pytest. Documented test cases and maintained test documentation.',
             'Performed end-to-end testing of invoice workflow including generation, editing, and deletion. Documented test cases and created manual testing checklist for QA team. Identified and reported 15 bugs with detailed reproduction steps.',
-            'Created automated Playwright tests for critical user paths in invoice management system. Implemented CI/CD pipeline integration for continuous testing. Set up parallel test execution reducing test suite runtime by 70% and monitored test stability.'
+            'Created automated Playwright tests for critical user paths in invoice management system. Implemented CI/CD pipeline integration for continuous testing. Set up parallel test execution reducing test suite runtime by 70% and monitored test stability.',
         ],
         'Documentation & Communication' => [
             'Updated API documentation with new endpoints, request/response schemas, and authentication requirements. Added code examples for common use cases and documented error responses. Created interactive API documentation using OpenAPI specification.',
             'Prepared technical specification document for invoice system redesign. Documented all business rules, validation requirements, and data relationships. Presented findings to stakeholders and incorporated feedback into final specification.',
-            'Conducted knowledge transfer session with new team member. Explained architecture decisions, code conventions, and deployment procedures. Created detailed onboarding documentation and recorded video tutorials for reference.'
+            'Conducted knowledge transfer session with new team member. Explained architecture decisions, code conventions, and deployment procedures. Created detailed onboarding documentation and recorded video tutorials for reference.',
         ],
         'Bug Fixes & Maintenance' => [
             'Fixed critical bug in invoice total calculation that was causing incorrect amounts for projects with variable hourly rates. Added regression tests to prevent future issues. Analyzed root cause and documented findings in incident report.',
             'Resolved race condition in concurrent invoice creation that was causing duplicate invoice numbers. Implemented proper locking mechanism using database transactions. Added comprehensive tests for concurrent scenarios.',
             'Updated deprecated dependencies and resolved security vulnerabilities in composer.json. Ran security audit using multiple scanning tools and documented all changes. Created dependency update strategy for ongoing maintenance.',
-            'Patched timezone handling issues causing discrepancies in work log time tracking. Standardized all times to UTC with proper conversion logic. Tested across multiple timezone configurations to ensure accuracy.'
-        ]
+            'Patched timezone handling issues causing discrepancies in work log time tracking. Standardized all times to UTC with proper conversion logic. Tested across multiple timezone configurations to ensure accuracy.',
+        ],
     ];
 
     public function run(): void
     {
-        $faker = \Faker\Factory::create();
+        $faker = Factory::create();
         $now = Carbon::now();
 
         $projects = Project::with('users')->get();
@@ -120,7 +122,7 @@ class WorkLogsSeeder extends Seeder
                     'description' => $description,
                     'billable' => $isBillable,
                     'hourly_rate' => $project->hourly_rate,
-                    'user_hourly_rate' => $freelancer->pivot->hourly_rate,
+                    'user_hourly_rate' => $freelancer->getProjectHourlyRate($project),
                 ]);
             }
 
@@ -139,6 +141,9 @@ class WorkLogsSeeder extends Seeder
             $safety = 0;
             while ($previousMonthActual > 0 && $actual < $minRequired && $topUpProject && $safety < 50) {
                 $freelancer = $topUpProject->users()->inRandomOrder()->first();
+                if (! $freelancer) {
+                    break;
+                }
                 $hours = min(12, max(1, ceil(($minRequired - $actual) / $topUpProject->hourly_rate)));
                 $startHour = rand(8, 11);
 
@@ -152,7 +157,7 @@ class WorkLogsSeeder extends Seeder
                     'description' => $this->taskDescriptions[$taskCategories[array_rand($taskCategories)]][0],
                     'billable' => true,
                     'hourly_rate' => $topUpProject->hourly_rate,
-                    'user_hourly_rate' => $freelancer->pivot->hourly_rate,
+                    'user_hourly_rate' => $freelancer->getProjectHourlyRate($topUpProject),
                 ]);
 
                 $actual += $hours * $topUpProject->hourly_rate;

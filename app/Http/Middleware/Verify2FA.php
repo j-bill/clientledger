@@ -2,24 +2,24 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\DeviceFingerprintService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use App\Services\DeviceFingerprintService;
 
 class Verify2FA
 {
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
 
         // Skip if no user is authenticated
-        if (!$user) {
+        if (! $user) {
             return $next($request);
         }
 
@@ -29,7 +29,7 @@ class Verify2FA
         }
 
         // Skip if user doesn't have 2FA enabled
-        if (!$user->hasTwoFactorEnabled()) {
+        if (! $user->twoFactorEnabled()) {
             return $next($request);
         }
 

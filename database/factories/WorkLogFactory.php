@@ -8,6 +8,9 @@ use App\Models\WorkLog;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends Factory<WorkLog>
+ */
 class WorkLogFactory extends Factory
 {
     protected $model = WorkLog::class;

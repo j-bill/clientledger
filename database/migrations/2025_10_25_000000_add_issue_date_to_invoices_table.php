@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('invoices', function (Blueprint $table) {
             // Add issue_date if it doesn't exist
-            if (!Schema::hasColumn('invoices', 'issue_date')) {
+            if (! Schema::hasColumn('invoices', 'issue_date')) {
                 $table->date('issue_date')->after('customer_id')->default(now());
             }
         });

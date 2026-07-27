@@ -5,24 +5,28 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\User;
 use App\Notifications\ProjectAssigned;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ProjectController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         // Prepare the query with appropriate relations
         if ($user && $user->isFreelancer()) {
             // For freelancers, only include projects they're assigned to and limit hourly rate data
-            $query = Project::with(['customer', 'users' => function($query) use ($user) {
+            $query = Project::with(['customer', 'users' => function (BelongsToMany $query) {
                 $query->select('users.id', 'users.name', 'users.email', 'users.role');
             }]);
-            
+
             $query->whereHas('users', function ($q) use ($user) {
                 $q->where('users.id', $user->id);
             });
@@ -32,12 +36,12 @@ class ProjectController extends Controller
         }
 
         // Filter by customers
-        if ($request->has('customers') && is_array($request->customers) && !empty($request->customers)) {
+        if ($request->has('customers') && is_array($request->customers) && ! empty($request->customers)) {
             $query->whereIn('customer_id', $request->customers);
         }
 
         // Filter by freelancers
-        if ($request->has('freelancers') && is_array($request->freelancers) && !empty($request->freelancers)) {
+        if ($request->has('freelancers') && is_array($request->freelancers) && ! empty($request->freelancers)) {
             $query->whereHas('users', function ($q) use ($request) {
                 $q->whereIn('users.id', $request->freelancers);
             });
@@ -57,9 +61,9 @@ class ProjectController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $this->validated($request, [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'customer_id' => 'required|exists:customers,id',
@@ -70,8 +74,9 @@ class ProjectController extends Controller
             'users.*.hourly_rate' => 'required|numeric|min:0',
         ]);
 
-        if (isset($validated['deadline'])) {
-            $validated['deadline'] = \Carbon\Carbon::parse($validated['deadline']);
+        $deadline = $validated['deadline'] ?? null;
+        if (is_string($deadline)) {
+            $validated['deadline'] = Carbon::parse($deadline);
         }
 
         $project = Project::create([
@@ -79,23 +84,30 @@ class ProjectController extends Controller
             'description' => $validated['description'],
             'customer_id' => $validated['customer_id'],
             'hourly_rate' => $validated['hourly_rate'],
-            'deadline' => $validated['deadline'],
+            'deadline' => $validated['deadline'] ?? null,
         ]);
 
         // Attach users with their hourly rates and send notifications
-        foreach ($validated['users'] as $userData) {
-            $project->users()->attach($userData['id'], [
-                'hourly_rate' => $userData['hourly_rate']
+        $assignments = is_array($validated['users'] ?? null) ? $validated['users'] : [];
+        foreach ($assignments as $userData) {
+            if (! is_array($userData) || ! is_numeric($userData['id'] ?? null) || ! is_numeric($userData['hourly_rate'] ?? null)) {
+                continue;
+            }
+            $userId = (int) $userData['id'];
+            $userRate = $userData['hourly_rate'];
+
+            $project->users()->attach($userId, [
+                'hourly_rate' => $userRate,
             ]);
-            
+
             // Send notification to the assigned user
-            $user = User::find($userData['id']);
+            $user = User::find($userId);
             if ($user) {
                 try {
-                    $user->notify(new ProjectAssigned($project->load('customer'), $userData['hourly_rate']));
+                    $user->notify(new ProjectAssigned($project->load('customer'), $userRate));
                 } catch (\Throwable $e) {
                     // A failing mail transport must not fail project creation
-                    \Log::warning('Project assignment notification failed', [
+                    Log::warning('Project assignment notification failed', [
                         'user_id' => $user->id,
                         'project_id' => $project->id,
                         'error' => $e->getMessage(),
@@ -110,9 +122,9 @@ class ProjectController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Project $project)
+    public function update(Request $request, Project $project): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $this->validated($request, [
             'name' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
             'customer_id' => 'sometimes|required|exists:customers,id',
@@ -123,8 +135,9 @@ class ProjectController extends Controller
             'users.*.hourly_rate' => 'required|numeric|min:0',
         ]);
 
-        if (isset($validated['deadline'])) {
-            $validated['deadline'] = \Carbon\Carbon::parse($validated['deadline']);
+        $deadline = $validated['deadline'] ?? null;
+        if (is_string($deadline)) {
+            $validated['deadline'] = Carbon::parse($deadline);
         }
 
         $project->update([
@@ -136,25 +149,32 @@ class ProjectController extends Controller
         ]);
 
         // Update users if provided
-        if (isset($validated['users'])) {
+        $assignments = $validated['users'] ?? null;
+        if (is_array($assignments)) {
             // Get current user IDs before detaching
             $previousUserIds = $project->users()->pluck('users.id')->toArray();
-            
+
             $project->users()->detach();
-            foreach ($validated['users'] as $userData) {
-                $project->users()->attach($userData['id'], [
-                    'hourly_rate' => $userData['hourly_rate']
+            foreach ($assignments as $userData) {
+                if (! is_array($userData) || ! is_numeric($userData['id'] ?? null) || ! is_numeric($userData['hourly_rate'] ?? null)) {
+                    continue;
+                }
+                $userId = (int) $userData['id'];
+                $userRate = $userData['hourly_rate'];
+
+                $project->users()->attach($userId, [
+                    'hourly_rate' => $userRate,
                 ]);
-                
+
                 // Only send notification to newly assigned users (not previously assigned)
-                if (!in_array($userData['id'], $previousUserIds)) {
-                    $user = User::find($userData['id']);
+                if (! in_array($userId, $previousUserIds)) {
+                    $user = User::find($userId);
                     if ($user) {
                         try {
-                            $user->notify(new ProjectAssigned($project->load('customer'), $userData['hourly_rate']));
+                            $user->notify(new ProjectAssigned($project->load('customer'), $userRate));
                         } catch (\Throwable $e) {
                             // A failing mail transport must not fail project update
-                            \Log::warning('Project assignment notification failed', [
+                            Log::warning('Project assignment notification failed', [
                                 'user_id' => $user->id,
                                 'project_id' => $project->id,
                                 'error' => $e->getMessage(),
@@ -171,9 +191,10 @@ class ProjectController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Request $request, Project $project)
+    public function destroy(Request $request, Project $project): JsonResponse
     {
         $project->delete();
+
         return response()->json(null, 204);
     }
 }

@@ -13,9 +13,8 @@ class InvoiceNumberGenerator
      */
     public static function generate(): string
     {
-        $useRandom = self::getSettingValue('invoice_number_random', 'false') === 'true' || 
-                     self::getSettingValue('invoice_number_random', 'false') === '1' ||
-                     self::getSettingValue('invoice_number_random', 'false') === true;
+        $useRandom = self::getSettingValue('invoice_number_random', 'false') === 'true' ||
+                     self::getSettingValue('invoice_number_random', 'false') === '1';
 
         if ($useRandom) {
             return self::generateRandomInvoiceNumber();
@@ -47,33 +46,33 @@ class InvoiceNumberGenerator
             $min = (int) str_pad('1', $length, '0');
             $max = (int) str_pad('9', $length, '9');
             $randomNumber = random_int($min, $max);
-            $randomPart = str_pad($randomNumber, $length, '0', STR_PAD_LEFT);
+            $randomPart = str_pad((string) $randomNumber, $length, '0', STR_PAD_LEFT);
 
             // Build invoice number based on format
             switch ($format) {
                 case 'YYYY-MM-number':
-                    $invoiceNumber = $prefix . $year . '-' . $month . '-' . $randomPart;
+                    $invoiceNumber = $prefix.$year.'-'.$month.'-'.$randomPart;
                     break;
 
                 case 'YYYY-number':
-                    $invoiceNumber = $prefix . $year . '-' . $randomPart;
+                    $invoiceNumber = $prefix.$year.'-'.$randomPart;
                     break;
 
                 case 'number':
                 default:
-                    $invoiceNumber = $prefix . $randomPart;
+                    $invoiceNumber = $prefix.$randomPart;
                     break;
             }
 
             // Check if this number already exists
-            if (!Invoice::where('invoice_number', $invoiceNumber)->exists()) {
+            if (! Invoice::where('invoice_number', $invoiceNumber)->exists()) {
                 return $invoiceNumber;
             }
 
             $attempt++;
         }
 
-        throw new \Exception('Unable to generate unique random invoice number after ' . $maxAttempts . ' attempts');
+        throw new \Exception('Unable to generate unique random invoice number after '.$maxAttempts.' attempts');
     }
 
     /**
@@ -93,20 +92,23 @@ class InvoiceNumberGenerator
             case 'YYYY-MM-number':
                 // Get the next number for this year-month
                 $nextNumber = self::getNextSequentialNumber($year, $month, $startNumber, $prefix);
-                return $prefix . $year . '-' . $month . '-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
+                return $prefix.$year.'-'.$month.'-'.str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
 
             case 'YYYY-number':
                 // Get the next number for this year
                 $nextNumber = self::getNextSequentialNumberForYear($year, $startNumber, $prefix);
-                return $prefix . $year . '-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
+                return $prefix.$year.'-'.str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
 
             case 'number':
                 // Get the next sequential number
                 $nextNumber = self::getNextSequentialNumberGlobal($startNumber);
-                return $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
+                return $prefix.str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
 
             default:
-                throw new \Exception('Unknown invoice number format: ' . $format);
+                throw new \Exception('Unknown invoice number format: '.$format);
         }
     }
 
@@ -118,13 +120,14 @@ class InvoiceNumberGenerator
         // Find the highest invoice number for this year-month.
         // The stored numbers include the configured prefix (e.g. INV-2026-07-001),
         // so the pattern must include it too or existing numbers are never found.
-        $pattern = $prefix . $year . '-' . $month . '-%';
+        $pattern = $prefix.$year.'-'.$month.'-%';
 
         $lastInvoice = Invoice::where('invoice_number', 'like', $pattern)
             ->get()
             ->sortByDesc(function ($invoice) {
                 // Extract the number part from invoice_number (format: YYYY-MM-001)
                 $parts = explode('-', $invoice->invoice_number);
+
                 return (int) array_pop($parts);
             })
             ->first();
@@ -133,6 +136,7 @@ class InvoiceNumberGenerator
             // Extract the number part from the invoice_number
             $parts = explode('-', $lastInvoice->invoice_number);
             $lastNumber = (int) array_pop($parts);
+
             return $lastNumber + 1;
         }
 
@@ -146,7 +150,7 @@ class InvoiceNumberGenerator
     {
         // Find the highest invoice number for this year (pattern must include
         // the configured prefix, see getNextSequentialNumber)
-        $pattern = $prefix . $year . '-%';
+        $pattern = $prefix.$year.'-%';
 
         $lastInvoice = Invoice::where('invoice_number', 'like', $pattern)
             ->orderByRaw("CAST(SUBSTRING_INDEX(invoice_number, '-', -1) AS UNSIGNED) DESC")
@@ -155,6 +159,7 @@ class InvoiceNumberGenerator
         if ($lastInvoice) {
             $parts = explode('-', $lastInvoice->invoice_number);
             $lastNumber = (int) array_pop($parts);
+
             return $lastNumber + 1;
         }
 
@@ -169,12 +174,13 @@ class InvoiceNumberGenerator
         $prefix = self::getSettingValue('invoice_prefix', 'INV-');
 
         // Find the highest invoice number globally
-        $lastInvoice = Invoice::orderByRaw("CAST(SUBSTRING(invoice_number, " . (strlen($prefix) + 1) . ") AS UNSIGNED) DESC")
+        $lastInvoice = Invoice::orderByRaw('CAST(SUBSTRING(invoice_number, ?) AS UNSIGNED) DESC', [strlen($prefix) + 1])
             ->first();
 
         if ($lastInvoice) {
             $numberPart = substr($lastInvoice->invoice_number, strlen($prefix));
             $lastNumber = (int) $numberPart;
+
             return $lastNumber + 1;
         }
 
@@ -184,9 +190,11 @@ class InvoiceNumberGenerator
     /**
      * Get a setting value, with fallback to default
      */
-    private static function getSettingValue(string $key, $default = null)
+    private static function getSettingValue(string $key, string $default = ''): string
     {
         $setting = Setting::where('key', $key)->first();
-        return $setting ? $setting->value : $default;
+        $value = $setting?->value;
+
+        return is_string($value) ? $value : $default;
     }
 }

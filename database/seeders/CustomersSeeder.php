@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Customer;
+use Illuminate\Database\Seeder;
 
 class CustomersSeeder extends Seeder
 {
@@ -22,7 +22,7 @@ class CustomersSeeder extends Seeder
                 'state' => 'NY',
                 'postcode' => '10001',
                 'country' => 'USA',
-                'vat_number' => 'US123456789'
+                'vat_number' => 'US123456789',
             ],
             [
                 'name' => 'TechStart Inc',
@@ -36,7 +36,7 @@ class CustomersSeeder extends Seeder
                 'state' => 'CA',
                 'postcode' => '94105',
                 'country' => 'USA',
-                'vat_number' => 'US987654321'
+                'vat_number' => 'US987654321',
             ],
             [
                 'name' => 'Global Solutions',
@@ -50,7 +50,7 @@ class CustomersSeeder extends Seeder
                 'state' => 'Greater London',
                 'postcode' => 'SW1A 1AA',
                 'country' => 'UK',
-                'vat_number' => 'GB123456789'
+                'vat_number' => 'GB123456789',
             ],
             [
                 'name' => 'Digital Dynamics',
@@ -64,7 +64,7 @@ class CustomersSeeder extends Seeder
                 'state' => 'TX',
                 'postcode' => '78701',
                 'country' => 'USA',
-                'vat_number' => 'US456789012'
+                'vat_number' => 'US456789012',
             ],
             [
                 'name' => 'CloudVenture',
@@ -78,7 +78,7 @@ class CustomersSeeder extends Seeder
                 'state' => 'WA',
                 'postcode' => '98101',
                 'country' => 'USA',
-                'vat_number' => 'US789012345'
+                'vat_number' => 'US789012345',
             ],
             [
                 'name' => 'Innovation Labs',
@@ -92,7 +92,7 @@ class CustomersSeeder extends Seeder
                 'state' => 'MA',
                 'postcode' => '02108',
                 'country' => 'USA',
-                'vat_number' => 'US234567890'
+                'vat_number' => 'US234567890',
             ],
             [
                 'name' => 'Enterprise Solutions',
@@ -106,7 +106,7 @@ class CustomersSeeder extends Seeder
                 'state' => 'IL',
                 'postcode' => '60601',
                 'country' => 'USA',
-                'vat_number' => 'US567890123'
+                'vat_number' => 'US567890123',
             ],
             [
                 'name' => 'StartUp Accelerator',
@@ -120,7 +120,7 @@ class CustomersSeeder extends Seeder
                 'state' => 'CO',
                 'postcode' => '80202',
                 'country' => 'USA',
-                'vat_number' => 'US890123456'
+                'vat_number' => 'US890123456',
             ],
         ];
 

@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Setting;
+use Illuminate\Database\Seeder;
 
 class SettingsSeeder extends Seeder
 {
@@ -208,13 +208,13 @@ Julian Billinger, c/o Block Services, Stuttgarter Str. 106, 70736 Fellbach, Germ
 <p>The content and works created by the site operators on these pages are subject to German copyright law. Third-party contributions are identified as such.</p>
 
 <h3>Test Environment Disclaimer</h3>
-<p>This application is provided as a demonstration and test environment. No warranty is given for continuous availability, data persistence, or fitness for any particular purpose. All data is subject to automatic deletion every 60 minutes. Use at your own risk.</p>'
+<p>This application is provided as a demonstration and test environment. No warranty is given for continuous availability, data persistence, or fitness for any particular purpose. All data is subject to automatic deletion every 60 minutes. Use at your own risk.</p>',
         ];
 
         foreach ($settings as $key => $value) {
             Setting::create([
                 'key' => $key,
-                'value' => $value
+                'value' => $value,
             ]);
         }
     }

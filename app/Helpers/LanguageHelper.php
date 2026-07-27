@@ -21,30 +21,34 @@ class LanguageHelper
      * Get the current language setting
      * Returns the language code stored in settings, or default to 'en'
      */
-    public static function getCurrentLanguage()
+    public static function getCurrentLanguage(): string
     {
         $language = SettingsHelper::get('language', 'en');
-        
+
         // Ensure the language is supported
-        if (!self::isLanguageSupported($language)) {
+        if (! is_string($language) || ! self::isLanguageSupported($language)) {
             return 'en';
         }
-        
+
         return $language;
     }
 
     /**
      * Check if a language is supported
+     *
+     * @param  mixed  $languageCode
      */
-    public static function isLanguageSupported($languageCode)
+    public static function isLanguageSupported($languageCode): bool
     {
-        return isset(self::SUPPORTED_LANGUAGES[$languageCode]);
+        return is_string($languageCode) && isset(self::SUPPORTED_LANGUAGES[$languageCode]);
     }
 
     /**
      * Get all supported languages as an array
+     *
+     * @return array<string, string>
      */
-    public static function getSupportedLanguages()
+    public static function getSupportedLanguages(): array
     {
         return self::SUPPORTED_LANGUAGES;
     }
@@ -52,15 +56,17 @@ class LanguageHelper
     /**
      * Get language name by code
      */
-    public static function getLanguageName($languageCode)
+    public static function getLanguageName(string $languageCode): ?string
     {
         return self::SUPPORTED_LANGUAGES[$languageCode] ?? null;
     }
 
     /**
      * Get list of language codes
+     *
+     * @return array<int, string>
      */
-    public static function getLanguageCodes()
+    public static function getLanguageCodes(): array
     {
         return array_keys(self::SUPPORTED_LANGUAGES);
     }

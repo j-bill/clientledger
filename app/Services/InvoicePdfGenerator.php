@@ -4,7 +4,12 @@ namespace App\Services;
 
 use App\Models\Invoice;
 use App\Models\Setting;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Dompdf\Canvas;
+use Dompdf\FontMetrics;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 
@@ -12,24 +17,29 @@ class InvoicePdfGenerator
 {
     /**
      * Generate PDF for an invoice
+     *
+     * @return ($download is true ? Response : \Barryvdh\DomPDF\PDF)
      */
-    public function generate(Invoice $invoice, bool $download = false)
+    public function generate(Invoice $invoice, bool $download = false): \Barryvdh\DomPDF\PDF|Response
     {
         // Load all settings
         $settings = $this->getSettings();
 
         // Get and set the application language
         $language = $settings['language'] ?? 'en';
-        app()->setLocale($language);
+        if (is_string($language)) {
+            app()->setLocale($language);
+        }
 
         // Get tax rate from settings
-        $taxRate = floatval($settings['tax_rate'] ?? 0);
+        $taxRateSetting = $settings['tax_rate'] ?? 0;
+        $taxRate = is_numeric($taxRateSetting) ? floatval($taxRateSetting) : 0.0;
 
         // Check if we have multiple users
-        $userCount = \App\Models\User::count();
+        $userCount = User::count();
 
         // Load invoice with related data and order work logs by ID
-        $invoice->load(['customer', 'workLogs' => function ($query) {
+        $invoice->load(['customer', 'workLogs' => function (BelongsToMany $query) {
             $query->orderBy('id', 'asc');
         }]);
 
@@ -73,7 +83,7 @@ class InvoicePdfGenerator
             $dompdf->setCallbacks([
                 [
                     'event' => 'end_document',
-                    'f' => function ($pageNumber, $pageCount, $canvas, $fontMetrics) use ($pageInfoColumns) {
+                    'f' => function (int $pageNumber, int $pageCount, Canvas $canvas, FontMetrics $fontMetrics) use ($pageInfoColumns) {
                         // Set the page number text with translation
                         $pageText = __('notifications.invoice.page');
                         $ofText = __('notifications.invoice.of');
@@ -129,7 +139,7 @@ class InvoicePdfGenerator
     /**
      * Generate and stream PDF for viewing
      */
-    public function stream(Invoice $invoice)
+    public function stream(Invoice $invoice): Response
     {
         return $this->generate($invoice)->stream();
     }
@@ -137,7 +147,7 @@ class InvoicePdfGenerator
     /**
      * Generate and download PDF
      */
-    public function download(Invoice $invoice)
+    public function download(Invoice $invoice): Response
     {
         return $this->generate($invoice, true);
     }
@@ -151,10 +161,11 @@ class InvoicePdfGenerator
         $filename = "invoice-{$invoice->invoice_number}.pdf";
         $path = "invoices/{$filename}";
 
-        // Ensure invoices directory exists
-        $disk = Storage::disk(config('filesystems.default'));
+        // Ensure invoices directory exists (Storage::disk() without arguments
+        // resolves to the configured default disk, i.e. filesystems.default)
+        $disk = Storage::disk();
         $invoicesPath = $disk->path('invoices');
-        if (!file_exists($invoicesPath)) {
+        if (! file_exists($invoicesPath)) {
             mkdir($invoicesPath, 0755, true);
         }
 
@@ -185,20 +196,27 @@ class InvoicePdfGenerator
 
     /**
      * Get all settings as an array
+     *
+     * @return array<string, mixed>
      */
     private function getSettings(): array
     {
-        $settings = Setting::pluck('value', 'key')->toArray();
+        $settings = [];
 
-        // Parse JSON values if needed
-        return array_map(function ($value) {
-            if (is_string($value) && (str_starts_with($value, '{') || str_starts_with($value, '['))) {
-                $decoded = json_decode($value, true);
-
-                return $decoded !== null ? $decoded : $value;
+        foreach (Setting::pluck('value', 'key')->toArray() as $key => $value) {
+            if (! is_string($key)) {
+                continue;
             }
 
-            return $value;
-        }, $settings);
+            // Parse JSON values if needed
+            if (is_string($value) && (str_starts_with($value, '{') || str_starts_with($value, '['))) {
+                $decoded = json_decode($value, true);
+                $value = $decoded !== null ? $decoded : $value;
+            }
+
+            $settings[$key] = $value;
+        }
+
+        return $settings;
     }
 }

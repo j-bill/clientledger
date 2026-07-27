@@ -5,23 +5,25 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Services\DeviceFingerprintService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use Illuminate\Http\Request;
 use PragmaRX\Google2FA\Google2FA;
+use Tests\TestCase;
 
 class TwoFactorRememberDeviceTest extends TestCase
 {
     use RefreshDatabase;
 
     private User $user;
+
     private string $secret;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
-        $google2fa = new Google2FA();
+
+        $google2fa = new Google2FA;
         $this->secret = $google2fa->generateSecretKey();
-        
+
         $this->user = User::factory()->create([
             'two_factor_secret' => encrypt($this->secret),
             'two_factor_confirmed_at' => now(),
@@ -39,18 +41,18 @@ class TwoFactorRememberDeviceTest extends TestCase
         ];
 
         // Create a mock request to generate the fingerprint
-        $request = \Illuminate\Http\Request::create('/test', 'GET', [], [], [], [
+        $request = Request::create('/test', 'GET', [], [], [], [
             'HTTP_USER_AGENT' => $headers['User-Agent'],
             'HTTP_ACCEPT_LANGUAGE' => $headers['Accept-Language'],
             'HTTP_ACCEPT_ENCODING' => $headers['Accept-Encoding'],
             'HTTP_X_DEVICE_FINGERPRINT' => $headers['X-Device-Fingerprint'],
         ]);
-        
+
         $fingerprint = DeviceFingerprintService::generate($request, $headers['X-Device-Fingerprint']);
-        
+
         // Add trusted device directly to user
         $this->user->addTrustedDevice($fingerprint, $headers['User-Agent'], $headers['X-Device-Fingerprint']);
-        
+
         // Acting as user (simulates being logged in)
         // Hit protected route - should SUCCEED because device is trusted
         $response = $this->actingAs($this->user)
@@ -66,12 +68,12 @@ class TwoFactorRememberDeviceTest extends TestCase
             'User-Agent' => 'DeviceA',
             'X-Device-Fingerprint' => 'fingerprint-a',
         ];
-        
-        $requestA = \Illuminate\Http\Request::create('/test', 'GET', [], [], [], [
+
+        $requestA = Request::create('/test', 'GET', [], [], [], [
             'HTTP_USER_AGENT' => $headersA['User-Agent'],
             'HTTP_X_DEVICE_FINGERPRINT' => $headersA['X-Device-Fingerprint'],
         ]);
-        
+
         $fingerprintA = DeviceFingerprintService::generate($requestA, $headersA['X-Device-Fingerprint']);
         $this->user->addTrustedDevice($fingerprintA, $headersA['User-Agent'], $headersA['X-Device-Fingerprint']);
 
@@ -125,7 +127,7 @@ class TwoFactorRememberDeviceTest extends TestCase
     {
         // Add device with only client fingerprint
         $clientFingerprint = 'unique-client-fingerprint-123';
-        
+
         // Store a trusted device with a specific client fingerprint
         $this->user->two_factor_device_fingerprints = [
             [
@@ -134,10 +136,10 @@ class TwoFactorRememberDeviceTest extends TestCase
                 'user_agent' => 'TestAgent',
                 'added_at' => now()->timestamp,
                 'expires_at' => now()->addDays(90)->timestamp,
-            ]
+            ],
         ];
         $this->user->save();
-        
+
         // Access with matching client fingerprint but different server fingerprint
         $headers = [
             'User-Agent' => 'DifferentAgent',
@@ -160,10 +162,10 @@ class TwoFactorRememberDeviceTest extends TestCase
                 'user_agent' => 'TestAgent',
                 'added_at' => now()->subDays(100)->timestamp,
                 'expires_at' => now()->subDays(10)->timestamp, // Expired
-            ]
+            ],
         ];
         $this->user->save();
-        
+
         $headers = [
             'User-Agent' => 'TestAgent',
             'X-Device-Fingerprint' => 'expired-client',

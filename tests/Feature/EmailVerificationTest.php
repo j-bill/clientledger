@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\Require2FASetup;
+use App\Http\Middleware\Verify2FA;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -11,14 +13,15 @@ class EmailVerificationTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private User $verifiedUser;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->withoutMiddleware([
-            \App\Http\Middleware\Require2FASetup::class,
-            \App\Http\Middleware\Verify2FA::class,
+            Require2FASetup::class,
+            Verify2FA::class,
         ]);
 
         $this->user = User::factory()->create([

@@ -9,7 +9,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('invoices', function (Blueprint $table) {
-            if (!Schema::hasColumn('invoices', 'notes')) {
+            if (! Schema::hasColumn('invoices', 'notes')) {
                 $table->text('notes')->nullable()->after('status');
             }
             // Adjust status enum if needed (some DBs require raw SQL; keep simple if not enum)

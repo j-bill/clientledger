@@ -1,15 +1,17 @@
 <?php
 
 // Setting.php
+
 namespace App\Models;
 
+use Database\Factories\SettingFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
 
 class Setting extends Model
 {
-    /** @use HasFactory<\Database\Factories\SettingFactory> */
+    /** @use HasFactory<SettingFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -25,7 +27,7 @@ class Setting extends Model
      */
     public const SENSITIVE_KEYS = ['openai_api_key'];
 
-    public function setValueAttribute($value)
+    public function setValueAttribute(?string $value): void
     {
         if (in_array($this->key, self::SENSITIVE_KEYS, true) && $value !== '' && $value !== null) {
             $value = Crypt::encryptString($value);
@@ -34,7 +36,7 @@ class Setting extends Model
         $this->attributes['value'] = $value;
     }
 
-    public function getValueAttribute($value)
+    public function getValueAttribute(?string $value): ?string
     {
         if (! in_array($this->key, self::SENSITIVE_KEYS, true) || $value === '' || $value === null) {
             return $value;

@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\Require2FASetup;
+use App\Http\Middleware\Verify2FA;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,8 +19,8 @@ class ProjectTest extends TestCase
     {
         parent::setUp();
         $this->withoutMiddleware([
-            \App\Http\Middleware\Require2FASetup::class,
-            \App\Http\Middleware\Verify2FA::class,
+            Require2FASetup::class,
+            Verify2FA::class,
         ]);
 
         $this->admin = User::factory()->create(['role' => 'admin']);
@@ -44,5 +46,20 @@ class ProjectTest extends TestCase
             ]);
 
         $response->assertStatus(200);
+    }
+
+    public function test_freelancer_only_sees_assigned_projects(): void
+    {
+        $freelancer = User::factory()->create(['role' => 'freelancer']);
+        $assigned = Project::factory()->create();
+        Project::factory()->create(); // unassigned
+        $assigned->users()->attach($freelancer->id, ['hourly_rate' => 50]);
+
+        $response = $this->actingAs($freelancer)
+            ->getJson('/api/projects');
+
+        $response->assertStatus(200)
+            ->assertJsonCount(1)
+            ->assertJson([['id' => $assigned->id]]);
     }
 }

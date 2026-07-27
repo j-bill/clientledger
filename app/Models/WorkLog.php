@@ -1,14 +1,20 @@
 <?php
 
 // WorkLog.php
+
 namespace App\Models;
 
+use Database\Factories\WorkLogFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class WorkLog extends Model
 {
-    /** @use HasFactory<\Database\Factories\WorkLogFactory> */
+    /** @use HasFactory<WorkLogFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -32,70 +38,95 @@ class WorkLog extends Model
         'user_hourly_rate' => 'decimal:2',
     ];
 
-    public function project()
+    /**
+     * @return BelongsTo<Project, $this>
+     */
+    public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
     }
-    
-    public function customer()
+
+    /**
+     * @return HasOneThrough<Customer, Project, $this>
+     */
+    public function customer(): HasOneThrough
     {
         return $this->hasOneThrough(Customer::class, Project::class, 'id', 'id', 'project_id', 'customer_id');
     }
 
-    public function user()
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function invoices()
+    /**
+     * @return BelongsToMany<Invoice, $this>
+     */
+    public function invoices(): BelongsToMany
     {
         return $this->belongsToMany(Invoice::class)->withTimestamps();
     }
 
-    // Calculate the amount owed to the user
-    public function calculateUserAmount()
+    /**
+     * The amount owed to the user (hours worked at the user's rate).
+     */
+    public function getAmountAttribute(): float
     {
         if ($this->hours_worked && $this->user_hourly_rate) {
-            return $this->hours_worked * $this->user_hourly_rate;
+            return (float) $this->hours_worked * (float) $this->user_hourly_rate;
         }
-        return 0;
+
+        return 0.0;
     }
 
-    // Get the billing rate (what customer pays)
-    public function getBillingRate()
+    /**
+     * The billing rate (what the customer pays), falling back to the
+     * project rate and then the customer rate when none is stored.
+     */
+    public function getBillingRateAttribute(): float
     {
-        // Use the stored hourly_rate if available, otherwise calculate from project/customer
         if ($this->hourly_rate) {
-            return $this->hourly_rate;
+            return (float) $this->hourly_rate;
         }
 
-        // Fallback: get from project or customer
         if ($this->project?->hourly_rate) {
-            return $this->project->hourly_rate;
+            return (float) $this->project->hourly_rate;
         }
 
         if ($this->customer?->hourly_rate) {
-            return $this->customer->hourly_rate;
+            return (float) $this->customer->hourly_rate;
         }
 
-        return 0;
+        return 0.0;
     }
 
-    // Calculate the billing amount (what customer pays)
-    public function calculateBillingAmount()
+    /**
+     * The billing amount (what the customer pays).
+     */
+    public function getBillingAmountAttribute(): float
     {
         if ($this->hours_worked) {
-            return $this->hours_worked * $this->getBillingRate();
+            return (float) $this->hours_worked * $this->billing_rate;
         }
-        return 0;
+
+        return 0.0;
     }
 
-    // Scope for freelancers to only see their own work logs
-    public function scopeForUser($query, User $user)
+    /**
+     * Scope for freelancers to only see their own work logs.
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopeForUser(Builder $query, User $user): Builder
     {
         if ($user->isAdmin()) {
             return $query;
         }
+
         return $query->where('user_id', $user->id);
     }
 }

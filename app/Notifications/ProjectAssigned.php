@@ -3,8 +3,8 @@
 namespace App\Notifications;
 
 use App\Models\Project;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -15,7 +15,7 @@ class ProjectAssigned extends Notification
     /**
      * The project that was assigned.
      *
-     * @var \App\Models\Project
+     * @var Project
      */
     protected $project;
 
@@ -28,11 +28,13 @@ class ProjectAssigned extends Notification
 
     /**
      * Create a new notification instance.
+     *
+     * @param  float|int|string  $hourlyRate
      */
     public function __construct(Project $project, $hourlyRate)
     {
         $this->project = $project;
-        $this->hourlyRate = $hourlyRate;
+        $this->hourlyRate = (float) $hourlyRate;
     }
 
     /**
@@ -40,41 +42,41 @@ class ProjectAssigned extends Notification
      *
      * @return array<int, string>
      */
-    public function via(object $notifiable): array
+    public function via(User $notifiable): array
     {
         // Only send if user has enabled notifications
-        if (!$notifiable->notify_on_project_assignment) {
+        if (! $notifiable->notify_on_project_assignment) {
             return [];
         }
-        
+
         return ['mail'];
     }
 
     /**
      * Get the mail representation of the notification.
      */
-    public function toMail(object $notifiable): MailMessage
+    public function toMail(User $notifiable): MailMessage
     {
         $projectUrl = url('/projects');
-        
+
         $message = (new MailMessage)
-                    ->subject(__('notifications.project_assigned.subject'))
-                    ->greeting(__('notifications.project_assigned.greeting', ['name' => $notifiable->name]))
-                    ->line(__('notifications.project_assigned.assigned_to', ['project' => $this->project->name]))
-                    ->line(__('notifications.project_assigned.customer', ['customer' => $this->project->customer ? $this->project->customer->name : 'N/A']))
-                    ->line(__('notifications.project_assigned.hourly_rate', ['rate' => '$' . number_format($this->hourlyRate, 2)]));
-        
+            ->subject(__('notifications.project_assigned.subject'))
+            ->greeting(__('notifications.project_assigned.greeting', ['name' => $notifiable->name]))
+            ->line(__('notifications.project_assigned.assigned_to', ['project' => $this->project->name]))
+            ->line(__('notifications.project_assigned.customer', ['customer' => $this->project->customer ? $this->project->customer->name : 'N/A']))
+            ->line(__('notifications.project_assigned.hourly_rate', ['rate' => '$'.number_format($this->hourlyRate, 2)]));
+
         if ($this->project->deadline) {
             $message->line(__('notifications.project_assigned.deadline', ['deadline' => $this->project->deadline->format('F j, Y')]));
         }
-        
+
         if ($this->project->description) {
             $message->line(__('notifications.project_assigned.description', ['description' => $this->project->description]));
         }
-        
+
         return $message
-                    ->action(__('notifications.project_assigned.action'), $projectUrl)
-                    ->line(__('notifications.project_assigned.thank_you'));
+            ->action(__('notifications.project_assigned.action'), $projectUrl)
+            ->line(__('notifications.project_assigned.thank_you'));
     }
 
     /**
@@ -82,7 +84,7 @@ class ProjectAssigned extends Notification
      *
      * @return array<string, mixed>
      */
-    public function toArray(object $notifiable): array
+    public function toArray(User $notifiable): array
     {
         return [
             'project_id' => $this->project->id,

@@ -1,5 +1,6 @@
 <?php
 
+use AdminIntelligence\LogShipper\Logging\CreateCustomLogger;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -54,13 +55,13 @@ return [
 
         'stack' => [
             'driver' => 'stack',
-            'channels' => explode(',', env('LOG_STACK', 'daily')),
+            'channels' => explode(',', (string) env('LOG_STACK', 'daily')),
             'ignore_exceptions' => false,
         ],
 
         'log_shipper' => [
             'driver' => 'custom',
-            'via' => \AdminIntelligence\LogShipper\Logging\CreateCustomLogger::class,
+            'via' => CreateCustomLogger::class,
             'level' => env('LOG_SHIPPER_LEVEL', 'error'),
         ],
 

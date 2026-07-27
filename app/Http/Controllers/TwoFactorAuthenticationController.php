@@ -2,52 +2,55 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Services\DeviceFingerprintService;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use PragmaRX\Google2FA\Google2FA;
-use BaconQrCode\Renderer\ImageRenderer;
-use BaconQrCode\Renderer\Image\SvgImageBackEnd;
-use BaconQrCode\Renderer\RendererStyle\RendererStyle;
-use BaconQrCode\Writer;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use App\Services\DeviceFingerprintService;
+use PragmaRX\Google2FA\Google2FA;
 
 class TwoFactorAuthenticationController extends Controller
 {
-    protected $google2fa;
+    protected Google2FA $google2fa;
 
     public function __construct()
     {
-        $this->google2fa = new Google2FA();
+        $this->google2fa = new Google2FA;
     }
 
     /**
      * Generate a new 2FA secret for the user
      */
-    public function enable(Request $request)
+    public function enable(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $user = $this->requireUser();
 
         // Generate secret key
         $secret = $this->google2fa->generateSecretKey();
-        
+
         // Store secret temporarily (not confirmed yet)
         $user->two_factor_secret = encrypt($secret);
         $user->save();
 
         // Generate QR code
         $qrCodeUrl = $this->google2fa->getQRCodeUrl(
-            config('app.name'),
+            config()->string('app.name'),
             $user->email,
             $secret
         );
 
         $renderer = new ImageRenderer(
             new RendererStyle(200),
-            new SvgImageBackEnd()
+            new SvgImageBackEnd
         );
         $writer = new Writer($renderer);
         $qrCodeSvg = $writer->writeString($qrCodeUrl);
@@ -61,41 +64,43 @@ class TwoFactorAuthenticationController extends Controller
     /**
      * Confirm 2FA setup by verifying a code
      */
-    public function confirm(Request $request)
+    public function confirm(Request $request): JsonResponse
     {
         $request->validate([
             'code' => 'required|string',
             'client_fingerprint' => 'sometimes|string',
         ]);
 
-        $user = $request->user();
+        $user = $this->requireUser();
 
-        if (!$user->two_factor_secret) {
+        if (! $user->two_factor_secret) {
             return response()->json(['message' => '2FA not enabled'], 400);
         }
 
         $secret = decrypt($user->two_factor_secret);
-        $valid = $this->google2fa->verifyKey($secret, $request->code);
+        $code = $request->string('code')->toString();
+        $valid = is_string($secret) && $this->google2fa->verifyKey($secret, $code);
 
         // Allow "000000" as a valid code for the seeded admin demo user
-        if (!$valid && $user->email === 'admin@admin.de' && $request->code === '000000') {
+        if (! $valid && $user->email === 'admin@admin.de' && $code === '000000') {
             $valid = true;
         }
 
-        if (!$valid) {
+        if (! $valid) {
             return response()->json(['message' => 'Invalid code'], 400);
         }
 
         // Generate recovery codes
         $recoveryCodes = $this->generateRecoveryCodes();
-        
+
         // Confirm 2FA
         $user->two_factor_confirmed_at = now();
         $user->two_factor_recovery_codes = encrypt(json_encode($recoveryCodes));
         $user->save();
 
         // Automatically trust the current device after initial setup
-        $clientFingerprint = $request->input('client_fingerprint') ?? $request->header('X-Device-Fingerprint');
+        $requestFingerprint = $request->input('client_fingerprint');
+        $clientFingerprint = is_string($requestFingerprint) ? $requestFingerprint : $request->header('X-Device-Fingerprint');
         $fingerprint = DeviceFingerprintService::generate($request, $clientFingerprint);
         $deviceInfo = DeviceFingerprintService::getDeviceInfo($request);
         $user->addTrustedDevice($fingerprint, $request->userAgent(), $clientFingerprint, $deviceInfo);
@@ -112,7 +117,7 @@ class TwoFactorAuthenticationController extends Controller
     /**
      * Verify 2FA code during login
      */
-    public function verify(Request $request)
+    public function verify(Request $request): JsonResponse
     {
         $request->validate([
             'code' => 'required|string',
@@ -122,32 +127,33 @@ class TwoFactorAuthenticationController extends Controller
 
         // Get user from pending session
         $userId = session('2fa_pending_user_id');
-        if (!$userId) {
+        if (! is_int($userId)) {
             return response()->json(['message' => 'No pending 2FA verification'], 400);
         }
 
-        $user = \App\Models\User::find($userId);
+        $user = User::find($userId);
 
-        if (!$user || !$user->hasTwoFactorEnabled()) {
+        if (! $user || $user->two_factor_secret === null || ! $user->twoFactorEnabled()) {
             return response()->json(['message' => 'Invalid request'], 400);
         }
 
         $secret = decrypt($user->two_factor_secret);
-        $valid = $this->google2fa->verifyKey($secret, $request->code);
+        $code = $request->string('code')->toString();
+        $valid = is_string($secret) && $this->google2fa->verifyKey($secret, $code);
         $usedRecoveryCode = false;
 
         // Allow "000000" as a valid code for the seeded admin demo user
-        if (!$valid && $user->email === 'admin@admin.de' && $request->code === '000000') {
+        if (! $valid && $user->email === 'admin@admin.de' && $code === '000000') {
             $valid = true;
         }
 
-        if (!$valid) {
+        if (! $valid) {
             // Try recovery codes
-            $valid = $this->validateRecoveryCode($user, $request->code);
+            $valid = $this->validateRecoveryCode($user, $code);
             $usedRecoveryCode = $valid;
         }
 
-        if (!$valid) {
+        if (! $valid) {
             return response()->json(['message' => 'Invalid code'], 400);
         }
 
@@ -163,7 +169,7 @@ class TwoFactorAuthenticationController extends Controller
             // Log the user in
             Auth::guard('web')->login($user);
             $request->session()->regenerate();
-            
+
             // Clear pending 2FA session
             session()->forget('2fa_pending_user_id');
 
@@ -175,7 +181,8 @@ class TwoFactorAuthenticationController extends Controller
 
         // Trust this device if requested (default to true)
         if ($request->input('trust_device', true)) {
-            $clientFingerprint = $request->input('client_fingerprint') ?? $request->header('X-Device-Fingerprint');
+            $requestFingerprint = $request->input('client_fingerprint');
+            $clientFingerprint = is_string($requestFingerprint) ? $requestFingerprint : $request->header('X-Device-Fingerprint');
             $fingerprint = DeviceFingerprintService::generate($request, $clientFingerprint);
             $deviceInfo = DeviceFingerprintService::getDeviceInfo($request);
             $user->addTrustedDevice($fingerprint, $request->userAgent(), $clientFingerprint, $deviceInfo);
@@ -184,10 +191,10 @@ class TwoFactorAuthenticationController extends Controller
         // Log the user in
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
-        
+
         // Clear pending 2FA session
         session()->forget('2fa_pending_user_id');
-        
+
         // Set session flag that 2FA is verified
         session(['2fa_verified' => true]);
 
@@ -199,16 +206,16 @@ class TwoFactorAuthenticationController extends Controller
     /**
      * Disable 2FA for the user
      */
-    public function disable(Request $request)
+    public function disable(Request $request): JsonResponse
     {
         $request->validate([
             'password' => 'required|string',
         ]);
 
-        $user = $request->user();
+        $user = $this->requireUser();
 
         // Verify password
-        if (!Hash::check($request->password, $user->password)) {
+        if (! Hash::check($request->string('password')->toString(), $user->password)) {
             return response()->json(['message' => 'Invalid password'], 400);
         }
 
@@ -224,13 +231,13 @@ class TwoFactorAuthenticationController extends Controller
     /**
      * Get 2FA status
      */
-    public function status(Request $request)
+    public function status(Request $request): JsonResponse
     {
-        $user = $request->user();
-        
+        $user = $this->requireUser();
+
         return response()->json([
-            'enabled' => $user->hasTwoFactorEnabled(),
-            'confirmed' => !is_null($user->two_factor_confirmed_at),
+            'enabled' => $user->twoFactorEnabled(),
+            'confirmed' => ! is_null($user->two_factor_confirmed_at),
             'trusted_devices_count' => count($user->two_factor_device_fingerprints ?: []),
         ]);
     }
@@ -238,11 +245,11 @@ class TwoFactorAuthenticationController extends Controller
     /**
      * Regenerate recovery codes
      */
-    public function regenerateRecoveryCodes(Request $request)
+    public function regenerateRecoveryCodes(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $user = $this->requireUser();
 
-        if (!$user->hasTwoFactorEnabled()) {
+        if (! $user->twoFactorEnabled()) {
             return response()->json(['message' => '2FA not enabled'], 400);
         }
 
@@ -258,15 +265,16 @@ class TwoFactorAuthenticationController extends Controller
     /**
      * Get recovery codes
      */
-    public function getRecoveryCodes(Request $request)
+    public function getRecoveryCodes(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $user = $this->requireUser();
 
-        if (!$user->hasTwoFactorEnabled() || !$user->two_factor_recovery_codes) {
+        if (! $user->twoFactorEnabled() || ! $user->two_factor_recovery_codes) {
             return response()->json(['message' => '2FA not enabled or no recovery codes'], 400);
         }
 
-        $recoveryCodes = json_decode(decrypt($user->two_factor_recovery_codes), true);
+        $decrypted = decrypt($user->two_factor_recovery_codes);
+        $recoveryCodes = is_string($decrypted) ? json_decode($decrypted, true) : [];
 
         return response()->json([
             'recovery_codes' => $recoveryCodes,
@@ -276,14 +284,14 @@ class TwoFactorAuthenticationController extends Controller
     /**
      * Remove a trusted device
      */
-    public function removeTrustedDevice(Request $request)
+    public function removeTrustedDevice(Request $request): JsonResponse
     {
         $request->validate([
             'fingerprint' => 'required|string',
         ]);
 
-        $user = $request->user();
-        $user->removeTrustedDevice($request->fingerprint);
+        $user = $this->requireUser();
+        $user->removeTrustedDevice($request->string('fingerprint')->toString());
 
         return response()->json(['message' => 'Device removed successfully']);
     }
@@ -291,45 +299,64 @@ class TwoFactorAuthenticationController extends Controller
     /**
      * Get list of trusted devices
      */
-    public function getTrustedDevices(Request $request)
+    public function getTrustedDevices(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $user = $this->requireUser();
         $devices = $user->two_factor_device_fingerprints ?: [];
 
         // Add current device indicator
         $clientFingerprint = $request->header('X-Device-Fingerprint');
         $currentFingerprint = DeviceFingerprintService::generate($request, $clientFingerprint);
-        
-        $devices = array_map(function($device) use ($currentFingerprint) {
-            $device['is_current'] = $device['fingerprint'] === $currentFingerprint;
-            $device['added_at_human'] = \Carbon\Carbon::createFromTimestamp($device['added_at'])->diffForHumans();
-            $device['expires_at_human'] = \Carbon\Carbon::createFromTimestamp($device['expires_at'])->diffForHumans();
+
+        $devices = array_map(function ($device) use ($currentFingerprint) {
+            if (! is_array($device)) {
+                return null;
+            }
+
+            $addedAt = $device['added_at'] ?? null;
+            $expiresAt = $device['expires_at'] ?? null;
+
+            $device['is_current'] = ($device['fingerprint'] ?? null) === $currentFingerprint;
+            $device['added_at_human'] = is_numeric($addedAt) ? Carbon::createFromTimestamp($addedAt)->diffForHumans() : null;
+            $device['expires_at_human'] = is_numeric($expiresAt) ? Carbon::createFromTimestamp($expiresAt)->diffForHumans() : null;
+
             return $device;
         }, $devices);
 
-        return response()->json(['devices' => array_values($devices)]);
+        return response()->json(['devices' => array_values(array_filter($devices))]);
     }
 
     /**
      * Generate recovery codes
      */
-    protected function generateRecoveryCodes()
+    /**
+     * @return array<int, string>
+     */
+    protected function generateRecoveryCodes(): array
     {
         return Collection::times(8, function () {
-            return Str::random(10) . '-' . Str::random(10);
+            return Str::random(10).'-'.Str::random(10);
         })->all();
     }
 
     /**
      * Validate a recovery code
      */
-    protected function validateRecoveryCode($user, $code)
+    protected function validateRecoveryCode(User $user, string $code): bool
     {
-        if (!$user->two_factor_recovery_codes) {
+        if (! $user->two_factor_recovery_codes) {
             return false;
         }
 
-        $recoveryCodes = json_decode(decrypt($user->two_factor_recovery_codes), true);
+        $decrypted = decrypt($user->two_factor_recovery_codes);
+        $recoveryCodes = is_string($decrypted) ? json_decode($decrypted, true) : null;
+
+        if (! is_array($recoveryCodes)) {
+            return false;
+        }
+
+        // Stored codes are strings; drop anything else defensively.
+        $recoveryCodes = array_values(array_filter($recoveryCodes, 'is_string'));
 
         if (in_array($code, $recoveryCodes)) {
             // Remove used recovery code
@@ -345,12 +372,13 @@ class TwoFactorAuthenticationController extends Controller
 
     /**
      * Get device fingerprint using the DeviceFingerprintService.
-     * 
+     *
      * @deprecated Use DeviceFingerprintService::generate() directly
      */
-    protected function getDeviceFingerprint(Request $request)
+    protected function getDeviceFingerprint(Request $request): string
     {
         $clientFingerprint = $request->header('X-Device-Fingerprint');
+
         return DeviceFingerprintService::generate($request, $clientFingerprint);
     }
 }

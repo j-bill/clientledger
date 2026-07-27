@@ -2,17 +2,18 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\WorkLog;
 use Carbon\Carbon;
+use Faker\Factory;
+use Illuminate\Database\Seeder;
 
 class InvoicesSeeder extends Seeder
 {
     public function run(): void
     {
-        $faker = \Faker\Factory::create();
+        $faker = Factory::create();
 
         // Create invoices for each COMPLETED month (not future months)
         $now = Carbon::now();
@@ -33,6 +34,7 @@ class InvoicesSeeder extends Seeder
             if ($monthEnd->isAfter($now)) {
                 // Skip months in the future
                 $currentDate->addMonth();
+
                 continue;
             }
 
@@ -43,10 +45,10 @@ class InvoicesSeeder extends Seeder
                 $workLogs = WorkLog::whereHas('project', function ($query) use ($customer) {
                     $query->where('customer_id', $customer->id);
                 })
-                ->where('billable', true)
-                ->whereMonth('date', $currentDate->month)
-                ->whereYear('date', $currentDate->year)
-                ->get();
+                    ->where('billable', true)
+                    ->whereMonth('date', $currentDate->month)
+                    ->whereYear('date', $currentDate->year)
+                    ->get();
 
                 if ($workLogs->isNotEmpty()) {
                     // Calculate total amount based on project rates
@@ -66,13 +68,13 @@ class InvoicesSeeder extends Seeder
 
                     // Create invoice with custom timestamps
                     $invoice = new Invoice([
-                        'invoice_number' => 'INV-' . $currentDate->format('Ym') . '-' . str_pad($customer->id, 3, '0', STR_PAD_LEFT),
+                        'invoice_number' => 'INV-'.$currentDate->format('Ym').'-'.str_pad((string) $customer->id, 3, '0', STR_PAD_LEFT),
                         'customer_id' => $customer->id,
                         'issue_date' => $invoiceDate->toDateString(),
                         'due_date' => $currentDate->copy()->addMonth()->endOfMonth()->toDateString(),
                         'total_amount' => $totalAmount,
                         'status' => $status,
-                        'notes' => $faker->optional(0.3)->sentence()
+                        'notes' => $faker->optional(0.3)->sentence(),
                     ]);
 
                     // Set custom timestamps
@@ -87,7 +89,9 @@ class InvoicesSeeder extends Seeder
                 }
             }
 
-            $paidTotal = collect($monthInvoices)->where('status', 'paid')->sum('total_amount');
+            $paidTotal = collect($monthInvoices)
+                ->where('status', 'paid')
+                ->reduce(fn (float $carry, Invoice $invoice): float => $carry + (float) $invoice->total_amount, 0.0);
             $minRequired = $previousPaidTotal * 1.03;
 
             if ($paidTotal < $minRequired) {
@@ -101,7 +105,7 @@ class InvoicesSeeder extends Seeder
                     }
                     $invoice->status = 'paid';
                     $invoice->save();
-                    $paidTotal += $invoice->total_amount;
+                    $paidTotal += (float) $invoice->total_amount;
                 }
             }
 

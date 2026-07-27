@@ -2,14 +2,14 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     /**
      * Run the migrations.
-     * 
+     *
      * This migration consolidates all invoice table updates into a single comprehensive migration.
      * It ensures the invoices table has all required columns and correct status enum values.
      */
@@ -17,17 +17,17 @@ return new class extends Migration
     {
         Schema::table('invoices', function (Blueprint $table) {
             // Add invoice_number if it doesn't exist
-            if (!Schema::hasColumn('invoices', 'invoice_number')) {
+            if (! Schema::hasColumn('invoices', 'invoice_number')) {
                 $table->string('invoice_number')->unique()->after('id');
             }
 
             // Add issue_date if it doesn't exist (it was in original but let's be safe)
-            if (!Schema::hasColumn('invoices', 'issue_date')) {
+            if (! Schema::hasColumn('invoices', 'issue_date')) {
                 $table->date('issue_date')->after('customer_id')->default(now());
             }
 
             // Add notes if it doesn't exist
-            if (!Schema::hasColumn('invoices', 'notes')) {
+            if (! Schema::hasColumn('invoices', 'notes')) {
                 $table->text('notes')->nullable()->after('status');
             }
 
@@ -38,10 +38,10 @@ return new class extends Migration
                 $table->enum('status', ['draft', 'sent', 'paid', 'overdue', 'cancelled'])
                     ->default('draft')
                     ->change();
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // If change() fails (missing doctrine/dbal), log it but continue
                 // The enum may already be in the correct state
-                Log::warning('Could not alter status enum, it may already be correct: ' . $e->getMessage());
+                Log::warning('Could not alter status enum, it may already be correct: '.$e->getMessage());
             }
         });
     }
@@ -70,8 +70,8 @@ return new class extends Migration
             // Revert status enum back to original state
             try {
                 $table->enum('status', ['pending', 'paid'])->default('pending')->change();
-            } catch (\Exception $e) {
-                Log::warning('Could not revert status enum: ' . $e->getMessage());
+            } catch (Exception $e) {
+                Log::warning('Could not revert status enum: '.$e->getMessage());
             }
         });
     }

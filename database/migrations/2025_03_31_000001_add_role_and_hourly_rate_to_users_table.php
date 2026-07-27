@@ -19,4 +19,4 @@ return new class extends Migration
             $table->dropColumn('hourly_rate');
         });
     }
-}; 
+};

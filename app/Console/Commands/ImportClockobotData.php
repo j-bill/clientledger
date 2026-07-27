@@ -2,12 +2,12 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
-use App\Models\User;
 use App\Models\Customer;
 use App\Models\Project;
+use App\Models\User;
 use App\Models\WorkLog;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\File;
 
 class ImportClockobotData extends Command
 {
@@ -25,6 +25,9 @@ class ImportClockobotData extends Command
      */
     protected $description = 'Import clockobot data from JSON export file';
 
+    /**
+     * @var array<string, array<int|string, int>>
+     */
     private $idMappings = [
         'users' => [],
         'customers' => [],
@@ -34,63 +37,71 @@ class ImportClockobotData extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): int
     {
         $this->info('=== Clockobot Data Importer ===');
 
         // Determine which file to use
         $filePath = $this->getImportFile();
-        
-        if (!$filePath) {
+
+        if (! $filePath) {
             return Command::FAILURE;
         }
 
-        $this->info("Using export file: " . basename($filePath));
-        
+        $this->info('Using export file: '.basename($filePath));
+
         $data = json_decode(File::get($filePath), true);
-        
-        if (!$data) {
+
+        if (! is_array($data) || $data === []) {
             $this->error('Failed to parse export file.');
+
             return Command::FAILURE;
         }
 
         // Confirm before importing
-        if (!$this->confirm('This will import data into your current database. Continue?')) {
+        if (! $this->confirm('This will import data into your current database. Continue?')) {
             $this->info('Import cancelled.');
+
             return Command::SUCCESS;
         }
 
         // Import in order to handle relationships
-        $this->importUsers($data['users']);
-        $this->importCustomers($data['customers']);
-        $this->importProjects($data['projects']);
-        $this->importWorkLogs($data['work_logs']);
-        
+        $this->importUsers($this->rows($data, 'users'));
+        $this->importCustomers($this->rows($data, 'customers'));
+        $this->importProjects($this->rows($data, 'projects'));
+        $this->importWorkLogs($this->rows($data, 'work_logs'));
+
         $this->info('Import completed successfully!');
         $this->showImportSummary();
 
         return Command::SUCCESS;
     }
 
-    private function getImportFile()
+    private function getImportFile(): ?string
     {
         $exportPath = storage_path('app/exports');
-        
+
         // If a specific file is provided
         if ($this->argument('file')) {
-            $filePath = $exportPath . '/' . $this->argument('file');
-            if (!File::exists($filePath)) {
+            $filePath = $exportPath.'/'.$this->argument('file');
+            if (! File::exists($filePath)) {
                 $this->error("File not found: {$filePath}");
+
                 return null;
             }
+
             return $filePath;
         }
 
         // Find export files
-        $files = File::glob($exportPath . '/clockobot_export_*.json');
-        
+        $files = array_values(array_filter(
+            File::glob($exportPath.'/clockobot_export_*.json'),
+            'is_string'
+        ));
+
         if (empty($files)) {
             $this->error('No export files found. Please run: php artisan clockobot:export');
+
             return null;
         }
 
@@ -99,29 +110,83 @@ class ImportClockobotData extends Command
             $latestFile = collect($files)->sortByDesc(function ($file) {
                 return File::lastModified($file);
             })->first();
+
             return $latestFile;
         }
 
         // Let user choose file
         $fileChoices = collect($files)->map(function ($file) {
             return basename($file);
-        })->toArray();
+        })->all();
 
         $choice = $this->choice('Select export file to import:', $fileChoices);
-        return $exportPath . '/' . $choice;
+        if (is_array($choice)) {
+            $first = reset($choice);
+            $choice = is_scalar($first) ? (string) $first : '';
+        }
+
+        return $exportPath.'/'.$choice;
     }
 
-    private function importUsers($users)
+    /**
+     * Extract a section of row arrays from the decoded export data.
+     *
+     * @param  array<mixed>  $data
+     * @return array<int, array<string, mixed>>
+     */
+    private function rows(array $data, string $key): array
+    {
+        $section = $data[$key] ?? [];
+
+        if (! is_array($section)) {
+            return [];
+        }
+
+        $rows = [];
+
+        foreach ($section as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $fields = [];
+
+            foreach ($row as $field => $value) {
+                if (is_string($field)) {
+                    $fields[$field] = $value;
+                }
+            }
+
+            $rows[] = $fields;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $users
+     */
+    private function importUsers($users): void
     {
         $this->info('Importing users...');
-        
+
         foreach ($users as $userData) {
+            $oldId = $userData['old_id'] ?? null;
+
+            if (! is_int($oldId) && ! is_string($oldId)) {
+                continue;
+            }
+
+            $email = $userData['email'] ?? null;
+            $emailLabel = is_scalar($email) ? (string) $email : '';
+
             // Check if user already exists by email
-            $existingUser = User::where('email', $userData['email'])->first();
-            
+            $existingUser = User::where('email', $email)->first();
+
             if ($existingUser) {
-                $this->info("User {$userData['email']} already exists, skipping...");
-                $this->idMappings['users'][$userData['old_id']] = $existingUser->id;
+                $this->info("User {$emailLabel} already exists, skipping...");
+                $this->idMappings['users'][$oldId] = $existingUser->id;
+
                 continue;
             }
 
@@ -137,22 +202,35 @@ class ImportClockobotData extends Command
                 'updated_at' => $userData['updated_at'],
             ]);
 
-            $this->idMappings['users'][$userData['old_id']] = $user->id;
+            $this->idMappings['users'][$oldId] = $user->id;
             $this->info("Created user: {$user->name} (ID: {$user->id})");
         }
     }
 
-    private function importCustomers($customers)
+    /**
+     * @param  array<int, array<string, mixed>>  $customers
+     */
+    private function importCustomers($customers): void
     {
         $this->info('Importing customers...');
-        
+
         foreach ($customers as $customerData) {
+            $oldId = $customerData['old_id'] ?? null;
+
+            if (! is_int($oldId) && ! is_string($oldId)) {
+                continue;
+            }
+
+            $name = $customerData['name'] ?? null;
+            $nameLabel = is_scalar($name) ? (string) $name : '';
+
             // Check if customer already exists by name
-            $existingCustomer = Customer::where('name', $customerData['name'])->first();
-            
+            $existingCustomer = Customer::where('name', $name)->first();
+
             if ($existingCustomer) {
-                $this->info("Customer {$customerData['name']} already exists, skipping...");
-                $this->idMappings['customers'][$customerData['old_id']] = $existingCustomer->id;
+                $this->info("Customer {$nameLabel} already exists, skipping...");
+                $this->idMappings['customers'][$oldId] = $existingCustomer->id;
+
                 continue;
             }
 
@@ -173,32 +251,49 @@ class ImportClockobotData extends Command
                 'updated_at' => $customerData['updated_at'],
             ]);
 
-            $this->idMappings['customers'][$customerData['old_id']] = $customer->id;
+            $this->idMappings['customers'][$oldId] = $customer->id;
             $this->info("Created customer: {$customer->name} (ID: {$customer->id})");
         }
     }
 
-    private function importProjects($projects)
+    /**
+     * @param  array<int, array<string, mixed>>  $projects
+     */
+    private function importProjects($projects): void
     {
         $this->info('Importing projects...');
-        
+
         foreach ($projects as $projectData) {
+            $oldId = $projectData['old_id'] ?? null;
+
+            if (! is_int($oldId) && ! is_string($oldId)) {
+                continue;
+            }
+
+            $name = $projectData['name'] ?? null;
+            $nameLabel = is_scalar($name) ? (string) $name : '';
+
             // Map the customer ID
-            $customerId = $this->idMappings['customers'][$projectData['customer_id']] ?? null;
-            
-            if (!$customerId) {
-                $this->error("Cannot find mapped customer ID for project: {$projectData['name']}");
+            $oldCustomerId = $projectData['customer_id'] ?? null;
+            $customerId = is_int($oldCustomerId) || is_string($oldCustomerId)
+                ? ($this->idMappings['customers'][$oldCustomerId] ?? null)
+                : null;
+
+            if (! $customerId) {
+                $this->error("Cannot find mapped customer ID for project: {$nameLabel}");
+
                 continue;
             }
 
             // Check if project already exists
-            $existingProject = Project::where('name', $projectData['name'])
+            $existingProject = Project::where('name', $name)
                 ->where('customer_id', $customerId)
                 ->first();
-            
+
             if ($existingProject) {
-                $this->info("Project {$projectData['name']} already exists, skipping...");
-                $this->idMappings['projects'][$projectData['old_id']] = $existingProject->id;
+                $this->info("Project {$nameLabel} already exists, skipping...");
+                $this->idMappings['projects'][$oldId] = $existingProject->id;
+
                 continue;
             }
 
@@ -212,33 +307,45 @@ class ImportClockobotData extends Command
                 'updated_at' => $projectData['updated_at'],
             ]);
 
-            $this->idMappings['projects'][$projectData['old_id']] = $project->id;
+            $this->idMappings['projects'][$oldId] = $project->id;
             $this->info("Created project: {$project->name} (ID: {$project->id})");
         }
     }
 
-    private function importWorkLogs($workLogs)
+    /**
+     * @param  array<int, array<string, mixed>>  $workLogs
+     */
+    private function importWorkLogs($workLogs): void
     {
         $this->info('Importing work logs...');
         $progressBar = $this->output->createProgressBar(count($workLogs));
         $imported = 0;
-        
+
         foreach ($workLogs as $workLogData) {
             // Map the IDs
-            $projectId = $this->idMappings['projects'][$workLogData['project_id']] ?? null;
-            $userId = $this->idMappings['users'][$workLogData['user_id']] ?? null;
-            
-            if (!$projectId || !$userId) {
+            $oldProjectId = $workLogData['project_id'] ?? null;
+            $oldUserId = $workLogData['user_id'] ?? null;
+
+            $projectId = is_int($oldProjectId) || is_string($oldProjectId)
+                ? ($this->idMappings['projects'][$oldProjectId] ?? null)
+                : null;
+            $userId = is_int($oldUserId) || is_string($oldUserId)
+                ? ($this->idMappings['users'][$oldUserId] ?? null)
+                : null;
+
+            if (! $projectId || ! $userId) {
                 $progressBar->advance();
+
                 continue;
             }
 
             // Get the project and user to calculate hourly rates
             $project = Project::find($projectId);
             $user = User::find($userId);
-            
-            if (!$project || !$user) {
+
+            if (! $project || ! $user) {
                 $progressBar->advance();
+
                 continue;
             }
 
@@ -264,24 +371,24 @@ class ImportClockobotData extends Command
             $imported++;
             $progressBar->advance();
         }
-        
+
         $progressBar->finish();
         $this->newLine();
         $this->info("Imported {$imported} work logs");
     }
 
-    private function showImportSummary()
+    private function showImportSummary(): void
     {
         $this->newLine();
-        $this->info("=== Import Summary ===");
-        $this->info("Users imported: " . count($this->idMappings['users']));
-        $this->info("Customers imported: " . count($this->idMappings['customers']));
-        $this->info("Projects imported: " . count($this->idMappings['projects']));
-        
+        $this->info('=== Import Summary ===');
+        $this->info('Users imported: '.count($this->idMappings['users']));
+        $this->info('Customers imported: '.count($this->idMappings['customers']));
+        $this->info('Projects imported: '.count($this->idMappings['projects']));
+
         $this->info("\nTotal records in database:");
-        $this->info("- Users: " . User::count());
-        $this->info("- Customers: " . Customer::count());
-        $this->info("- Projects: " . Project::count());
-        $this->info("- Work Logs: " . WorkLog::count());
+        $this->info('- Users: '.User::count());
+        $this->info('- Customers: '.Customer::count());
+        $this->info('- Projects: '.Project::count());
+        $this->info('- Work Logs: '.WorkLog::count());
     }
 }

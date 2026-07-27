@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\Require2FASetup;
+use App\Http\Middleware\Verify2FA;
 use App\Models\Customer;
 use App\Models\Project;
 use App\Models\Setting;
@@ -10,6 +12,7 @@ use App\Services\AiDescriptionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Ai\Ai;
 use Laravel\Ai\AnonymousAgent;
+use Laravel\Ai\Prompts\AgentPrompt;
 use Tests\TestCase;
 
 class AiDescriptionTest extends TestCase
@@ -22,8 +25,8 @@ class AiDescriptionTest extends TestCase
     {
         parent::setUp();
         $this->withoutMiddleware([
-            \App\Http\Middleware\Require2FASetup::class,
-            \App\Http\Middleware\Verify2FA::class,
+            Require2FASetup::class,
+            Verify2FA::class,
         ]);
 
         $this->freelancer = User::factory()->create(['role' => 'freelancer']);
@@ -62,7 +65,7 @@ class AiDescriptionTest extends TestCase
                 'feedback' => 'Rephrased the notes into full sentences.',
             ]);
 
-        Ai::assertAgentWasPrompted(AnonymousAgent::class, function ($prompt) {
+        Ai::assertAgentWasPrompted(AnonymousAgent::class, function (AgentPrompt $prompt) {
             return $prompt->contains('fixed login bug, deployed staging')
                 && $prompt->contains('Website Relaunch')
                 && $prompt->contains('Acme Corp');
@@ -125,9 +128,11 @@ class AiDescriptionTest extends TestCase
             ])
             ->assertStatus(200);
 
-        Ai::assertAgentWasPrompted(AnonymousAgent::class, function ($prompt) {
-            return str_starts_with($prompt->agent->instructions(), 'Write like a pirate.')
-                && str_contains($prompt->agent->instructions(), AiDescriptionService::FORMAT_PROMPT);
+        Ai::assertAgentWasPrompted(AnonymousAgent::class, function (AgentPrompt $prompt) {
+            $instructions = (string) $prompt->agent->instructions();
+
+            return str_starts_with($instructions, 'Write like a pirate.')
+                && str_contains($instructions, AiDescriptionService::FORMAT_PROMPT);
         });
     }
 
@@ -143,9 +148,11 @@ class AiDescriptionTest extends TestCase
             ])
             ->assertStatus(200);
 
-        Ai::assertAgentWasPrompted(AnonymousAgent::class, function ($prompt) {
-            return str_starts_with($prompt->agent->instructions(), AiDescriptionService::DEFAULT_PROMPT)
-                && str_contains($prompt->agent->instructions(), AiDescriptionService::FORMAT_PROMPT);
+        Ai::assertAgentWasPrompted(AnonymousAgent::class, function (AgentPrompt $prompt) {
+            $instructions = (string) $prompt->agent->instructions();
+
+            return str_starts_with($instructions, AiDescriptionService::DEFAULT_PROMPT)
+                && str_contains($instructions, AiDescriptionService::FORMAT_PROMPT);
         });
     }
 

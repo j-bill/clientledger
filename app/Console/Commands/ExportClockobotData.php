@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
-use Carbon\Carbon;
 
 class ExportClockobotData extends Command
 {
@@ -22,18 +22,25 @@ class ExportClockobotData extends Command
      */
     protected $description = 'Export data from clockobot database to JSON format';
 
+    /**
+     * @var array{host: string, database: string, username: string, password: string}
+     */
     private $sourceConnection;
 
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): int
     {
+        $host = $this->option('host');
+        $username = $this->option('username');
+        $password = $this->option('password');
+
         $this->sourceConnection = [
-            'host' => $this->option('host'),
+            'host' => is_string($host) ? $host : '',
             'database' => 'clockobot',
-            'username' => $this->option('username'),
-            'password' => $this->option('password'),
+            'username' => is_string($username) ? $username : '',
+            'password' => is_string($password) ? $password : '',
         ];
 
         $this->info('=== Clockobot Data Exporter ===');
@@ -41,7 +48,7 @@ class ExportClockobotData extends Command
 
         try {
             $pdo = $this->createConnection();
-            
+
             $this->info('Exporting data from clockobot database...');
 
             $exportData = [
@@ -55,35 +62,42 @@ class ExportClockobotData extends Command
 
             // Create export directory if it doesn't exist
             $exportDir = storage_path('app/exports');
-            if (!File::exists($exportDir)) {
+            if (! File::exists($exportDir)) {
                 File::makeDirectory($exportDir, 0755, true);
             }
 
             // Save to JSON file
-            $filename = 'clockobot_export_' . now()->format('Y_m_d_H_i_s') . '.json';
-            $filePath = $exportDir . '/' . $filename;
+            $filename = 'clockobot_export_'.now()->format('Y_m_d_H_i_s').'.json';
+            $filePath = $exportDir.'/'.$filename;
 
-            File::put($filePath, json_encode($exportData, JSON_PRETTY_PRINT));
+            $json = json_encode($exportData, JSON_PRETTY_PRINT);
+            if ($json === false) {
+                $this->error('Failed to encode export data to JSON: '.json_last_error_msg());
+
+                return Command::FAILURE;
+            }
+            File::put($filePath, $json);
 
             $this->info("\n=== Export Completed Successfully! ===");
             $this->info("File saved to: {$filePath}");
             $this->info("\nSummary:");
-            $this->info("- Users: " . count($exportData['users']));
-            $this->info("- Customers: " . count($exportData['customers']));
-            $this->info("- Projects: " . count($exportData['projects']));
-            $this->info("- Work Logs: " . count($exportData['work_logs']));
-            $this->info("- Work Types: " . count($exportData['work_types']));
+            $this->info('- Users: '.count($exportData['users']));
+            $this->info('- Customers: '.count($exportData['customers']));
+            $this->info('- Projects: '.count($exportData['projects']));
+            $this->info('- Work Logs: '.count($exportData['work_logs']));
+            $this->info('- Work Types: '.count($exportData['work_types']));
             $this->info("\nTo import this data, run: php artisan clockobot:import");
 
             return Command::SUCCESS;
 
         } catch (\Exception $e) {
-            $this->error("Export failed: " . $e->getMessage());
+            $this->error('Export failed: '.$e->getMessage());
+
             return Command::FAILURE;
         }
     }
 
-    private function createConnection()
+    private function createConnection(): \PDO
     {
         return new \PDO(
             "mysql:host={$this->sourceConnection['host']};dbname={$this->sourceConnection['database']}",
@@ -96,11 +110,47 @@ class ExportClockobotData extends Command
         );
     }
 
-    private function exportUsers($pdo)
+    /**
+     * Run a query and return all rows, failing loudly instead of returning false.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function fetchRows(\PDO $pdo, string $sql): array
+    {
+        $stmt = $pdo->query($sql);
+
+        if ($stmt === false) {
+            throw new \RuntimeException("Query failed: {$sql}");
+        }
+
+        $rows = [];
+
+        foreach ($stmt->fetchAll() as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $fields = [];
+
+            foreach ($row as $column => $value) {
+                if (is_string($column)) {
+                    $fields[$column] = $value;
+                }
+            }
+
+            $rows[] = $fields;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function exportUsers(\PDO $pdo): array
     {
         $this->info('Exporting users...');
-        $stmt = $pdo->query("SELECT * FROM users ORDER BY id");
-        $users = $stmt->fetchAll();
+        $users = $this->fetchRows($pdo, 'SELECT * FROM users ORDER BY id');
 
         return array_map(function ($user) {
             return [
@@ -121,11 +171,13 @@ class ExportClockobotData extends Command
         }, $users);
     }
 
-    private function exportCustomers($pdo)
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function exportCustomers(\PDO $pdo): array
     {
         $this->info('Exporting customers...');
-        $stmt = $pdo->query("SELECT * FROM clients ORDER BY id");
-        $clients = $stmt->fetchAll();
+        $clients = $this->fetchRows($pdo, 'SELECT * FROM clients ORDER BY id');
 
         return array_map(function ($client) {
             return [
@@ -148,11 +200,13 @@ class ExportClockobotData extends Command
         }, $clients);
     }
 
-    private function exportProjects($pdo)
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function exportProjects(\PDO $pdo): array
     {
         $this->info('Exporting projects...');
-        $stmt = $pdo->query("SELECT * FROM projects ORDER BY id");
-        $projects = $stmt->fetchAll();
+        $projects = $this->fetchRows($pdo, 'SELECT * FROM projects ORDER BY id');
 
         return array_map(function ($project) {
             return [
@@ -169,16 +223,18 @@ class ExportClockobotData extends Command
         }, $projects);
     }
 
-    private function exportWorkLogs($pdo)
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function exportWorkLogs(\PDO $pdo): array
     {
         $this->info('Exporting work logs...');
-        $stmt = $pdo->query("
-            SELECT te.*, wt.title as work_type_title 
-            FROM time_entries te 
-            LEFT JOIN work_types wt ON te.work_type_id = wt.id 
+        $timeEntries = $this->fetchRows($pdo, '
+            SELECT te.*, wt.title as work_type_title
+            FROM time_entries te
+            LEFT JOIN work_types wt ON te.work_type_id = wt.id
             ORDER BY te.id
-        ");
-        $timeEntries = $stmt->fetchAll();
+        ');
 
         return array_map(function ($entry) {
             $hoursWorked = null;
@@ -186,10 +242,13 @@ class ExportClockobotData extends Command
             $startTime = null;
             $endTime = null;
 
-            if ($entry['start'] && $entry['end']) {
-                $start = Carbon::parse($entry['start']);
-                $end = Carbon::parse($entry['end']);
-                
+            $rawStart = $entry['start'] ?? null;
+            $rawEnd = $entry['end'] ?? null;
+
+            if (is_string($rawStart) && $rawStart !== '' && is_string($rawEnd) && $rawEnd !== '') {
+                $start = Carbon::parse($rawStart);
+                $end = Carbon::parse($rawEnd);
+
                 $date = $start->format('Y-m-d');
                 $startTime = $start->format('H:i:s');
                 $endTime = $end->format('H:i:s');
@@ -217,11 +276,13 @@ class ExportClockobotData extends Command
         }, $timeEntries);
     }
 
-    private function exportWorkTypes($pdo)
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function exportWorkTypes(\PDO $pdo): array
     {
         $this->info('Exporting work types...');
-        $stmt = $pdo->query("SELECT * FROM work_types ORDER BY id");
-        $workTypes = $stmt->fetchAll();
+        $workTypes = $this->fetchRows($pdo, 'SELECT * FROM work_types ORDER BY id');
 
         return array_map(function ($workType) {
             return [

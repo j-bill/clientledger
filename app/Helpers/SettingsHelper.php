@@ -10,43 +10,58 @@ class SettingsHelper
     /**
      * Get a setting value by key
      */
-    public static function get($key, $default = null)
+    public static function get(string $key, mixed $default = null): mixed
     {
         return Cache::remember("setting_{$key}", 3600, function () use ($key, $default) {
             $setting = Setting::where('key', $key)->first();
+
             return $setting ? $setting->value : $default;
         });
     }
 
     /**
      * Get all settings as a key-value array
+     *
+     * @return array<string, mixed>
      */
-    public static function all()
+    public static function all(): array
     {
-        return Cache::remember('all_settings', 3600, function () {
+        $settings = Cache::remember('all_settings', 3600, function () {
             return Setting::all()->pluck('value', 'key')->toArray();
         });
+
+        $result = [];
+
+        foreach ($settings as $key => $value) {
+            if (is_string($key)) {
+                $result[$key] = $value;
+            }
+        }
+
+        return $result;
     }
 
     /**
      * Clear settings cache
      */
-    public static function clearCache()
+    public static function clearCache(): void
     {
         Cache::forget('all_settings');
         $keys = Setting::pluck('key');
         foreach ($keys as $key) {
-            Cache::forget("setting_{$key}");
+            if (is_string($key)) {
+                Cache::forget("setting_{$key}");
+            }
         }
     }
 
     /**
      * Apply mail configuration from settings
      */
-    public static function applyMailConfig()
+    public static function applyMailConfig(): void
     {
         $mailHost = self::get('mail_host');
-        
+
         // Only apply if mail settings exist
         if ($mailHost) {
             config([
