@@ -39,7 +39,7 @@ class InvoicePdfGenerator
         $userCount = User::count();
 
         // Load invoice with related data and order work logs by ID
-        $invoice->load(['customer', 'workLogs' => function (BelongsToMany $query) {
+        $invoice->load(['customer', 'items', 'workLogs' => function (BelongsToMany $query) {
             $query->orderBy('id', 'asc');
         }]);
 

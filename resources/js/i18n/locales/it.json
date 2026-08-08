@@ -298,7 +298,14 @@
       "notes": "Note",
       "notesHint": "Note aggiuntive o istruzioni speciali per questa fattura",
       "editTitle": "Modifica Fattura",
-      "createTitle": "Crea Fattura"
+      "createTitle": "Crea Fattura",
+      "items": "Voci",
+      "addItem": "Aggiungi voce",
+      "itemDescription": "Descrizione",
+      "quantity": "Quantità",
+      "unitPrice": "Prezzo unitario",
+      "itemsSubtotal": "Subtotale voci",
+      "itemsHint": "Voci aggiuntive oltre ai registri di lavoro, ad es. hosting o licenze"
     },
     "required": "Obbligatorio"
   },

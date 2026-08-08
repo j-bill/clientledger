@@ -61,6 +61,63 @@
       />
     </div>
 
+    <!-- Line Items -->
+    <div class="mt-4">
+      <div class="mb-1 flex items-center justify-between">
+        <span class="text-sm font-medium text-bone-100">{{ $t('forms.invoice.items') }}</span>
+        <ui-button variant="ghost" size="sm" :icon="Plus" data-test="invoice-add-item" @click="addItem">
+          {{ $t('forms.invoice.addItem') }}
+        </ui-button>
+      </div>
+      <p class="mb-2 text-xs text-bone-500">{{ $t('forms.invoice.itemsHint') }}</p>
+      <div
+        v-for="(item, index) in formData.items"
+        :key="index"
+        class="mb-2 flex items-start gap-2"
+        :data-test="`invoice-item-${index}`"
+      >
+        <div class="min-w-0 flex-1">
+          <ui-input
+            v-model="item.description"
+            :label="$t('forms.invoice.itemDescription')"
+            :rules="[rules.required]"
+          />
+        </div>
+        <div class="w-24 shrink-0">
+          <ui-input
+            v-model="item.quantity"
+            :label="$t('forms.invoice.quantity')"
+            type="number"
+            step="0.01"
+            min="0"
+            :rules="[rules.required]"
+          />
+        </div>
+        <div class="w-32 shrink-0">
+          <ui-input
+            v-model="item.unit_price"
+            :label="$t('forms.invoice.unitPrice')"
+            type="number"
+            step="0.01"
+            :suffix="currencySymbol"
+            :rules="[rules.required]"
+          />
+        </div>
+        <ui-button
+          variant="danger-ghost"
+          size="sm"
+          class="mt-6 shrink-0"
+          :icon="Trash2"
+          :title="$t('common.delete')"
+          @click="removeItem(index)"
+        />
+      </div>
+      <div v-if="formData.items.length > 0" class="mt-1 text-right text-sm text-bone-300">
+        {{ $t('forms.invoice.itemsSubtotal') }}:
+        <strong class="tnum">{{ itemsSubtotal.toFixed(2) }}{{ currencySymbol }}</strong>
+      </div>
+    </div>
+
     <!-- Notes -->
     <div class="mt-4">
       <ui-textarea
@@ -78,13 +135,13 @@
 import { mapState, mapActions } from 'pinia';
 import { store } from '../../store'; // Assuming store path
 import { useI18n } from 'vue-i18n';
-import { Calendar } from 'lucide-vue-next';
+import { Calendar, Plus, Trash2 } from 'lucide-vue-next';
 
 export default {
   name: 'InvoiceForm',
   setup() {
     const { t } = useI18n()
-    return { t, Calendar }
+    return { t, Calendar, Plus, Trash2 }
   },
   props: {
     invoice: { // Pass the invoice object for editing, null for creating
@@ -102,6 +159,7 @@ export default {
         total_amount: 0.00,
         status: 'draft',
         notes: '',
+        items: [],
       },
       statusOptions: ['draft', 'sent', 'paid', 'overdue', 'cancelled'],
       rules: {
@@ -114,6 +172,11 @@ export default {
     ...mapState(store, ['customers', 'currencySymbol', 'settings']), // Need customers for the dropdown
     formTitle() {
       return this.invoice ? this.t('forms.invoice.editTitle') : this.t('forms.invoice.createTitle');
+    },
+    itemsSubtotal() {
+      return this.formData.items.reduce((sum, item) => {
+        return sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0);
+      }, 0);
     }
   },
   created() {
@@ -128,7 +191,12 @@ export default {
           due_date: this.invoice.due_date,
           total_amount: this.invoice.total_amount,
           status: this.invoice.status,
-          notes: this.invoice.notes || ''
+          notes: this.invoice.notes || '',
+          items: (this.invoice.items || []).map(item => ({
+            description: item.description,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+          })),
       };
     } else {
       // For new invoice, set issue_date to today
@@ -141,6 +209,14 @@ export default {
   },
   methods: {
      ...mapActions(store, ['createInvoice', 'updateInvoice', 'fetchCustomers']),
+
+    addItem() {
+      this.formData.items.push({ description: '', quantity: 1, unit_price: 0 });
+    },
+
+    removeItem(index) {
+      this.formData.items.splice(index, 1);
+    },
 
     async submit() {
       const { valid } = await this.$refs.form.validate();
@@ -157,7 +233,12 @@ export default {
         due_date: this.formData.due_date,
         total_amount: this.formData.total_amount,
         status: this.formData.status,
-        notes: this.formData.notes
+        notes: this.formData.notes,
+        items: this.formData.items.map(item => ({
+          description: item.description,
+          quantity: parseFloat(item.quantity) || 0,
+          unit_price: parseFloat(item.unit_price) || 0,
+        }))
       };
 
       if (this.invoice) {

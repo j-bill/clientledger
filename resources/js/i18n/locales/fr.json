@@ -298,7 +298,14 @@
       "notes": "Notes",
       "notesHint": "Notes supplémentaires ou instructions spéciales pour cette facture",
       "editTitle": "Modifier Facture",
-      "createTitle": "Créer Facture"
+      "createTitle": "Créer Facture",
+      "items": "Postes",
+      "addItem": "Ajouter un poste",
+      "itemDescription": "Description",
+      "quantity": "Quantité",
+      "unitPrice": "Prix unitaire",
+      "itemsSubtotal": "Sous-total des postes",
+      "itemsHint": "Postes supplémentaires en plus des journaux de travail, p. ex. hébergement ou licences"
     },
     "required": "Requis"
   },

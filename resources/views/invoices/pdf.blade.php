@@ -359,8 +359,47 @@
             </div>
         </div>
         @empty
+        @if($invoice->items->isEmpty())
         <p>{{ __('notifications.invoice.no_work_logs_found') }}</p>
+        @endif
         @endforelse
+
+        @if($invoice->items->isNotEmpty())
+        <div class="project-section">
+            <div class="project-name">{{ __('notifications.invoice.additional_items') }}</div>
+
+            <table class="worklogs-table">
+                <thead>
+                    <tr>
+                        <th width="70%">{{ __('notifications.invoice.description') }}</th>
+                        <th width="10%" style="text-align: right">{{ __('notifications.invoice.rate_unit') }}</th>
+                        <th width="10%" style="text-align: right">{{ __('notifications.invoice.amount') }}</th>
+                        <th width="10%" style="text-align: right">{{ __('notifications.invoice.total') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php $itemsTotal = 0; @endphp
+                    @foreach($invoice->items as $item)
+                    @php
+                        $lineTotal = ($item->quantity ?? 0) * ($item->unit_price ?? 0);
+                        $itemsTotal += $lineTotal;
+                        $totalAmount += $lineTotal;
+                    @endphp
+                    <tr>
+                        <td>{!! nl2br(e($item->description)) !!}</td>
+                        <td style="text-align: right">{{ $currency_symbol }}{{ number_format($item->unit_price ?? 0, 2) }}</td>
+                        <td style="text-align: right">{{ number_format($item->quantity ?? 0, 2) }}</td>
+                        <td style="text-align: right">{{ $currency_symbol }}{{ number_format($lineTotal, 2) }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+
+            <div class="project-total">
+                {{ __('notifications.invoice.items_total') }}: {{ $currency_symbol }}{{ number_format($itemsTotal, 2) }}
+            </div>
+        </div>
+        @endif
 
         <div style="margin-top: 30px;">
             <div style="text-align: right; margin-bottom: 10px;">

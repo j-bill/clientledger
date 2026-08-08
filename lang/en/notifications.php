@@ -37,6 +37,8 @@ return [
         'subtotal' => 'Subtotal',
         'tax' => 'Tax',
         'no_work_logs_found' => 'No work logs found',
+        'additional_items' => 'Additional Items',
+        'items_total' => 'Items Total',
         'payment_terms' => 'Payment Terms',
         'page' => 'Page',
         'of' => 'of',

@@ -37,6 +37,8 @@ return [
         'subtotal' => 'Sous-total',
         'tax' => 'Taxe',
         'no_work_logs_found' => 'Aucun journal de travail trouvé',
+        'additional_items' => 'Postes supplémentaires',
+        'items_total' => 'Total des postes',
         'payment_terms' => 'Conditions de paiement',
         'page' => 'Page',
         'of' => 'sur',

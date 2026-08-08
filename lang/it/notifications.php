@@ -37,6 +37,8 @@ return [
         'subtotal' => 'Subtotale',
         'tax' => 'Imposta',
         'no_work_logs_found' => 'Nessun registro di lavoro trovato',
+        'additional_items' => 'Voci aggiuntive',
+        'items_total' => 'Totale voci',
         'payment_terms' => 'Termini di pagamento',
         'page' => 'Pagina',
         'of' => 'di',

@@ -37,6 +37,8 @@ return [
         'subtotal' => 'Zwischensumme',
         'tax' => 'Steuer',
         'no_work_logs_found' => 'Keine Arbeitslogs gefunden',
+        'additional_items' => 'Weitere Positionen',
+        'items_total' => 'Summe Positionen',
         'payment_terms' => 'Zahlungsbedingungen',
         'page' => 'Seite',
         'of' => 'von',

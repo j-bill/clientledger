@@ -299,7 +299,14 @@
       "notes": "Notes",
       "notesHint": "Additional notes or special instructions for this invoice",
       "editTitle": "Edit Invoice",
-      "createTitle": "Create Invoice"
+      "createTitle": "Create Invoice",
+      "items": "Line Items",
+      "addItem": "Add Item",
+      "itemDescription": "Description",
+      "quantity": "Quantity",
+      "unitPrice": "Unit Price",
+      "itemsSubtotal": "Items Subtotal",
+      "itemsHint": "Extra positions besides work logs, e.g. hosting or licenses"
     },
     "required": "Required"
   },

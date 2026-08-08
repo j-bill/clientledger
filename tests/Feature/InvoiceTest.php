@@ -199,6 +199,124 @@ class InvoiceTest extends TestCase
             ->assertJsonStructure(['id', 'invoice_number', 'customer_id']);
     }
 
+    public function test_admin_can_create_invoice_with_items(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->postJson('/api/invoices', [
+                'customer_id' => $this->customer->id,
+                'invoice_number' => 'INV-ITEMS-1',
+                'issue_date' => Carbon::now()->format('Y-m-d'),
+                'due_date' => Carbon::now()->addDays(30)->format('Y-m-d'),
+                'total_amount' => 290.00,
+                'status' => 'draft',
+                'items' => [
+                    ['description' => 'Hosting Juli 2026', 'quantity' => 1, 'unit_price' => 290.00],
+                ],
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.description', 'Hosting Juli 2026')
+            ->assertJsonPath('items.0.total', 290);
+
+        $this->assertDatabaseHas('invoice_items', [
+            'description' => 'Hosting Juli 2026',
+            'unit_price' => 290.00,
+        ]);
+    }
+
+    public function test_create_invoice_rejects_item_without_description(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->postJson('/api/invoices', [
+                'customer_id' => $this->customer->id,
+                'issue_date' => Carbon::now()->format('Y-m-d'),
+                'due_date' => Carbon::now()->addDays(30)->format('Y-m-d'),
+                'total_amount' => 100.00,
+                'status' => 'draft',
+                'items' => [
+                    ['quantity' => 1, 'unit_price' => 100.00],
+                ],
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['items.0.description']);
+    }
+
+    public function test_update_replaces_items_when_key_present(): void
+    {
+        $invoice = Invoice::factory()->create(['customer_id' => $this->customer->id]);
+        $invoice->items()->create(['description' => 'Old item', 'quantity' => 1, 'unit_price' => 50]);
+
+        $response = $this->actingAs($this->admin)
+            ->putJson("/api/invoices/{$invoice->id}", [
+                'items' => [
+                    ['description' => 'New item', 'quantity' => 2, 'unit_price' => 145.00],
+                ],
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.description', 'New item')
+            ->assertJsonPath('items.0.total', 290);
+
+        $this->assertDatabaseMissing('invoice_items', ['description' => 'Old item']);
+    }
+
+    public function test_update_without_items_key_leaves_items_untouched(): void
+    {
+        $invoice = Invoice::factory()->create(['customer_id' => $this->customer->id]);
+        $invoice->items()->create(['description' => 'Kept item', 'quantity' => 1, 'unit_price' => 50]);
+
+        $response = $this->actingAs($this->admin)
+            ->putJson("/api/invoices/{$invoice->id}", [
+                'status' => 'sent',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonCount(1, 'items');
+
+        $this->assertDatabaseHas('invoice_items', ['description' => 'Kept item']);
+    }
+
+    public function test_generate_from_worklogs_includes_items_in_total(): void
+    {
+        $this->project->update(['hourly_rate' => 100]);
+        WorkLog::factory()->create([
+            'project_id' => $this->project->id,
+            'billable' => true,
+            'user_id' => $this->freelancer->id,
+            'hours_worked' => 2,
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->postJson('/api/invoices/generate', [
+                'customer_id' => $this->customer->id,
+                'work_log_ids' => [1],
+                'status' => 'draft',
+                'due_date' => Carbon::now()->addDays(30)->format('Y-m-d'),
+                'items' => [
+                    ['description' => 'Hosting Juli 2026', 'quantity' => 1, 'unit_price' => 290.00],
+                ],
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('total_amount', '490.00');
+    }
+
+    public function test_deleting_invoice_deletes_its_items(): void
+    {
+        $invoice = Invoice::factory()->create(['customer_id' => $this->customer->id]);
+        $invoice->items()->create(['description' => 'Doomed item', 'quantity' => 1, 'unit_price' => 10]);
+
+        $response = $this->actingAs($this->admin)
+            ->deleteJson("/api/invoices/{$invoice->id}");
+
+        $response->assertStatus(204);
+        $this->assertDatabaseMissing('invoice_items', ['description' => 'Doomed item']);
+    }
+
     public function test_get_unbilled_worklogs(): void
     {
         WorkLog::factory()->count(2)->create([

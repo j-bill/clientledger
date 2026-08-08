@@ -298,7 +298,14 @@
       "notes": "Notas",
       "notesHint": "Notas adicionales o instrucciones especiales para esta factura",
       "editTitle": "Editar Factura",
-      "createTitle": "Crear Factura"
+      "createTitle": "Crear Factura",
+      "items": "Posiciones",
+      "addItem": "Añadir posición",
+      "itemDescription": "Descripción",
+      "quantity": "Cantidad",
+      "unitPrice": "Precio unitario",
+      "itemsSubtotal": "Subtotal de posiciones",
+      "itemsHint": "Posiciones adicionales aparte de los registros de trabajo, p. ej. hosting o licencias"
     },
     "required": "Requerido"
   },

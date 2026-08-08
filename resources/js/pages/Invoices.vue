@@ -195,6 +195,43 @@
         </ul>
       </ui-card>
 
+      <!-- Additional Items -->
+      <ui-card v-if="generateForm.customer_id" class="mb-4" flat>
+        <template #title>{{ $t('forms.invoice.items') }}</template>
+        <template #actions>
+          <ui-button variant="brass-ghost" size="sm" :icon="Plus" data-test="gen-add-item" @click="addGenerateItem">
+            {{ $t('forms.invoice.addItem') }}
+          </ui-button>
+        </template>
+        <p v-if="generateForm.items.length === 0" class="text-xs text-bone-500">
+          {{ $t('forms.invoice.itemsHint') }}
+        </p>
+        <div
+          v-for="(item, index) in generateForm.items"
+          :key="index"
+          class="mb-2 flex items-start gap-2"
+          :data-test="`gen-item-${index}`"
+        >
+          <div class="min-w-0 flex-1">
+            <ui-input v-model="item.description" :label="$t('forms.invoice.itemDescription')" />
+          </div>
+          <div class="w-24 shrink-0">
+            <ui-input v-model="item.quantity" :label="$t('forms.invoice.quantity')" type="number" step="0.01" min="0" />
+          </div>
+          <div class="w-32 shrink-0">
+            <ui-input v-model="item.unit_price" :label="$t('forms.invoice.unitPrice')" type="number" step="0.01" />
+          </div>
+          <ui-button
+            variant="danger-ghost"
+            size="sm"
+            class="mt-6 shrink-0"
+            :icon="Trash2"
+            :title="$t('common.delete')"
+            @click="removeGenerateItem(index)"
+          />
+        </div>
+      </ui-card>
+
       <!-- Invoice Details -->
       <div v-if="generateForm.customer_id" class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <ui-input
@@ -214,21 +251,24 @@
       </div>
 
       <!-- Selected Work Logs Summary -->
-      <div v-if="generateForm.work_log_ids.length > 0" class="mt-4 rounded-lg border border-brass-500/40 bg-brass-900/30 p-4">
+      <div v-if="generateForm.work_log_ids.length > 0 || generateForm.items.length > 0" class="mt-4 rounded-lg border border-brass-500/40 bg-brass-900/30 p-4">
         <div class="mb-3 flex items-center justify-between text-sm text-bone-100">
           <div>
             <strong class="tnum">{{ generateForm.work_log_ids.length }}</strong> work log{{ generateForm.work_log_ids.length !== 1 ? 's' : '' }} selected
+            <template v-if="generateForm.items.length > 0">
+              + <strong class="tnum">{{ generateForm.items.length }}</strong> item{{ generateForm.items.length !== 1 ? 's' : '' }}
+            </template>
           </div>
           <div>
-            <strong>Subtotal: <span class="tnum">{{ currencySymbol }}{{ calculateSelectedTotal() }}</span></strong>
+            <strong>Subtotal: <span class="tnum">{{ currencySymbol }}{{ calculateGrandSubtotal().toFixed(2) }}</span></strong>
           </div>
         </div>
         <hr class="my-2 border-ink-700/60" />
         <div class="text-xs text-bone-500">
-          Tax Rate ({{ settings.tax_rate }}%): <span class="tnum">{{ currencySymbol }}{{ (calculateSelectedTotal() * (settings.tax_rate / 100)).toFixed(2) }}</span>
+          Tax Rate ({{ settings.tax_rate }}%): <span class="tnum">{{ currencySymbol }}{{ (calculateGrandSubtotal() * (settings.tax_rate / 100)).toFixed(2) }}</span>
         </div>
         <div class="mt-2 text-lg font-semibold text-bone-100">
-          Total: <span class="tnum">{{ currencySymbol }}{{ (calculateSelectedTotal() * (1 + (settings.tax_rate / 100))).toFixed(2) }}</span>
+          Total: <span class="tnum">{{ currencySymbol }}{{ (calculateGrandSubtotal() * (1 + (settings.tax_rate / 100))).toFixed(2) }}</span>
         </div>
       </div>
 
@@ -240,7 +280,7 @@
           :disabled="!generateForm.customer_id || generateForm.work_log_ids.length === 0 || !generateForm.due_date || !generateForm.status"
           @click="generateInvoice"
         >
-          Generate Invoice (<span class="tnum">{{ currencySymbol }}{{ (calculateSelectedTotal() * (1 + (settings.tax_rate / 100))).toFixed(2) }}</span>)
+          Generate Invoice (<span class="tnum">{{ currencySymbol }}{{ (calculateGrandSubtotal() * (1 + (settings.tax_rate / 100))).toFixed(2) }}</span>)
         </ui-button>
       </template>
     </ui-dialog>
@@ -333,6 +373,7 @@ export default {
       generateForm: {
         customer_id: null,
         work_log_ids: [],
+        items: [],
         due_date: new Date().toISOString().slice(0, 10),
         status: 'draft'
       },
@@ -524,6 +565,7 @@ export default {
       this.generateForm = {
         customer_id: null,
         work_log_ids: [],
+        items: [],
         due_date: today,
         status: 'draft'
       };
@@ -630,9 +672,38 @@ export default {
       }, 0);
       return total.toFixed(2);
     },
+
+    calculateItemsTotal() {
+      return this.generateForm.items.reduce((sum, item) => {
+        return sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0);
+      }, 0);
+    },
+
+    calculateGrandSubtotal() {
+      return parseFloat(this.calculateSelectedTotal()) + this.calculateItemsTotal();
+    },
+
+    addGenerateItem() {
+      this.generateForm.items.push({ description: '', quantity: 1, unit_price: 0 });
+    },
+
+    removeGenerateItem(index) {
+      this.generateForm.items.splice(index, 1);
+    },
+
     async generateInvoice() {
       try {
-        const payload = { ...this.generateForm };
+        const payload = {
+          ...this.generateForm,
+          // Drop empty rows and coerce numerics before hitting the API
+          items: this.generateForm.items
+            .filter(item => (item.description || '').trim() !== '')
+            .map(item => ({
+              description: item.description,
+              quantity: parseFloat(item.quantity) || 0,
+              unit_price: parseFloat(item.unit_price) || 0,
+            }))
+        };
         const { data } = await axios.post('/api/invoices/generate', payload);
         this.allInvoices.unshift(data);
         this.applyFilters();

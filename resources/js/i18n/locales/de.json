@@ -299,7 +299,14 @@
       "notes": "Notizen",
       "notesHint": "Zusätzliche Notizen oder spezielle Anweisungen für diese Rechnung",
       "editTitle": "Rechnung Bearbeiten",
-      "createTitle": "Rechnung Erstellen"
+      "createTitle": "Rechnung Erstellen",
+      "items": "Positionen",
+      "addItem": "Position hinzufügen",
+      "itemDescription": "Beschreibung",
+      "quantity": "Menge",
+      "unitPrice": "Einzelpreis",
+      "itemsSubtotal": "Summe Positionen",
+      "itemsHint": "Zusätzliche Positionen neben Arbeitslogs, z. B. Hosting oder Lizenzen"
     },
     "required": "Erforderlich"
   },

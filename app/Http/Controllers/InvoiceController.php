@@ -21,7 +21,7 @@ class InvoiceController extends Controller
      */
     public function index(): JsonResponse
     {
-        $invoices = Invoice::with(['customer', 'workLogs'])
+        $invoices = Invoice::with(['customer', 'workLogs', 'items'])
             ->orderByDesc('created_at')
             ->get();
 
@@ -44,6 +44,10 @@ class InvoiceController extends Controller
             'notes' => 'nullable|string',
             'work_logs' => 'sometimes|array|nullable',
             'work_logs.*' => 'integer|exists:work_logs,id',
+            'items' => 'sometimes|array|nullable',
+            'items.*.description' => 'required|string|max:255',
+            'items.*.quantity' => 'required|numeric|min:0',
+            'items.*.unit_price' => 'required|numeric',
         ]);
 
         // Generate invoice number if not provided
@@ -56,7 +60,8 @@ class InvoiceController extends Controller
             unset($validated['notes']);
         }
         $workLogs = $validated['work_logs'] ?? [];
-        unset($validated['work_logs']);
+        $items = $this->itemRows($validated['items'] ?? null);
+        unset($validated['work_logs'], $validated['items']);
 
         $invoice = Invoice::create($validated);
 
@@ -64,7 +69,9 @@ class InvoiceController extends Controller
             $invoice->workLogs()->attach($workLogs);
         }
 
-        $invoice->load(['customer', 'workLogs']);
+        $this->syncItems($invoice, $items);
+
+        $invoice->load(['customer', 'workLogs', 'items']);
 
         return response()->json($invoice, 201);
     }
@@ -74,7 +81,7 @@ class InvoiceController extends Controller
      */
     public function show(Invoice $invoice): JsonResponse
     {
-        $invoice->load(['customer', 'workLogs']);
+        $invoice->load(['customer', 'workLogs', 'items']);
 
         return response()->json($invoice);
     }
@@ -92,6 +99,10 @@ class InvoiceController extends Controller
             'total_amount' => 'sometimes|required|numeric',
             'status' => 'sometimes|required|string|in:draft,sent,paid,overdue,cancelled',
             'notes' => 'nullable|string',
+            'items' => 'sometimes|array|nullable',
+            'items.*.description' => 'required|string|max:255',
+            'items.*.quantity' => 'required|numeric|min:0',
+            'items.*.unit_price' => 'required|numeric',
         ]);
 
         // Strip empty notes
@@ -99,10 +110,78 @@ class InvoiceController extends Controller
             unset($validated['notes']);
         }
 
+        // An absent key leaves items untouched; a present key (even an
+        // empty array) replaces the full set.
+        $items = null;
+        if (array_key_exists('items', $validated)) {
+            $items = $this->itemRows($validated['items']);
+            unset($validated['items']);
+        }
+
         $invoice->update($validated);
-        $invoice->load(['customer', 'workLogs']);
+
+        if ($items !== null) {
+            $invoice->items()->delete();
+            $this->syncItems($invoice, $items);
+        }
+
+        $invoice->load(['customer', 'workLogs', 'items']);
 
         return response()->json($invoice);
+    }
+
+    /**
+     * Normalize the validated `items` payload into typed rows. Validation
+     * already guarantees the shape; this narrows the types for static
+     * analysis and coerces the numerics.
+     *
+     * @return list<array{description: string, quantity: float, unit_price: float}>
+     */
+    private function itemRows(mixed $items): array
+    {
+        if (! is_array($items)) {
+            return [];
+        }
+
+        $rows = [];
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $description = $item['description'] ?? null;
+            $quantity = $item['quantity'] ?? null;
+            $unitPrice = $item['unit_price'] ?? null;
+
+            if (! is_string($description) || ! is_numeric($quantity) || ! is_numeric($unitPrice)) {
+                continue;
+            }
+
+            $rows[] = [
+                'description' => $description,
+                'quantity' => (float) $quantity,
+                'unit_price' => (float) $unitPrice,
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Persist manual line items for an invoice, preserving submitted order.
+     *
+     * @param  list<array{description: string, quantity: float, unit_price: float}>  $items
+     */
+    private function syncItems(Invoice $invoice, array $items): void
+    {
+        foreach ($items as $index => $item) {
+            $invoice->items()->create([
+                'description' => $item['description'],
+                'quantity' => $item['quantity'],
+                'unit_price' => $item['unit_price'],
+                'sort_order' => $index,
+            ]);
+        }
     }
 
     /**
@@ -184,6 +263,10 @@ class InvoiceController extends Controller
             'work_log_ids.*' => 'exists:work_logs,id',
             'due_date' => 'required|date',
             'status' => 'required|string|in:draft,sent,paid,overdue,cancelled',
+            'items' => 'sometimes|array|nullable',
+            'items.*.description' => 'required|string|max:255',
+            'items.*.quantity' => 'required|numeric|min:0',
+            'items.*.unit_price' => 'required|numeric',
         ]);
 
         // Get customer and work logs
@@ -205,6 +288,11 @@ class InvoiceController extends Controller
             $totalAmount += (float) ($log->hours_worked ?? 0) * (float) $rate;
         }
 
+        $items = $this->itemRows($validated['items'] ?? null);
+        foreach ($items as $item) {
+            $totalAmount += $item['quantity'] * $item['unit_price'];
+        }
+
         // Generate unique invoice number
         $invoiceNumber = InvoiceNumberGenerator::generate();
 
@@ -221,7 +309,9 @@ class InvoiceController extends Controller
         // Attach work logs to the invoice
         $invoice->workLogs()->attach($validated['work_log_ids']);
 
-        $invoice->load(['customer', 'workLogs']);
+        $this->syncItems($invoice, $items);
+
+        $invoice->load(['customer', 'workLogs', 'items']);
 
         return response()->json($invoice, 201);
     }
