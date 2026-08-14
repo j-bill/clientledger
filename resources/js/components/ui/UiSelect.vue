@@ -15,7 +15,10 @@
             @keydown.esc="open = false"
         >
             <span class="truncate" :class="selectedLabel ? 'text-bone-100' : 'text-bone-700'">
-                {{ selectedLabel || placeholder }}
+                <slot v-if="selectedItem" name="selection" :item="selectedItem.raw" :title="selectedItem.title">
+                    {{ selectedLabel }}
+                </slot>
+                <template v-else>{{ placeholder }}</template>
             </span>
             <span class="flex shrink-0 items-center gap-1">
                 <span
@@ -46,7 +49,9 @@
                     @mouseenter="highlighted = i"
                     @click="pick(i)"
                 >
-                    <span class="truncate">{{ item.title }}</span>
+                    <span class="truncate">
+                        <slot name="item" :item="item.raw" :title="item.title">{{ item.title }}</slot>
+                    </span>
                     <Check v-if="isSelected(item)" class="h-3.5 w-3.5 shrink-0" />
                 </li>
             </ul>
@@ -99,7 +104,8 @@ function isSelected(item) {
     return valueOf(item.value) === valueOf(props.modelValue);
 }
 
-const selectedLabel = computed(() => normalizedItems.value.find((i) => isSelected(i))?.title ?? '');
+const selectedItem = computed(() => normalizedItems.value.find((i) => isSelected(i)) ?? null);
+const selectedLabel = computed(() => selectedItem.value?.title ?? '');
 
 function toggle() {
     if (props.disabled) return;

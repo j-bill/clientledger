@@ -29,7 +29,7 @@ Dark ledger aesthetic. Warm graphite surfaces, bone text, one brass accent. No n
 | `v-form ref="form"` | `<ui-form ref="form" @submit="...">` — exposes `validate()` returning `{ valid }`, and `resetValidation()`. Same `rules` API: `(v) => true \| 'msg'`. |
 | `v-text-field` | `<ui-input v-model label type rules hint placeholder clearable disabled readonly suffix :icon="LucideIcon" />` (number type auto-casts) |
 | `v-textarea` | `<ui-textarea v-model label rows rules hint />` |
-| `v-select` | `<ui-select v-model :items item-title item-value label rules clearable return-object />` (items may be strings or objects) |
+| `v-select` | `<ui-select v-model :items item-title item-value label rules clearable return-object />` (items may be strings or objects). Optional scoped slots `#item="{ item, title }"` and `#selection="{ item, title }"` for custom option/selected rendering (item = raw items entry). |
 | `v-autocomplete` | `<ui-autocomplete>` same props as ui-select |
 | `v-checkbox` | `<ui-checkbox v-model label hint />` |
 | `v-switch` | `<ui-switch v-model label hint />` |

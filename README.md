@@ -14,7 +14,7 @@ Built with Laravel and Vue.js, supporting PostgreSQL, MySQL, and SQLite.
 
 **Expense Tracking** - Log general business expenses for tax deduction purposes. Upload receipts, categorize expenses, and export reports. Admin-only feature for business-level expense management.
 
-**Invoicing** - Generate invoices from logged hours. Consolidate multiple projects into single invoices. Track payment status (paid, pending, overdue). Per-customer invoice intro text and payment terms with global defaults as fallback.
+**Invoicing** - Generate invoices from logged hours. Consolidate multiple projects into single invoices. Track payment status (paid, pending, overdue). Per-customer invoice intro text and payment terms with global defaults as fallback. Customizable invoice appearance (accent color, font, density, table style) with a live PDF preview in the settings — fonts include self-hosted Google Fonts (Inter, Lato, Montserrat, Merriweather, Playfair Display) embedded into the PDF, no external requests.
 
 **Analytics Dashboard** - View revenue, billable hours, and earnings trends. Month-to-month and year-to-year comparisons with forecasting.
 
@@ -32,7 +32,7 @@ Built with Laravel and Vue.js, supporting PostgreSQL, MySQL, and SQLite.
 
 **Frontend:** Vue 3 with Composition API, Tailwind CSS 4 with a custom dark UI kit, Vite, Vue Router, Pinia for state management
 
-**Additional Tools:** DOMPDF for PDF generation, Playwright for E2E testing, PHPUnit for unit tests
+**Additional Tools:** spatie/laravel-pdf (headless Chrome via Puppeteer) for PDF generation, Playwright for E2E testing, PHPUnit for unit tests
 
 ---
 
@@ -57,6 +57,23 @@ Configure your database in `.env`, then run:
 php artisan migrate
 php artisan db:seed  # optional - adds sample data
 ```
+
+**PDF generation (headless Chrome):**
+
+Invoice PDFs are rendered with [spatie/laravel-pdf](https://spatie.be/docs/laravel-pdf), which drives headless Chrome through Puppeteer. Puppeteer itself is installed via `npm install`, but the Chrome binary must be downloaded separately.
+
+Puppeteer's browser cache is **per-user** (`~/.cache/puppeteer`), so the browser has to be installed as the user that executes PHP:
+
+```bash
+# Local development (PHP runs as your user)
+npx puppeteer browsers install chrome-headless-shell
+
+# Production (PHP-FPM/web server runs as www-data)
+mkdir -p /var/www/.cache && chown -R www-data:www-data /var/www/.cache
+sudo -u www-data npx puppeteer browsers install chrome-headless-shell
+```
+
+If generation fails with `Could not find chrome-headless-shell`, the error message states which cache path is being searched — install the browser as the matching user.
 
 Start the development servers:
 

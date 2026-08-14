@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\WorkLog;
 use Carbon\Carbon;
 use Faker\Factory;
+use Faker\Generator;
 use Illuminate\Database\Seeder;
 
 class WorkLogsSeeder extends Seeder
@@ -50,6 +51,30 @@ class WorkLogsSeeder extends Seeder
             'Patched timezone handling issues causing discrepancies in work log time tracking. Standardized all times to UTC with proper conversion logic. Tested across multiple timezone configurations to ensure accuracy.',
         ],
     ];
+
+    /**
+     * Build a description of varying length (up to 1500 chars, the API limit)
+     * by stitching together entries from the category's pool, so seeded data
+     * exercises short, medium, and near-limit descriptions.
+     */
+    private function makeDescription(string $category, Generator $faker): string
+    {
+        $pool = $this->taskDescriptions[$category];
+        $targetLength = $faker->numberBetween(200, 1500);
+
+        $description = $pool[array_rand($pool)];
+        while (strlen($description) < $targetLength) {
+            $description .= ' '.$pool[array_rand($pool)];
+        }
+
+        if (strlen($description) > 1500) {
+            // Cut at the last sentence boundary that fits.
+            $cut = strrpos(substr($description, 0, 1500), '.');
+            $description = substr($description, 0, $cut === false ? 1500 : $cut + 1);
+        }
+
+        return $description;
+    }
 
     public function run(): void
     {
@@ -109,8 +134,7 @@ class WorkLogsSeeder extends Seeder
                 $startHour = rand(8, 11);
 
                 $category = $taskCategories[array_rand($taskCategories)];
-                $descriptions = $this->taskDescriptions[$category];
-                $description = $descriptions[array_rand($descriptions)];
+                $description = $this->makeDescription($category, $faker);
 
                 $createdLogs[] = WorkLog::create([
                     'project_id' => $project->id,
@@ -154,7 +178,7 @@ class WorkLogsSeeder extends Seeder
                     'start_time' => sprintf('%02d:00', $startHour),
                     'end_time' => sprintf('%02d:00', $startHour + $hours),
                     'hours_worked' => $hours,
-                    'description' => $this->taskDescriptions[$taskCategories[array_rand($taskCategories)]][0],
+                    'description' => $this->makeDescription($taskCategories[array_rand($taskCategories)], $faker),
                     'billable' => true,
                     'hourly_rate' => $topUpProject->hourly_rate,
                     'user_hourly_rate' => $freelancer->getProjectHourlyRate($topUpProject),

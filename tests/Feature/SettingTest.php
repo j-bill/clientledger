@@ -7,6 +7,7 @@ use App\Http\Middleware\Verify2FA;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\LaravelPdf\Facades\Pdf;
 use Tests\TestCase;
 
 class SettingTest extends TestCase
@@ -191,5 +192,29 @@ class SettingTest extends TestCase
 
         $stored = \DB::table('settings')->where('key', 'openai_api_key')->value('value');
         $this->assertNotEquals('sk-legacy-plaintext', $stored);
+    }
+
+    public function test_admin_can_preview_invoice_appearance(): void
+    {
+        Pdf::fake();
+
+        $response = $this->actingAs($this->admin)
+            ->postJson('/api/settings/invoice-preview', [
+                'invoice_accent_color' => '#2563eb',
+                'invoice_font' => 'georgia',
+                'invoice_density' => 'compact',
+                'invoice_table_style' => 'minimal',
+            ]);
+
+        $response->assertStatus(200);
+    }
+
+    public function test_non_admin_cannot_preview_invoice_appearance(): void
+    {
+        $freelancer = User::factory()->create(['role' => 'freelancer']);
+
+        $this->actingAs($freelancer)
+            ->postJson('/api/settings/invoice-preview', [])
+            ->assertStatus(403);
     }
 }

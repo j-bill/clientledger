@@ -306,6 +306,70 @@
 								item-value="value"
 							/>
 						</div>
+
+						<hr class="my-6 border-ink-700/60" />
+
+						<div class="mb-4 flex items-center gap-2 text-sm font-semibold text-bone-100">
+							<Palette class="h-4 w-4 text-bone-500" />
+							{{ $t('pages.settings.invoiceAppearance') }}
+						</div>
+
+						<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+							<div class="grid h-fit grid-cols-1 gap-4 md:grid-cols-2">
+								<ui-input
+									v-model="settings.invoice_accent_color"
+									type="color"
+									:label="$t('pages.settings.invoiceAccentColor')"
+									:hint="$t('pages.settings.invoiceAccentColorHint')"
+								/>
+								<ui-select
+									v-model="settings.invoice_font"
+									:items="invoiceFontOptions"
+									:label="$t('pages.settings.invoiceFont')"
+									item-title="title"
+									item-value="value"
+								>
+									<template #selection="{ item, title }">
+										<span :style="{ fontFamily: item.stack }">{{ title }}</span>
+									</template>
+									<template #item="{ item, title }">
+										<span :style="{ fontFamily: item.stack }">{{ title }}</span>
+									</template>
+								</ui-select>
+								<ui-select
+									v-model="settings.invoice_density"
+									:items="invoiceDensityOptions"
+									:label="$t('pages.settings.invoiceDensity')"
+									item-title="title"
+									item-value="value"
+								/>
+								<ui-select
+									v-model="settings.invoice_table_style"
+									:items="invoiceTableStyleOptions"
+									:label="$t('pages.settings.invoiceTableStyle')"
+									item-title="title"
+									item-value="value"
+								/>
+								</div>
+
+							<div class="relative overflow-hidden rounded-lg border border-ink-700/60 bg-ink-850" style="height: 560px">
+								<iframe
+									v-if="invoicePreviewUrl"
+									:src="invoicePreviewUrl + '#toolbar=0&navpanes=0'"
+									class="h-full w-full"
+									title="Invoice preview"
+								/>
+								<div v-else class="flex h-full items-center justify-center text-sm text-bone-500">
+									{{ $t('pages.settings.previewInvoiceStyle') }}…
+								</div>
+								<div
+									v-if="previewingInvoiceStyle"
+									class="absolute inset-0 flex items-center justify-center bg-ink-900/60"
+								>
+									<ui-spinner />
+								</div>
+							</div>
+						</div>
 					</ui-form>
 				</div>
 
@@ -584,7 +648,7 @@ import {
 	Building2, Globe, Banknote, CalendarClock, Mail, Gavel, Bot, Volume2,
 	Phone, Hash, MapPin, Landmark, Image, ImagePlus, Languages, Percent,
 	Type, FileText, MessageSquareText, LayoutTemplate, Calendar, Server,
-	Network, User, Lock, Eye, EyeOff, Shield, Key, Brain, Play, Save
+	Network, User, Lock, Eye, EyeOff, Shield, Key, Brain, Play, Save, Palette
 } from 'lucide-vue-next'
 
 export default {
@@ -592,7 +656,7 @@ export default {
 	components: {
 		Building2, MapPin, Landmark, Image, ImagePlus, Languages, Banknote,
 		FileText, MessageSquareText, LayoutTemplate, Calendar, Hash, Mail,
-		Shield, Gavel, Bot, Volume2
+		Shield, Gavel, Bot, Volume2, Palette
 	},
 	setup() {
 		const { setLanguage } = useLanguage()
@@ -600,12 +664,16 @@ export default {
 		return {
 			setLanguage, t,
 			Building2, Mail, Phone, Globe, Hash, MapPin, Percent, Type,
-			Server, Network, User, Lock, Eye, EyeOff, Key, Brain, Play, Save
+			Server, Network, User, Lock, Eye, EyeOff, Key, Brain, Play, Save, Palette
 		}
 	},
 	data() {
 		return {
 			loading: false,
+			previewingInvoiceStyle: false,
+			invoicePreviewUrl: null,
+			invoicePreviewTimer: null,
+			invoicePreviewRequestId: 0,
 			tab: 'company',
 			showMailPassword: false,
 			openaiApiKeyInput: '',
@@ -642,6 +710,10 @@ export default {
 				invoice_footer_col1: 'company_info',
 				invoice_footer_col2: 'bank_info',
 				invoice_footer_col3: 'page_info',
+				invoice_accent_color: '#333333',
+				invoice_font: 'arial',
+				invoice_density: 'comfortable',
+				invoice_table_style: 'filled',
 
 				// Date & Time
 				date_format: 'DD/MM/YYYY',
@@ -738,6 +810,45 @@ export default {
 				{ title: this.t('pages.settings.dropdownOptions.footerColumns.empty'), value: 'empty' }
 			];
 		},
+		invoiceAppearanceValues() {
+			return [
+				this.settings.invoice_accent_color,
+				this.settings.invoice_font,
+				this.settings.invoice_density,
+				this.settings.invoice_table_style
+			].join('|')
+		},
+		invoiceFontOptions() {
+			const stacks = {
+				inter: "'Inter', Arial, sans-serif",
+				lato: "'Lato', Arial, sans-serif",
+				montserrat: "'Montserrat', Arial, sans-serif",
+				merriweather: "'Merriweather', Georgia, serif",
+				playfair: "'Playfair Display', Georgia, serif",
+				arial: 'Arial, sans-serif',
+				helvetica: "Helvetica, 'Helvetica Neue', Arial, sans-serif",
+				georgia: 'Georgia, serif',
+				times: "'Times New Roman', Times, serif",
+				courier: "'Courier New', Courier, monospace"
+			}
+			return ['inter', 'lato', 'montserrat', 'merriweather', 'playfair', 'arial', 'helvetica', 'georgia', 'times', 'courier'].map(value => ({
+				title: this.t(`pages.settings.dropdownOptions.invoiceFonts.${value}`),
+				value,
+				stack: stacks[value]
+			}));
+		},
+		invoiceDensityOptions() {
+			return [
+				{ title: this.t('pages.settings.dropdownOptions.invoiceDensities.comfortable'), value: 'comfortable' },
+				{ title: this.t('pages.settings.dropdownOptions.invoiceDensities.compact'), value: 'compact' }
+			];
+		},
+		invoiceTableStyleOptions() {
+			return [
+				{ title: this.t('pages.settings.dropdownOptions.invoiceTableStyles.filled'), value: 'filled' },
+				{ title: this.t('pages.settings.dropdownOptions.invoiceTableStyles.minimal'), value: 'minimal' }
+			];
+		},
 		dateFormats() {
 			return [
 				{ title: this.t('pages.settings.dropdownOptions.dateFormats.ddmmyyyy'), value: 'DD/MM/YYYY' },
@@ -789,11 +900,60 @@ export default {
 			];
 		}
 	},
+	watch: {
+		invoiceAppearanceValues() {
+			if (this.tab === 'financial') {
+				this.scheduleInvoicePreview()
+			}
+		},
+		tab(newTab) {
+			if (newTab === 'financial' && !this.invoicePreviewUrl && !this.loading) {
+				this.refreshInvoicePreview()
+			}
+		}
+	},
 	mounted() {
 		this.fetchLocalSettings()
 	},
+	beforeUnmount() {
+		clearTimeout(this.invoicePreviewTimer)
+		if (this.invoicePreviewUrl) {
+			URL.revokeObjectURL(this.invoicePreviewUrl)
+		}
+	},
 	methods: {
 		...mapActions(store, ['showSnackbar', 'fetchSettings']),
+
+		scheduleInvoicePreview() {
+			clearTimeout(this.invoicePreviewTimer)
+			this.invoicePreviewTimer = setTimeout(() => this.refreshInvoicePreview(), 600)
+		},
+
+		async refreshInvoicePreview() {
+			try {
+				this.previewingInvoiceStyle = true
+				const requestId = ++this.invoicePreviewRequestId
+				const response = await axios.post('/api/settings/invoice-preview', {
+					invoice_accent_color: this.settings.invoice_accent_color,
+					invoice_font: this.settings.invoice_font,
+					invoice_density: this.settings.invoice_density,
+					invoice_table_style: this.settings.invoice_table_style
+				}, { responseType: 'blob' })
+
+				// A newer request finished first; drop this stale response
+				if (requestId !== this.invoicePreviewRequestId) return
+
+				if (this.invoicePreviewUrl) {
+					URL.revokeObjectURL(this.invoicePreviewUrl)
+				}
+				this.invoicePreviewUrl = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+			} catch (error) {
+				console.error('Invoice preview failed:', error)
+				this.showSnackbar({ text: this.t('pages.settings.previewInvoiceStyleFailed'), color: 'error' })
+			} finally {
+				this.previewingInvoiceStyle = false
+			}
+		},
 
 		async fetchLocalSettings() {
 			try {

@@ -714,6 +714,26 @@
           "coinBag": "Bag of coins",
           "coinRetro": "Retro coin (8-bit)",
           "coinChime": "Coin chime"
+        },
+        "invoiceFonts": {
+          "inter": "Inter",
+          "lato": "Lato",
+          "montserrat": "Montserrat",
+          "merriweather": "Merriweather",
+          "playfair": "Playfair Display",
+          "arial": "Arial (sans-serif)",
+          "helvetica": "Helvetica (sans-serif)",
+          "georgia": "Georgia (serif)",
+          "times": "Times New Roman (serif)",
+          "courier": "Courier New (monospace)"
+        },
+        "invoiceDensities": {
+          "comfortable": "Comfortable",
+          "compact": "Compact"
+        },
+        "invoiceTableStyles": {
+          "filled": "Filled headers",
+          "minimal": "Minimal lines"
         }
       },
       "ai": "AI",
@@ -734,7 +754,15 @@
       "openaiApiKeyPlaceholder": "Enter your OpenAI API key",
       "openaiApiKeyCurrent": "Current key",
       "openaiApiKeyReplaceHint": "enter a new key above to replace it",
-      "openaiApiKeyHint": "Stored encrypted. Never displayed again after saving."
+      "openaiApiKeyHint": "Stored encrypted. Never displayed again after saving.",
+      "invoiceAppearance": "Invoice Appearance",
+      "invoiceAccentColor": "Accent Color",
+      "invoiceAccentColorHint": "Used for headers, table heads and the total block",
+      "invoiceFont": "Font",
+      "invoiceDensity": "Density",
+      "invoiceTableStyle": "Table Style",
+      "previewInvoiceStyle": "Preview Invoice Style",
+      "previewInvoiceStyleFailed": "Could not generate the preview"
     },
     "errorPages": {
       "accessDenied": "Access Denied",

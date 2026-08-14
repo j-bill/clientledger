@@ -713,6 +713,26 @@
           "coinBag": "Sac de pièces",
           "coinRetro": "Pièce rétro (8 bits)",
           "coinChime": "Tintement de pièce"
+        },
+        "invoiceFonts": {
+          "inter": "Inter",
+          "lato": "Lato",
+          "montserrat": "Montserrat",
+          "merriweather": "Merriweather",
+          "playfair": "Playfair Display",
+          "arial": "Arial (sans empattement)",
+          "helvetica": "Helvetica (sans empattement)",
+          "georgia": "Georgia (empattement)",
+          "times": "Times New Roman (empattement)",
+          "courier": "Courier New (monospace)"
+        },
+        "invoiceDensities": {
+          "comfortable": "Confortable",
+          "compact": "Compact"
+        },
+        "invoiceTableStyles": {
+          "filled": "En-têtes remplis",
+          "minimal": "Lignes minimales"
         }
       },
       "ai": "IA",
@@ -733,7 +753,15 @@
       "openaiApiKeyPlaceholder": "Saisissez votre clé API OpenAI",
       "openaiApiKeyCurrent": "Clé actuelle",
       "openaiApiKeyReplaceHint": "saisissez une nouvelle clé ci-dessus pour la remplacer",
-      "openaiApiKeyHint": "Stockée de façon chiffrée. Plus jamais affichée après l’enregistrement."
+      "openaiApiKeyHint": "Stockée de façon chiffrée. Plus jamais affichée après l’enregistrement.",
+      "invoiceAppearance": "Apparence de la facture",
+      "invoiceAccentColor": "Couleur d'accent",
+      "invoiceAccentColorHint": "Utilisée pour les en-têtes, les têtes de tableau et le bloc de total",
+      "invoiceFont": "Police",
+      "invoiceDensity": "Densité",
+      "invoiceTableStyle": "Style de tableau",
+      "previewInvoiceStyle": "Aperçu du style de facture",
+      "previewInvoiceStyleFailed": "Impossible de générer l'aperçu"
     },
     "errorPages": {
       "accessDenied": "Accès refusé",

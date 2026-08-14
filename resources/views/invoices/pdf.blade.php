@@ -4,10 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <title>Invoice {{ $invoice->invoice_number }}</title>
+    @php
+        // Appearance settings resolved and validated in InvoicePdfGenerator
+        $accent = $appearance['accent'];
+        $accentText = $appearance['accent_text'];
+        $compact = $appearance['density'] === 'compact';
+        $filledTables = $appearance['table_style'] === 'filled';
+        $cellPadding = $compact ? '6px' : '10px';
+        $tableFontSize = $compact ? '10px' : '11px';
+        $bodyFontSize = $compact ? '11px' : '12px';
+        $lineHeight = $compact ? '1.4' : '1.6';
+    @endphp
     <style>
-        @page {
-            margin: 40px;
-        }
+        {!! $appearance['font_faces'] !!}
 
         * {
             margin: 0;
@@ -16,18 +25,19 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            line-height: 1.6;
+            {{-- Raw output: value comes from an allowlist in InvoicePdfGenerator, never user input --}}
+            font-family: {!! $appearance['font_family'] !!};
+            font-size: {{ $bodyFontSize }};
+            line-height: {{ $lineHeight }};
             margin: 0;
-            padding: 40px;
-            padding-bottom: 150px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
         .logo-top-right {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 0;
+            right: 0;
             max-width: 250px;
             max-height: 150px;
         }
@@ -36,51 +46,10 @@
             position: relative;
         }
 
-        .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 80px;
-            background: white;
-            border-top: 1px solid #ddd;
-            padding: 15px 40px;
-            font-size: 10px;
-            color: #666;
-        }
-
-        .footer-table {
-            width: 100%;
-            height: 100%;
-            border-collapse: collapse;
-        }
-
-        .footer-table td {
-            padding: 0;
-            vertical-align: top;
-            line-height: 1.4;
-        }
-
-        .footer-left {
-            width: 33.33%;
-            padding-right: 10px;
-        }
-
-        .footer-center {
-            width: 33.33%;
-            padding: 0 10px;
-        }
-
-        .footer-right {
-            width: 33.33%;
-            padding-left: 10px;
-            text-align: right;
-        }
-
         .invoice-header {
             margin-bottom: 40px;
             margin-top: 60px;
-            border-bottom: 2px solid #333;
+            border-bottom: 2px solid {{ $accent }};
             padding-bottom: 30px;
         }
 
@@ -140,30 +109,46 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 40px;
-            font-size: 11px;
+            font-size: {{ $tableFontSize }};
         }
 
         .worklogs-table thead {
-            background-color: #333;
-            color: white;
+            display: table-header-group;
+            @if($filledTables)
+            background-color: {{ $accent }};
+            color: {{ $accentText }};
+            @endif
         }
 
         .worklogs-table th {
-            padding: 10px;
+            padding: {{ $cellPadding }};
             text-align: left;
             font-weight: bold;
-            border: 1px solid #333;
+            @if($filledTables)
+            border: 1px solid {{ $accent }};
+            @else
+            color: #333;
+            border: none;
+            border-bottom: 2px solid {{ $accent }};
+            @endif
         }
 
         .worklogs-table td {
-            padding: 10px;
-            border: 1px solid #ddd;
+            padding: {{ $cellPadding }};
             vertical-align: top;
+            @if($filledTables)
+            border: 1px solid #ddd;
+            @else
+            border: none;
+            border-bottom: 1px solid #eee;
+            @endif
         }
 
+        @if($filledTables)
         .worklogs-table tbody tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+        @endif
 
         .worklogs-table .text-right {
             text-align: right;
@@ -187,10 +172,14 @@
         .project-total {
             font-weight: bold;
             text-align: right;
-            padding: 10px;
+            padding: {{ $cellPadding }};
+            margin-bottom: 20px;
+            @if($filledTables)
             background-color: #f9f9f9;
             border: 1px solid #ddd;
-            margin-bottom: 20px;
+            @else
+            border-top: 1px solid {{ $accent }};
+            @endif
         }
 
         .invoice-total {
@@ -198,10 +187,15 @@
             font-size: 14px;
             text-align: right;
             padding: 15px;
-            background-color: #333;
-            color: white;
-            border: 1px solid #333;
             margin-top: 30px;
+            @if($filledTables)
+            background-color: {{ $accent }};
+            color: {{ $accentText }};
+            border: 1px solid {{ $accent }};
+            @else
+            color: #333;
+            border-top: 2px solid {{ $accent }};
+            @endif
         }
 
         .payment-terms {
@@ -219,10 +213,6 @@
             text-transform: uppercase;
         }
 
-        .page-number {
-            font-size: 10px;
-            color: #666;
-        }
     </style>
 </head>
 
@@ -422,49 +412,6 @@
         @endif
     </div>
 
-    <footer class="footer">
-        <table class="footer-table">
-            <tr>
-                @php
-                    $footerColumns = [
-                        $company['invoice_footer_col1'] ?? 'company_info',
-                        $company['invoice_footer_col2'] ?? 'bank_info',
-                        $company['invoice_footer_col3'] ?? 'page_info'
-                    ];
-                    $columnClasses = ['footer-left', 'footer-center', 'footer-right'];
-                @endphp
-
-                @foreach($footerColumns as $index => $column)
-                <td class="{{ $columnClasses[$index] }}">
-                    @if($column === 'company_info')
-                        {{ $company['company_name'] ?? 'Company' }}<br>
-                        @if($company['company_address_street'] ?? false)
-                            {{ $company['company_address_street'] }}
-                            @if($company['company_address_number'] ?? false) {{ $company['company_address_number'] }} @endif
-                            <br>
-                        @endif
-                        @if($company['company_address_zipcode'] ?? false)
-                            {{ $company['company_address_zipcode'] }}
-                            @if($company['company_address_city'] ?? false) {{ $company['company_address_city'] }} @endif
-                            <br>
-                        @endif
-                        @if($company['company_phone'] ?? false){{ $company['company_phone'] }}<br>@endif
-                        @if($company['company_email'] ?? false){{ $company['company_email'] }}@endif
-                    @elseif($column === 'bank_info' || $column === 'bankInfo')
-                        @if($company['company_bank_info'] ?? false)
-                            {!! nl2br(e($company['company_bank_info'])) !!}
-                        @endif
-                    @elseif($column === 'page_info')
-                        <!-- Page numbering handled by PDF callback -->
-                        &nbsp;
-                    @elseif($column === 'empty')
-                        <!-- Empty column -->
-                    @endif
-                </td>
-                @endforeach
-            </tr>
-        </table>
-    </footer>
 </body>
 
 </html>

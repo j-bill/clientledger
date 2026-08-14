@@ -714,6 +714,26 @@
           "coinBag": "Münzbeutel",
           "coinRetro": "Retro-Münze (8-Bit)",
           "coinChime": "Münzklang"
+        },
+        "invoiceFonts": {
+          "inter": "Inter",
+          "lato": "Lato",
+          "montserrat": "Montserrat",
+          "merriweather": "Merriweather",
+          "playfair": "Playfair Display",
+          "arial": "Arial (serifenlos)",
+          "helvetica": "Helvetica (serifenlos)",
+          "georgia": "Georgia (Serife)",
+          "times": "Times New Roman (Serife)",
+          "courier": "Courier New (Monospace)"
+        },
+        "invoiceDensities": {
+          "comfortable": "Komfortabel",
+          "compact": "Kompakt"
+        },
+        "invoiceTableStyles": {
+          "filled": "Gefüllte Köpfe",
+          "minimal": "Minimale Linien"
         }
       },
       "ai": "KI",
@@ -734,7 +754,15 @@
       "openaiApiKeyPlaceholder": "OpenAI-API-Schlüssel eingeben",
       "openaiApiKeyCurrent": "Aktueller Schlüssel",
       "openaiApiKeyReplaceHint": "gib oben einen neuen Schlüssel ein, um ihn zu ersetzen",
-      "openaiApiKeyHint": "Wird verschlüsselt gespeichert. Nach dem Speichern nie wieder angezeigt."
+      "openaiApiKeyHint": "Wird verschlüsselt gespeichert. Nach dem Speichern nie wieder angezeigt.",
+      "invoiceAppearance": "Rechnungsdesign",
+      "invoiceAccentColor": "Akzentfarbe",
+      "invoiceAccentColorHint": "Wird für Kopfzeilen, Tabellenköpfe und den Summenblock verwendet",
+      "invoiceFont": "Schriftart",
+      "invoiceDensity": "Dichte",
+      "invoiceTableStyle": "Tabellenstil",
+      "previewInvoiceStyle": "Rechnungsdesign ansehen",
+      "previewInvoiceStyleFailed": "Vorschau konnte nicht erstellt werden"
     },
     "errorPages": {
       "accessDenied": "Zugriff verweigert",

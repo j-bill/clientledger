@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Helpers\LanguageHelper;
 use App\Helpers\SettingsHelper;
 use App\Models\Setting;
+use App\Services\InvoicePdfGenerator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class SettingController extends Controller
 {
@@ -169,6 +171,26 @@ class SettingController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Render a sample invoice PDF with the submitted (possibly unsaved)
+     * appearance settings so admins can preview the invoice look.
+     */
+    public function invoicePreview(Request $request, InvoicePdfGenerator $pdfGenerator): SymfonyResponse
+    {
+        $validated = $this->validated($request, [
+            'invoice_accent_color' => 'nullable|string|max:7',
+            'invoice_font' => 'nullable|string|max:20',
+            'invoice_density' => 'nullable|string|max:20',
+            'invoice_table_style' => 'nullable|string|max:20',
+        ]);
+
+        // Invalid values fall back to defaults inside the generator
+        return $pdfGenerator->preview(array_filter($validated, fn ($value) => $value !== null))
+            ->name('invoice-preview.pdf')
+            ->inline()
+            ->toResponse($request);
     }
 
     /**

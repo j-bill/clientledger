@@ -124,7 +124,10 @@
 
 				<ui-input v-model="startTime" :label="$t('workLogs.startTime')" type="time" />
 
-				<ui-textarea v-model="workDescription" :label="$t('workLogs.description')" rows="3" />
+				<ui-textarea v-model="workDescription" :label="$t('workLogs.description')" :maxlength="1500" rows="3" />
+				<p class="mt-1 text-right font-mono text-xs text-bone-700 tnum">
+					{{ (workDescription || '').length }} / 1500
+				</p>
 			</div>
 
 			<template #actions>
@@ -393,7 +396,10 @@ export default {
 				localStorage.setItem('hourlyRate', this.hourlyRate.toString());
 			} catch (error) {
 				console.error('Error starting time tracking:', error);
-				this.showSnackbar('Failed to start time tracking', 'error');
+				const validationMessage = error.response?.status === 422
+					? Object.values(error.response.data?.errors ?? {})[0]?.[0] || error.response.data?.message
+					: null;
+				this.showSnackbar(validationMessage || 'Failed to start time tracking', 'error');
 			} finally {
 				this.isLoading = false;
 			}

@@ -131,6 +131,7 @@ Route::middleware('auth:sanctum')->group(function () {
             // Batch endpoints first to prevent route shadowing
             Route::get('/settings/batch', [SettingController::class, 'getBatch']);
             Route::post('/settings/batch', [SettingController::class, 'saveBatch']);
+            Route::post('/settings/invoice-preview', [SettingController::class, 'invoicePreview']);
 
             // Individual setting endpoints
             Route::get('/settings', [SettingController::class, 'index']);

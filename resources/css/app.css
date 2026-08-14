@@ -2,6 +2,45 @@
 
 @import 'tailwindcss';
 
+/* Invoice fonts (self-hosted, shared with PDF generation via resources/fonts) —
+   used to preview the fonts in the invoice appearance settings */
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 100 900;
+    src: url('../fonts/inter-400.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Lato';
+    font-style: normal;
+    font-weight: 400;
+    src: url('../fonts/lato-400.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Lato';
+    font-style: normal;
+    font-weight: 700;
+    src: url('../fonts/lato-700.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Montserrat';
+    font-style: normal;
+    font-weight: 100 900;
+    src: url('../fonts/montserrat-400.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Merriweather';
+    font-style: normal;
+    font-weight: 100 900;
+    src: url('../fonts/merriweather-400.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Playfair Display';
+    font-style: normal;
+    font-weight: 100 900;
+    src: url('../fonts/playfair-400.woff2') format('woff2');
+}
+
 @theme {
     /* Ink — warm graphite scale */
     --color-ink-950: #141412;

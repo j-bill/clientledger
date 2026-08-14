@@ -270,7 +270,13 @@ export const store = defineStore("store", {
           this.users = [this.user];
           resolve(this.user); // Resolve promise with authenticated user
         } catch (error) {
-          console.error('[store.js] getAuthUser error:', error);
+          // 401 just means no active session (e.g. expired cookie on page load) —
+          // expected flow, keep it out of the error log shipper
+          if (error.response?.status === 401) {
+            console.log('[store.js] getAuthUser: not authenticated');
+          } else {
+            console.error('[store.js] getAuthUser error:', error);
+          }
           reject(error.response?.data?.message || "Failed to get user info"); // Reject promise with error message
         }
       });

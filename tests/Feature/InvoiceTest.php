@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Spatie\LaravelPdf\Facades\Pdf;
 use Tests\TestCase;
 
 class InvoiceTest extends TestCase
@@ -431,6 +432,8 @@ class InvoiceTest extends TestCase
 
     public function test_admin_can_generate_invoice_pdf(): void
     {
+        Pdf::fake();
+
         $invoice = Invoice::factory()->create(['customer_id' => $this->customer->id]);
 
         $response = $this->actingAs($this->admin)

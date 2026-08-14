@@ -713,6 +713,26 @@
           "coinBag": "Sacchetto di monete",
           "coinRetro": "Moneta retrò (8-bit)",
           "coinChime": "Tintinnio di moneta"
+        },
+        "invoiceFonts": {
+          "inter": "Inter",
+          "lato": "Lato",
+          "montserrat": "Montserrat",
+          "merriweather": "Merriweather",
+          "playfair": "Playfair Display",
+          "arial": "Arial (senza grazie)",
+          "helvetica": "Helvetica (senza grazie)",
+          "georgia": "Georgia (con grazie)",
+          "times": "Times New Roman (con grazie)",
+          "courier": "Courier New (monospazio)"
+        },
+        "invoiceDensities": {
+          "comfortable": "Comoda",
+          "compact": "Compatta"
+        },
+        "invoiceTableStyles": {
+          "filled": "Intestazioni piene",
+          "minimal": "Linee minimali"
         }
       },
       "ai": "IA",
@@ -733,7 +753,15 @@
       "openaiApiKeyPlaceholder": "Inserisci la tua chiave API OpenAI",
       "openaiApiKeyCurrent": "Chiave attuale",
       "openaiApiKeyReplaceHint": "inserisci una nuova chiave sopra per sostituirla",
-      "openaiApiKeyHint": "Memorizzata in modo crittografato. Non più visualizzata dopo il salvataggio."
+      "openaiApiKeyHint": "Memorizzata in modo crittografato. Non più visualizzata dopo il salvataggio.",
+      "invoiceAppearance": "Aspetto della fattura",
+      "invoiceAccentColor": "Colore accento",
+      "invoiceAccentColorHint": "Usato per intestazioni, testate di tabella e il blocco totale",
+      "invoiceFont": "Carattere",
+      "invoiceDensity": "Densità",
+      "invoiceTableStyle": "Stile tabella",
+      "previewInvoiceStyle": "Anteprima stile fattura",
+      "previewInvoiceStyleFailed": "Impossibile generare l'anteprima"
     },
     "errorPages": {
       "accessDenied": "Accesso negato",

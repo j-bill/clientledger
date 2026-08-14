@@ -24,7 +24,7 @@ import { init as initLogShipper } from "@adminintelligence/js-log-shipper";
 initLogShipper({
   endpoint: import.meta.env.VITE_LOG_SHIPPER_ENDPOINT,
   apiKey: import.meta.env.VITE_LOG_SHIPPER_KEY,
-  channel: "js",
+  channel: "javascript",
   enabled: Boolean(
     import.meta.env.VITE_LOG_SHIPPER_ENDPOINT &&
       import.meta.env.VITE_LOG_SHIPPER_KEY
