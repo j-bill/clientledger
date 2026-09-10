@@ -815,7 +815,10 @@ export default {
 				this.settings.invoice_accent_color,
 				this.settings.invoice_font,
 				this.settings.invoice_density,
-				this.settings.invoice_table_style
+				this.settings.invoice_table_style,
+				this.settings.invoice_footer_col1,
+				this.settings.invoice_footer_col2,
+				this.settings.invoice_footer_col3
 			].join('|')
 		},
 		invoiceFontOptions() {
@@ -937,7 +940,10 @@ export default {
 					invoice_accent_color: this.settings.invoice_accent_color,
 					invoice_font: this.settings.invoice_font,
 					invoice_density: this.settings.invoice_density,
-					invoice_table_style: this.settings.invoice_table_style
+					invoice_table_style: this.settings.invoice_table_style,
+					invoice_footer_col1: this.settings.invoice_footer_col1,
+					invoice_footer_col2: this.settings.invoice_footer_col2,
+					invoice_footer_col3: this.settings.invoice_footer_col3
 				}, { responseType: 'blob' })
 
 				// A newer request finished first; drop this stale response

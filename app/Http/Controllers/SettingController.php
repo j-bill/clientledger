@@ -184,6 +184,9 @@ class SettingController extends Controller
             'invoice_font' => 'nullable|string|max:20',
             'invoice_density' => 'nullable|string|max:20',
             'invoice_table_style' => 'nullable|string|max:20',
+            'invoice_footer_col1' => 'nullable|string|in:company_info,bank_info,page_info,empty',
+            'invoice_footer_col2' => 'nullable|string|in:company_info,bank_info,page_info,empty',
+            'invoice_footer_col3' => 'nullable|string|in:company_info,bank_info,page_info,empty',
         ]);
 
         // Invalid values fall back to defaults inside the generator

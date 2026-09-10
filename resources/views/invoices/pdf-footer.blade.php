@@ -5,7 +5,7 @@
         $company['invoice_footer_col2'] ?? 'bank_info',
         $company['invoice_footer_col3'] ?? 'page_info',
     ];
-    $columnAlignments = ['left', 'left', 'right'];
+    $columnAlignments = ['left', 'center', 'right'];
 @endphp
 <div style="width: 100%; margin: 0 20mm; font-family: Arial, sans-serif; font-size: 8px; color: #666; border-top: 1px solid #ddd; padding-top: 8px;">
     <table style="width: 100%; border-collapse: collapse;">
