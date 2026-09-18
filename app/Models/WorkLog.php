@@ -116,6 +116,50 @@ class WorkLog extends Model
     }
 
     /**
+     * The first work log of this user on this date whose time range clashes
+     * with the given range.
+     *
+     * Ranges are half-open: a log ending at 12:00 does not clash with one
+     * starting at 12:00. A missing end time counts as running until the end
+     * of the day, because that time is unaccounted for.
+     */
+    public static function findClash(int $userId, string $date, string $startTime, ?string $endTime, ?int $ignoreId = null): ?self
+    {
+        $start = self::minutesOfDay($startTime);
+        $end = $endTime === null ? 1440 : self::minutesOfDay($endTime);
+
+        $query = static::query()
+            ->where('user_id', $userId)
+            ->whereDate('date', substr($date, 0, 10))
+            ->whereNotNull('start_time');
+
+        if ($ignoreId !== null) {
+            $query->whereKeyNot($ignoreId);
+        }
+
+        foreach ($query->with('project')->get() as $existing) {
+            $existingStart = self::minutesOfDay($existing->start_time?->format('H:i') ?? '00:00');
+            $existingEnd = $existing->end_time === null ? 1440 : self::minutesOfDay($existing->end_time->format('H:i'));
+
+            if ($start < $existingEnd && $existingStart < $end) {
+                return $existing;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Minutes since midnight for an "H:i" (or "H:i:s") time string.
+     */
+    private static function minutesOfDay(string $time): int
+    {
+        $parts = explode(':', $time);
+
+        return ((int) $parts[0]) * 60 + (int) ($parts[1] ?? 0);
+    }
+
+    /**
      * Scope for freelancers to only see their own work logs.
      *
      * @param  Builder<static>  $query

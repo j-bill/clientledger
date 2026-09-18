@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\User;
 use App\Models\WorkLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -111,6 +112,7 @@ class WorkLogController extends Controller
     {
         $validated = $this->validated($request, [
             'project_id' => 'required|exists:projects,id',
+            'user_id' => 'sometimes|integer|exists:users,id',
             'date' => 'required|date',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'nullable|date_format:H:i',
@@ -118,8 +120,9 @@ class WorkLogController extends Controller
             'billable' => 'boolean',
         ]);
 
-        // Get the user
-        $user = $this->requireUser();
+        // The log belongs to the authenticated user unless an admin books it
+        // for somebody else.
+        $user = $this->resolveOwner($this->requireUser(), $this->requestedUserId($validated));
 
         // If end_time is not provided, check for existing active work logs
         if (! isset($validated['end_time'])) {
@@ -130,9 +133,24 @@ class WorkLogController extends Controller
 
             if ($activeWorkLog) {
                 return response()->json([
-                    'message' => 'You already have an active work log. Please complete it before starting a new one.',
+                    'message' => $user->id === $this->requireUser()->id
+                        ? 'You already have an active work log. Please complete it before starting a new one.'
+                        : 'That user already has an active work log. It has to be completed first.',
                     'active_work_log' => $activeWorkLog->load('project'),
                 ], 422);
+            }
+        }
+
+        // Block time that clashes with an existing log of this user
+        $date = $validated['date'] ?? null;
+        $start = $validated['start_time'] ?? null;
+        $end = $validated['end_time'] ?? null;
+
+        if (is_string($date) && is_string($start)) {
+            $clash = $this->clashResponse($user->id, $date, $start, is_string($end) ? $end : null);
+
+            if ($clash) {
+                return $clash;
             }
         }
 
@@ -148,9 +166,11 @@ class WorkLogController extends Controller
         // Get the project and user
         $project = Project::findOrFail($request->integer('project_id'));
 
-        // Ensure user is assigned to the project
+        // Ensure the work log's user is assigned to the project
         if (! $project->users->contains($user->id)) {
-            abort(403, 'You are not assigned to this project.');
+            abort(403, $user->id === $this->requireUser()->id
+                ? 'You are not assigned to this project.'
+                : 'That user is not assigned to this project.');
         }
 
         // Set the project's hourly rate (for invoice generation)
@@ -192,6 +212,7 @@ class WorkLogController extends Controller
 
         $validated = $this->validated($request, [
             'project_id' => 'sometimes|required|exists:projects,id',
+            'user_id' => 'sometimes|integer|exists:users,id',
             'date' => 'sometimes|required|date',
             'start_time' => 'sometimes|required|date_format:H:i',
             'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time',
@@ -207,18 +228,51 @@ class WorkLogController extends Controller
             $validated['hours_worked'] = (strtotime($endTime) - strtotime($startTime)) / 3600;
         }
 
-        // Update hourly rates if project changes
-        if (isset($validated['project_id']) && $validated['project_id'] !== $workLog->project_id) {
-            $project = Project::findOrFail($request->integer('project_id'));
+        // Admins may hand the log to another freelancer
+        $owner = $this->resolveOwner($user, $this->requestedUserId($validated), (int) $workLog->user_id);
 
-            // Ensure user is assigned to the new project
-            if (! $project->users->contains($user->id)) {
-                abort(403, 'You are not assigned to this project.');
+        // Block time that clashes with another log of the same user
+        $newDateRaw = $validated['date'] ?? null;
+        $newDate = is_string($newDateRaw) ? $newDateRaw : (string) $workLog->date;
+        $newStartRaw = $validated['start_time'] ?? null;
+        $newStart = is_string($newStartRaw) ? $newStartRaw : $workLog->start_time?->format('H:i');
+        $newEnd = array_key_exists('end_time', $validated)
+            ? $validated['end_time']
+            : $workLog->end_time?->format('H:i');
+
+        if (is_string($newStart)) {
+            $clash = $this->clashResponse(
+                $owner->id,
+                $newDate,
+                $newStart,
+                is_string($newEnd) ? $newEnd : null,
+                (int) $workLog->id
+            );
+
+            if ($clash) {
+                return $clash;
+            }
+        }
+
+        // Update hourly rates if the project or the freelancer changes
+        $newProjectId = $validated['project_id'] ?? null;
+        $projectId = is_numeric($newProjectId) ? (int) $newProjectId : (int) $workLog->project_id;
+
+        if ($projectId !== (int) $workLog->project_id || $owner->id !== (int) $workLog->user_id) {
+            $project = Project::findOrFail($projectId);
+
+            // Ensure the work log's user is assigned to the project
+            if (! $project->users->contains($owner->id)) {
+                abort(403, $owner->id === $user->id
+                    ? 'You are not assigned to this project.'
+                    : 'That user is not assigned to this project.');
             }
 
             $validated['hourly_rate'] = $project->hourly_rate;
-            $validated['user_hourly_rate'] = $user->getProjectHourlyRate($project);
+            $validated['user_hourly_rate'] = $owner->getProjectHourlyRate($project);
         }
+
+        $validated['user_id'] = $owner->id;
 
         $workLog->update($validated);
 
@@ -250,6 +304,18 @@ class WorkLogController extends Controller
             return response()->json(['message' => 'Invalid end time.'], 422);
         }
 
+        $clash = $this->clashResponse(
+            (int) $workLog->user_id,
+            (string) $workLog->date,
+            (string) $workLog->start_time->format('H:i'),
+            $endTime,
+            (int) $workLog->id
+        );
+
+        if ($clash) {
+            return $clash;
+        }
+
         $hours_worked = (strtotime($endTime) - strtotime((string) $workLog->start_time)) / 3600;
 
         $description = $validated['description'] ?? null;
@@ -263,6 +329,61 @@ class WorkLogController extends Controller
         ]);
 
         return response()->json($workLog->load('project'));
+    }
+
+    /**
+     * The user a work log belongs to. Everybody books their own time; only
+     * admins may book somebody else's.
+     */
+    private function resolveOwner(User $actor, ?int $requestedId, ?int $currentId = null): User
+    {
+        $targetId = $requestedId ?? $currentId ?? $actor->id;
+
+        if ($targetId === $actor->id) {
+            return $actor;
+        }
+
+        if (! $actor->isAdmin()) {
+            abort(403, 'Only admins can log time for another user.');
+        }
+
+        return User::findOrFail($targetId);
+    }
+
+    /**
+     * The user_id out of a validated payload, if one was sent.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function requestedUserId(array $validated): ?int
+    {
+        $requested = $validated['user_id'] ?? null;
+
+        return is_numeric($requested) ? (int) $requested : null;
+    }
+
+    /**
+     * A 422 response describing the work log clashing with the given range,
+     * or null when the range is free.
+     */
+    private function clashResponse(int $userId, string $date, string $startTime, ?string $endTime, ?int $ignoreId = null): ?JsonResponse
+    {
+        $clash = WorkLog::findClash($userId, $date, $startTime, $endTime, $ignoreId);
+
+        if (! $clash) {
+            return null;
+        }
+
+        return response()->json([
+            'message' => sprintf(
+                'This time clashes with an existing work log on %s (%s - %s%s). Adjust the times or edit that entry.',
+                substr((string) $clash->date, 0, 10),
+                $clash->start_time?->format('H:i') ?? '?',
+                $clash->end_time?->format('H:i') ?? 'open',
+                $clash->project ? ', '.$clash->project->name : ''
+            ),
+            'conflicting_work_log' => $clash->load('project'),
+        ], 422);
     }
 
     /**

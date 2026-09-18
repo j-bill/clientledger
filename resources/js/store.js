@@ -327,9 +327,9 @@ export const store = defineStore("store", {
         this.showSnackbar('Work log created successfully', 'success');
         return response.data;
       } catch (error) {
-        const message = error.response?.data?.errors 
+        const message = error.response?.data?.errors
           ? Object.values(error.response.data.errors)[0][0]
-          : 'Failed to create work log';
+          : (error.response?.data?.message || 'Failed to create work log');
         this.showSnackbar(message, 'error');
         throw error;
       }
@@ -341,9 +341,9 @@ export const store = defineStore("store", {
         this.showSnackbar('Work log updated successfully', 'success');
         return response.data;
       } catch (error) {
-        const message = error.response?.data?.errors 
+        const message = error.response?.data?.errors
           ? Object.values(error.response.data.errors)[0][0]
-          : 'Failed to update work log';
+          : (error.response?.data?.message || 'Failed to update work log');
         this.showSnackbar(message, 'error');
         throw error;
       }

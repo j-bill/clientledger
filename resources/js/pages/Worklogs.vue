@@ -147,6 +147,7 @@
 
 		<!-- Create Work Log Dialog -->
 		<ui-dialog v-model="createDialog" :title="$t('pages.workLogs.newWorkLog')" max-width="1000px" persistent>
+			<ui-alert v-if="createClash" type="error" :text="createClash" class="mb-4" />
 			<work-log-form ref="createForm"
 						   :projects="projects"
 						   @save="saveWorkLogRecord"></work-log-form>
@@ -167,6 +168,7 @@
 			max-width="1000px"
 			persistent
 		>
+			<ui-alert v-if="editClash" type="error" :text="editClash" class="mb-4" />
 			<ui-alert
 				v-if="currentWorkLog?.wasAutoSaved"
 				type="success"
@@ -221,6 +223,8 @@ export default {
 			editDialog: false,
 			itemToDelete: null,
 			currentWorkLog: null,
+			createClash: null,
+			editClash: null,
 			showFilters: false,
 			totalItems: 0,
 
@@ -378,6 +382,7 @@ export default {
 				workLog.wasAutoSaved = wasAutoSaved;
 
 				// Open the edit dialog with the work log data
+				this.editClash = null;
 				this.currentWorkLog = workLog;
 				this.editDialog = true;
 
@@ -468,32 +473,46 @@ export default {
 		},
 
 		openCreateDialog() {
+			this.createClash = null;
 			this.createDialog = true;
 		},
 
 		openEditDialog(item) {
+			this.editClash = null;
 			this.currentWorkLog = { ...item };
 			this.editDialog = true;
 		},
 
 		async saveWorkLogRecord(workLog) {
+			this.createClash = null;
 			try {
 				await this.createWorkLog(workLog);
 				this.createDialog = false;
 				this.loadWorkLogs(); // Refresh the list
 			} catch (error) {
+				// A clashing work log is rejected outright; keep the dialog open
+				// and name the entry that is in the way.
+				this.createClash = this.clashMessage(error);
 				console.error('Error creating work log:', error);
 			}
 		},
 
 		async updateWorkLogRecord(workLog) {
+			this.editClash = null;
 			try {
 				await this.updateWorkLog(workLog);
 				this.editDialog = false;
 				this.loadWorkLogs(); // Refresh the list
 			} catch (error) {
+				this.editClash = this.clashMessage(error);
 				console.error('Error updating work log:', error);
 			}
+		},
+
+		clashMessage(error) {
+			return error.response?.data?.conflicting_work_log
+				? error.response.data.message
+				: null;
 		},
 
 		formatDate(dateStr) {
