@@ -8,6 +8,7 @@
         "php": "^8.2",
         "adminintelligence/laravel-log-shipper": "^1.4",
         "bacon/bacon-qr-code": "^3.0",
+        "fakerphp/faker": "^1.23",
         "laravel/ai": "^0.9.1",
         "laravel/framework": "^13.0",
         "laravel/sanctum": "^4.0",
@@ -17,7 +18,6 @@
         "spatie/laravel-pdf": "^2.12"
     },
     "require-dev": {
-        "fakerphp/faker": "^1.23",
         "larastan/larastan": "^3.10",
         "laravel/pail": "^1.1",
         "laravel/pint": "^1.13",
