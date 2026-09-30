@@ -168,7 +168,6 @@ export default {
 			timerInterval: null,
 			customers: [],
 			projects: [],
-			filteredCustomers: [],
 			filteredProjects: [],
 			hourlyRate: 0,
 			secondsElapsed: 0,
@@ -182,6 +181,16 @@ export default {
 		User: () => User,
 		Settings: () => Settings,
 		LogOut: () => LogOut,
+		// Derived, not assigned in a fetch callback: customers and projects load in
+		// parallel, and whichever lands first must not leave this list empty.
+		filteredCustomers() {
+			const assignedCustomerIds = new Set(
+				this.projects
+					.filter(p => this.isAdmin || p.assigned_users?.some(u => u.id === this.getUser?.id))
+					.map(p => p.customer_id)
+			);
+			return this.customers.filter(c => assignedCustomerIds.has(c.id));
+		},
 		formattedEarnings() {
 			return this.earnings > 0 ? formatCurrency(this.earnings, this.settings) : '';
 		},
@@ -239,7 +248,6 @@ export default {
 			try {
 				const response = await axios.get('/api/customers');
 				this.customers = response.data;
-				// Will be filtered in fetchProjects after we know which projects are assigned
 			} catch (error) {
 				console.error('Error fetching customers:', error);
 				this.showSnackbar('Failed to load customers', 'error');
@@ -264,14 +272,6 @@ export default {
 				}
 
 				this.filteredProjects = [...assignedProjects];
-
-				// Filter customers to only those with assigned projects
-				const assignedCustomerIds = new Set(
-					assignedProjects.map(p => p.customer_id)
-				);
-				this.filteredCustomers = this.customers.filter(c =>
-					assignedCustomerIds.has(c.id)
-				);
 			} catch (error) {
 				console.error('Error fetching projects:', error);
 				this.showSnackbar('Failed to load projects', 'error');
