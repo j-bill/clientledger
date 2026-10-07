@@ -90,6 +90,73 @@ class DashboardController extends Controller
         return is_string($row->date ?? null) ? $row->date : null;
     }
 
+    /**
+     * Admin revenue per month of *work*, split into paid and due.
+     *
+     * Billable work logs land in the month they were worked: paid once a paid
+     * invoice carries them, due otherwise (open invoice or not invoiced yet).
+     * Invoice amounts not backed by work logs (manual items, rate drift) land
+     * in the invoice's issue month. Keying invoices by issue_date alone shifted
+     * every month by one billing cycle: September's work, invoiced in October,
+     * showed up as October revenue next to October's uninvoiced work.
+     *
+     * @return array<string, array{paid: float, due: float}> keyed "Y-m"
+     */
+    private function revenueByWorkMonth(Carbon $from, Carbon $to): array
+    {
+        $statuses = ['paid', 'sent', 'draft', 'overdue'];
+        $months = [];
+        $add = function (string $month, bool $paid, float $amount) use (&$months): void {
+            $months[$month] ??= ['paid' => 0.0, 'due' => 0.0];
+            $months[$month][$paid ? 'paid' : 'due'] += $amount;
+        };
+
+        $workLogs = WorkLog::where('billable', true)
+            ->whereBetween('date', [$from, $to])
+            ->with('invoices:id,status')
+            ->get(['id', 'date', 'hours_worked', 'hourly_rate']);
+        foreach ($workLogs as $log) {
+            $add(
+                Carbon::parse($log->date)->format('Y-m'),
+                $log->invoices->contains(fn (Invoice $invoice) => $invoice->status === 'paid'),
+                (float) $log->hours_worked * (float) $log->hourly_rate,
+            );
+        }
+
+        $invoices = Invoice::whereIn('status', $statuses)
+            ->whereBetween('issue_date', [$from, $to])
+            ->with('workLogs:id,hours_worked,hourly_rate')
+            ->get(['id', 'status', 'issue_date', 'total_amount']);
+        foreach ($invoices as $invoice) {
+            $logged = $invoice->workLogs->sum(fn (WorkLog $log) => (float) $log->hours_worked * (float) $log->hourly_rate);
+            $rest = (float) $invoice->total_amount - $logged;
+            if (abs($rest) >= 0.005) {
+                $add(Carbon::parse($invoice->issue_date)->format('Y-m'), $invoice->status === 'paid', $rest);
+            }
+        }
+
+        return $months;
+    }
+
+    /**
+     * Paid + due summed over the months of $revenue that start with $prefix ("2026" or "2026-09").
+     *
+     * @param  array<string, array{paid: float, due: float}>  $revenue
+     * @return array{paid: float, due: float}
+     */
+    private function revenueFor(array $revenue, string $prefix): array
+    {
+        $sum = ['paid' => 0.0, 'due' => 0.0];
+        foreach ($revenue as $month => $amounts) {
+            if (str_starts_with($month, $prefix)) {
+                $sum['paid'] += $amounts['paid'];
+                $sum['due'] += $amounts['due'];
+            }
+        }
+
+        return ['paid' => round($sum['paid'], 2), 'due' => round($sum['due'], 2)];
+    }
+
     public function index(Request $request): JsonResponse
     {
         $user = Auth::user();
@@ -276,40 +343,29 @@ class DashboardController extends Controller
         if ($isAdmin) {
             // --- Admin: Revenue KPIs ---
 
-            // THIS MONTH: Actual from work logs + Extrapolated
-            $currentMonthActual = (float) WorkLog::where('billable', true)
-                ->whereBetween('date', [$thisMonthStart, $now])
-                ->sum(DB::raw('hours_worked * hourly_rate'));
+            // Every revenue figure counts work in the month it was done,
+            // not in the month its invoice was issued (revenueByWorkMonth).
+            $revenue = $this->revenueByWorkMonth($lastYearStart, $today);
+
+            // THIS MONTH: Actual + Extrapolated
+            $thisMonth = $this->revenueFor($revenue, $now->format('Y-m'));
+            $currentMonthActual = $thisMonth['paid'] + $thisMonth['due'];
             $currentMonthExtrapolated = $currentMonthActual * $monthlyExtrapolationFactor;
 
-            // LAST MONTH: Paid invoices + Due invoices + Uninvoiced work logs
-            $lastMonthPaid = Invoice::where('status', 'paid')
-                ->whereBetween('issue_date', [$lastMonthStart, $lastMonthEnd])
-                ->sum('total_amount');
-            $lastMonthDue = Invoice::whereIn('status', ['sent', 'draft'])
-                ->whereBetween('issue_date', [$lastMonthStart, $lastMonthEnd])
-                ->sum('total_amount');
-            // Include uninvoiced work logs valued at their hourly rate
-            // Exclude work logs that have been attached to any invoice (paid, sent, or draft)
-            $lastMonthUninvoiced = WorkLog::where('billable', true)
-                ->whereDoesntHave('invoices')
-                ->whereBetween('date', [$lastMonthStart, $lastMonthEnd])
-                ->sum(DB::raw('hours_worked * hourly_rate'));
-            $lastMonthDue += $lastMonthUninvoiced;
+            // LAST MONTH: Paid + Due (open invoices and uninvoiced work)
+            $lastMonth = $this->revenueFor($revenue, $lastMonthStart->format('Y-m'));
+            $lastMonthPaid = $lastMonth['paid'];
+            $lastMonthDue = $lastMonth['due'];
 
-            // THIS YEAR: All issued invoices + Extrapolated estimate
-            $thisYearActual = (float) Invoice::whereIn('status', ['paid', 'sent', 'draft'])
-                ->whereYear('issue_date', $now->year)
-                ->sum('total_amount');
+            // THIS YEAR: Actual + Extrapolated estimate
+            $thisYear = $this->revenueFor($revenue, $now->format('Y'));
+            $thisYearActual = $thisYear['paid'] + $thisYear['due'];
             $thisYearExtrapolated = $thisYearActual * $yearlyExtrapolationFactor;
 
             // LAST YEAR: Paid + Due
-            $lastYearPaid = Invoice::where('status', 'paid')
-                ->whereBetween('issue_date', [$lastYearStart, $lastYearEnd])
-                ->sum('total_amount');
-            $lastYearDue = Invoice::whereIn('status', ['sent', 'draft'])
-                ->whereBetween('issue_date', [$lastYearStart, $lastYearEnd])
-                ->sum('total_amount');
+            $lastYear = $this->revenueFor($revenue, $lastYearStart->format('Y'));
+            $lastYearPaid = $lastYear['paid'];
+            $lastYearDue = $lastYear['due'];
 
             // --- Admin: Revenue by Customer ---
             $revenueByCustomer = Invoice::with('customer')
@@ -321,61 +377,21 @@ class DashboardController extends Controller
                 })
                 ->sortDesc();
 
-            // --- Admin: Revenue Trend (PAID INVOICES - LAST 12 MONTHS) ---
-            $yearlyRevenueTrend = Invoice::where('status', 'paid')
-                ->where('issue_date', '>=', $rollingYearStart)
-                ->get()
-                ->groupBy(function ($invoice) {
-                    return $invoice->issue_date->format('Y-m');
-                })
-                ->map(function ($group) {
-                    return [
-                        'date' => $group->first()?->issue_date->format('Y-m-01'),
-                        'amount' => $group->sum('total_amount'),
-                    ];
-                })
-                ->values();
-
-            // --- Admin: Hero Trend (ALL INVOICES + UNINVOICED WORK - LAST 12 MONTHS) ---
-            // Combine all invoices (paid, sent, draft) with uninvoiced work logs valued at project/customer rates
+            // --- Admin: Revenue Trend (PAID) + Hero Trend (PAID + DUE), LAST 12 MONTHS ---
+            $yearlyRevenueTrend = [];
             $heroTrendData = [];
-
-            // Get all invoices by month for the last 12 months.
-            // Aggregate rows aren't Invoice models, so fetch them as plain objects.
-            $allInvoices = Invoice::whereIn('status', ['paid', 'sent', 'draft'])
-                ->where('issue_date', '>=', $rollingYearStart)
-                ->selectRaw($this->yearExtract('issue_date').', '.$this->monthExtract('issue_date').', SUM(total_amount) as total')
-                ->groupBy('year', 'month')
-                ->orderBy('year')
-                ->orderBy('month')
-                ->toBase()
-                ->get()
-                ->keyBy(fn ($item) => $this->monthKey($item));
-
-            // Get all work logs by month, valued at their hourly rate
-            $allWorkLogs = WorkLog::where('billable', true)
-                ->whereDoesntHave('invoices', function ($query) {
-                    $query->whereIn('status', ['paid', 'sent', 'draft']);
-                })
-                ->where('date', '>=', $rollingYearStart)
-                ->selectRaw($this->yearExtract('date').', '.$this->monthExtract('date').', SUM(hours_worked * hourly_rate) as total')
-                ->groupBy('year', 'month')
-                ->orderBy('year')
-                ->orderBy('month')
-                ->toBase()
-                ->get()
-                ->keyBy(fn ($item) => $this->monthKey($item));
-
-            // Merge invoices and work logs by month for the last 12 months
             $startDate = $rollingYearStart->copy();
             while ($startDate <= $now) {
-                $monthKey = $startDate->format('Y-m');
-                $invoiceAmount = $this->rowTotal($allInvoices->get($monthKey));
-                $workLogAmount = $this->rowTotal($allWorkLogs->get($monthKey));
-
+                $month = $this->revenueFor($revenue, $startDate->format('Y-m'));
+                if ($month['paid'] != 0) {
+                    $yearlyRevenueTrend[] = [
+                        'date' => $startDate->format('Y-m-01'),
+                        'amount' => $month['paid'],
+                    ];
+                }
                 $heroTrendData[] = [
-                    'date' => $startDate->copy()->startOfMonth()->format('Y-m-d'),
-                    'amount' => $invoiceAmount + $workLogAmount,
+                    'date' => $startDate->format('Y-m-01'),
+                    'amount' => $month['paid'] + $month['due'],
                 ];
 
                 $startDate->addMonth();

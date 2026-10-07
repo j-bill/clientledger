@@ -88,10 +88,11 @@ class DashboardTest extends TestCase
                 'monthly_hours',
             ]);
 
-        // This-year revenue: both invoices issued this year (paid + sent)
-        $this->assertEquals(800, $response->json('kpis.revenue.yearly.actual'));
-        // This-month actual revenue from billable work logs: 4h * 100
-        $this->assertEquals(400, $response->json('kpis.revenue.monthly.actual'));
+        // This-year revenue: both invoices (no work logs behind them, so their
+        // issue month) plus this month's uninvoiced work: 500 + 300 + 400
+        $this->assertEquals(1200, $response->json('kpis.revenue.yearly.actual'));
+        // This month: 4h * 100 of work + the 300 invoice without work logs
+        $this->assertEquals(700, $response->json('kpis.revenue.monthly.actual'));
         $this->assertEquals(800, $response->json('revenue_by_customer.Acme'));
         // Paid-invoice trend has the paid invoice's month
         $this->assertNotEmpty($response->json('yearly_revenue_trend'));
@@ -111,6 +112,65 @@ class DashboardTest extends TestCase
         $this->assertIsArray($loggedDay);
         $this->assertEquals(4, $loggedDay['hours']);
         $this->assertEquals(4, $loggedDay['billable']);
+    }
+
+    public function test_admin_revenue_follows_the_month_of_work_not_the_invoice_date(): void
+    {
+        Carbon::setTestNow('2026-10-07 12:00:00');
+
+        $customer = Customer::factory()->create();
+        $project = Project::factory()->create(['customer_id' => $customer->id]);
+        $log = fn (string $date, float $hours) => WorkLog::factory()->create([
+            'project_id' => $project->id,
+            'user_id' => $this->freelancer->id,
+            'billable' => true,
+            'date' => $date,
+            'hours_worked' => $hours,
+            'hourly_rate' => 100,
+        ]);
+
+        // August work, invoiced and paid in September
+        $august = Invoice::factory()->create([
+            'customer_id' => $customer->id,
+            'status' => 'paid',
+            'issue_date' => '2026-09-03',
+            'total_amount' => 1000,
+        ]);
+        $august->workLogs()->attach($log('2026-08-20', 10)->id);
+
+        // September work, invoiced in October (plus a 50 manual item), paid;
+        // two more September hours not invoiced yet
+        $september = Invoice::factory()->create([
+            'customer_id' => $customer->id,
+            'status' => 'paid',
+            'issue_date' => '2026-10-02',
+            'total_amount' => 850,
+        ]);
+        $september->workLogs()->attach($log('2026-09-15', 8)->id);
+        $log('2026-09-30', 2);
+
+        // October work, not invoiced
+        $log('2026-10-05', 3);
+
+        $response = $this->actingAs($this->user)->getJson('/api/dashboard');
+        $response->assertStatus(200);
+
+        // Letzter Monat = September's work, not the August invoice issued in September
+        $this->assertEquals(800, $response->json('kpis.revenue.last_month.paid'));
+        $this->assertEquals(200, $response->json('kpis.revenue.last_month.due'));
+        // This month: October work + the manual item on the October invoice
+        $this->assertEquals(350, $response->json('kpis.revenue.monthly.actual'));
+        $this->assertEquals(2350, $response->json('kpis.revenue.yearly.actual'));
+
+        // Sparkline: each month once, no invoice counted on top of its own work
+        $heroTrend = $response->json('hero_trend_data');
+        $this->assertIsArray($heroTrend);
+        $hero = collect($heroTrend)->pluck('amount', 'date');
+        $this->assertEquals(1000, $hero['2026-08-01']);
+        $this->assertEquals(1000, $hero['2026-09-01']);
+        $this->assertEquals(350, $hero['2026-10-01']);
+
+        Carbon::setTestNow();
     }
 
     public function test_freelancer_dashboard_reports_earnings(): void
