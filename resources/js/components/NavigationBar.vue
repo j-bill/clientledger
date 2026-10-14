@@ -183,12 +183,9 @@ export default {
 		LogOut: () => LogOut,
 		// Derived, not assigned in a fetch callback: customers and projects load in
 		// parallel, and whichever lands first must not leave this list empty.
+		// /api/projects is already scoped to the user's projects for freelancers.
 		filteredCustomers() {
-			const assignedCustomerIds = new Set(
-				this.projects
-					.filter(p => this.isAdmin || p.assigned_users?.some(u => u.id === this.getUser?.id))
-					.map(p => p.customer_id)
-			);
+			const assignedCustomerIds = new Set(this.projects.map(p => p.customer_id));
 			return this.customers.filter(c => assignedCustomerIds.has(c.id));
 		},
 		formattedEarnings() {
@@ -257,21 +254,9 @@ export default {
 		async fetchProjects() {
 			try {
 				const response = await axios.get('/api/projects');
+				// The API already limits freelancers to their assigned projects.
 				this.projects = response.data;
-
-				// Filter projects: only show those assigned to the current user (unless admin)
-				const currentUser = this.getUser;
-				let assignedProjects = this.projects;
-
-				if (currentUser && !this.isAdmin) {
-					// Filter projects where current user is assigned
-					assignedProjects = this.projects.filter(project => {
-						return project.assigned_users &&
-						       project.assigned_users.some(user => user.id === currentUser.id);
-					});
-				}
-
-				this.filteredProjects = [...assignedProjects];
+				this.filteredProjects = [...this.projects];
 			} catch (error) {
 				console.error('Error fetching projects:', error);
 				this.showSnackbar('Failed to load projects', 'error');
@@ -282,19 +267,14 @@ export default {
 			if (this.selectedCustomer) {
 				// Get all assigned projects for the selected customer
 				this.filteredProjects = this.projects.filter(
-					project => project.customer_id === this.selectedCustomer &&
-						       (!this.isAdmin ? (project.assigned_users &&
-						        project.assigned_users.some(user => user.id === this.getUser?.id)) : true)
+					project => project.customer_id === this.selectedCustomer
 				);
 				// Reset selected project if it doesn't belong to the selected customer
 				if (this.selectedProject && !this.filteredProjects.some(p => p.id === this.selectedProject)) {
 					this.selectedProject = null;
 				}
 			} else {
-				this.filteredProjects = [...this.projects.filter(project =>
-					!this.isAdmin ? (project.assigned_users &&
-					               project.assigned_users.some(user => user.id === this.getUser?.id)) : true
-				)];
+				this.filteredProjects = [...this.projects];
 			}
 		},
 
@@ -409,8 +389,6 @@ export default {
 			if (!this.activeWorkLog) return;
 
 			try {
-				clearInterval(this.timerInterval);
-
 				// Get current time in HH:MM format
 				const now = new Date();
 				const currentTime = now.toTimeString().slice(0, 5);
@@ -421,6 +399,10 @@ export default {
 					description: this.activeWorkLog.description
 				});
 
+				// Stop the timer only once the log is really completed: on a clash (422)
+				// the log stays active and the timer has to keep running.
+				clearInterval(this.timerInterval);
+				this.timerInterval = null;
 				this.playStopSound();
 
 				// Navigate to work logs page and pass the active work log ID
@@ -443,7 +425,10 @@ export default {
 				localStorage.removeItem('hourlyRate');
 			} catch (error) {
 				console.error('Error stopping time tracking:', error);
-				this.showSnackbar('Failed to stop time tracking', 'error');
+				const message = error.response?.data?.errors
+					? Object.values(error.response.data.errors)[0]?.[0]
+					: error.response?.data?.message;
+				this.showSnackbar(message || 'Failed to stop time tracking', 'error');
 			}
 		},
 
