@@ -22,7 +22,7 @@ class McpTokenCommand extends Command
     {
         $key = $this->argument('user');
         $name = $this->option('name');
-        $user = is_string($key) ? User::where(ctype_digit($key) ? 'id' : 'email', $key)->first() : null;
+        $user = User::where(ctype_digit($key) ? 'id' : 'email', $key)->first();
 
         if (! $user || ! is_string($name)) {
             $this->error('User not found.');
