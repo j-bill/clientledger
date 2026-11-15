@@ -22,13 +22,15 @@ Built with Laravel and Vue.js, supporting PostgreSQL, MySQL, and SQLite.
 
 **Security** - Two-factor authentication with QR codes, email verification, role-based access control, API token authentication with Laravel Sanctum.
 
+**Claude / MCP** - Remote MCP server at `/mcp`: Claude (or any MCP client) can book time, run the timer, add expenses, draft invoices from unbilled hours and read revenue, with the token user's rights.
+
 **Customization** - Logo upload, currency formats, timezone selection, language preferences (English, German, Spanish, French, Italian).
 
 ---
 
 ## Tech Stack
 
-**Backend:** Laravel 12 (PHP 8.2+), PostgreSQL/MySQL/SQLite, Laravel Sanctum for API authentication
+**Backend:** Laravel 13 (PHP 8.2+), MySQL, Laravel Sanctum for API authentication, laravel/mcp for the MCP server
 
 **Frontend:** Vue 3 with Composition API, Tailwind CSS 4 with a custom dark UI kit, Vite, Vue Router, Pinia for state management
 
@@ -98,6 +100,7 @@ php artisan migrate            # Run database migrations
 php artisan db:seed            # Seed sample data
 php artisan tinker             # Interactive shell
 php artisan test               # Run unit and feature tests
+php artisan mcp:token <email>  # Create an MCP token (--days=90 default, 0 = never)
 
 # Frontend
 npm run dev                     # Start dev server with hot reload
@@ -114,6 +117,7 @@ npm run test:e2e:ui            # Run tests with interactive UI
 app/
 ├── Http/Controllers/      API endpoint handlers
 ├── Http/Middleware/       Request middleware and guards
+├── Mcp/                   MCP server and tools
 ├── Models/                Eloquent models
 ├── Services/              Business logic layer
 └── Helpers/               Utility functions
@@ -124,6 +128,7 @@ resources/
 
 routes/
 ├── api.php                RESTful API routes
+├── ai.php                 MCP endpoint
 └── web.php                Web application routes
 
 database/
@@ -177,6 +182,37 @@ All endpoints are protected with Laravel Sanctum API tokens and role-based acces
 
 ---
 
+## MCP Server
+
+`POST /mcp` speaks the Model Context Protocol over HTTP. Auth is a Sanctum token with the `mcp` ability, created on the server:
+
+```bash
+php artisan mcp:token julian@example.com --days=90
+```
+
+The command prints the token once, plus the matching `claude mcp add --transport http ...` line for Claude Code.
+
+Tools:
+
+| Tool | Who | What |
+|---|---|---|
+| `status` | all | running timer, own hours today and this week |
+| `list_customers`, `list_projects` | all | ids for booking, scoped like the UI |
+| `list_worklogs` | all | filter by period, project, user, billable |
+| `book_worklog` | all | book a finished block; clashes are refused with the existing entry |
+| `start_timer`, `stop_timer` | all | running work log |
+| `update_worklog`, `delete_worklog` | all | own logs (admins: any); invoiced logs cannot be deleted |
+| `add_expense` | all | without receipt upload |
+| `unbilled_worklogs` | admin | billable logs not on any invoice, with amounts |
+| `list_invoices` | admin | filter by status and customer |
+| `draft_invoice` | admin | draft from unbilled logs of a period; never sent |
+| `set_invoice_status` | admin | e.g. mark paid |
+| `revenue` | admin | dashboard revenue figures (by month of work) |
+
+Every tool calls the same controller code as the API, so validation, the clash check, ownership and rates behave exactly as in the UI. Route middleware does not run for tool calls: admin-only tools check the role themselves, and 2FA does not apply (the token is the credential, keep it short-lived). On the demo instance the hourly reseed deletes all tokens.
+
+---
+
 ## User Interface
 
 Built with Tailwind CSS 4 and a custom component kit in a dark "ledger" aesthetic — warm graphite surfaces, a single brass accent, and tabular monospace numerals for all amounts and hours. Responsive layouts for desktop, tablet, and mobile devices. Real-time updates on timers and data, and interactive charts for financial reporting.
@@ -189,6 +225,7 @@ Built with Tailwind CSS 4 and a custom component kit in a dark "ledger" aestheti
 - **Email Verification** - Required before account activation
 - **Password Security** - Bcrypt hashing with salt
 - **API Authentication** - Laravel Sanctum token-based authentication
+- **MCP Tokens** - Created only on the server (`mcp:token`), expire after 90 days by default, `mcp` ability required, no 2FA on tool calls
 - **CSRF Protection** - Automatic CSRF token validation on all requests
 - **Input Validation** - Server-side validation on all endpoints
 - **Role-Based Access Control** - Admin and freelancer permission levels with proper data scoping
@@ -227,7 +264,7 @@ Supports English, German, Spanish, French, and Italian. Users can configure lang
 - 50+ RESTful endpoints
 - 20+ Vue components
 - 20 database migrations
-- 54 passing tests
+- 120+ tests
 - 5 supported languages
 
 ---
